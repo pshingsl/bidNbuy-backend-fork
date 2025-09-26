@@ -51,3 +51,11 @@ create table EmailVerification(
     FOREIGN KEY (user_id) REFERENCES User(user_id)
 );
 
+create table RefreshToken (
+    token_id     BIGINT       auto_increment not null PRIMARY KEY,
+    user_id      BIGINT       not null UNIQUE, --User table FK
+    token_value  VARCHAR(500) not null,
+    expiry_date  TIMESTAMP    not null,
+
+    FOREIGN KEY (user_id) REFERENCES User(user_id)
+);
