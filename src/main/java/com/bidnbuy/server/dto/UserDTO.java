@@ -25,4 +25,5 @@ public class UserDTO {
     private String userType;
     private LocalDateTime createdAt;
     private LocalDateTime updateAt;
+    private  LocalDateTime deletedAt;
 }

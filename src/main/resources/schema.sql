@@ -33,7 +33,8 @@ create table User(
     user_status ENUM('Y', 'N', 'B') default 'Y' not null,
     user_type VARCHAR(20),
     create_at DATETIME DEFAULT  CURRENT_TIMESTAMP not null,
-    updated_at    DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
+    deleted_at DATETIME null,
 
     FOREIGN KEY (admin_id) REFERENCES Admin(admin_id),
     FOREIGN KEY (address_id) REFERENCES Address(address_id)

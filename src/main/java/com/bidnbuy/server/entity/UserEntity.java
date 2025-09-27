@@ -58,4 +58,8 @@ public class UserEntity {
     @Column(name = "update_at", nullable = false)
     private  LocalDateTime updateAt;
 
+    @Column(name="deleted_at")
+    private LocalDateTime deletedAt;
+
+
 }
