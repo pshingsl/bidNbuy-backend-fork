@@ -8,7 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
-// 경매 테이블
+// 경매상품 테이블
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
