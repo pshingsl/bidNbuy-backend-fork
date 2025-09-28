@@ -23,11 +23,11 @@ public class AuctionProducts {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private UserEntity user_id;
+    private UserEntity user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "wishlist_id", nullable = false)
-    private Long wishlistId;
+    private WishLisEntity wishlist;
 
     @Column(name = "title", nullable = false)
     private String title;
@@ -51,8 +51,8 @@ public class AuctionProducts {
     @Column(name = "end_time", nullable = false)
     private LocalDateTime end_time;
 
-    @Column(name = "create_time", nullable = false)
-    private LocalDateTime create_time;
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime created_at;
 
     @Column(name = "delete_at", nullable = false)
     private LocalDateTime delete_at;
