@@ -25,7 +25,7 @@ create table Address(
 create table User(
     user_id BIGINT auto_increment not null PRIMARY KEY,
     admin_id BIGINT,
-    address_id BIGINT not null,
+    address_id BIGINT,
     email VARCHAR(255) not null unique,
     password VARCHAR(100) not null,
     nickname VARCHAR(20) not null,

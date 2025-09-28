@@ -21,15 +21,15 @@ import java.time.LocalDateTime;
 public class UserEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_id", nullable = false)
+    @Column(name = "user_id", nullable = true)
     private long userId;
 
     @ManyToOne
-    @JoinColumn(name="admin_id")
+    @JoinColumn(name="admin_id", nullable = true) //나중에 false로 바꾸기
     private AdminEntity adminId;
 
     @ManyToOne
-    @JoinColumn(name="address_id")
+    @JoinColumn(name="address_id", nullable = true)
     private AddressEntity addressId;
 
     @Column(name = "email", nullable = false, unique = true, length = 255)
@@ -42,10 +42,12 @@ public class UserEntity {
     private  String nickname;
 
     @Enumerated(EnumType.STRING)
-    private AuthStatus authStatus;
+    @Builder.Default
+    private AuthStatus authStatus = AuthStatus.N;
 
     @Enumerated(EnumType.STRING)
-    private UserStatus userStatus;
+    @Builder.Default
+    private UserStatus userStatus = UserStatus.Y;
 
     @Column(name = "user_type", length = 20)
     private  String userType;

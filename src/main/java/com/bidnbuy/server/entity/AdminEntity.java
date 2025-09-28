@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 public class AdminEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name="admin_id", nullable = false)
+    @Column(name="admin_id", nullable = true)//구현시 notnull로 바꿔서 사용
     private long adminId;
 
     @Column(name="email", nullable = false, unique = true, length = 255)

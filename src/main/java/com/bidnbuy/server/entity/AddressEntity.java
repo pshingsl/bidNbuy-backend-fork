@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 public class AddressEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name="address_id", nullable = false)
+    @Column(name="address_id", nullable = true) //구현시 notnull로 바꿔서 사용
     private long addressId;
 
     @Column(name="zonecode", nullable = false, length = 10)
