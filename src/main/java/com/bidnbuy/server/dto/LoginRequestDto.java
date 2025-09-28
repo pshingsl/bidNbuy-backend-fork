@@ -1,5 +1,6 @@
 package com.bidnbuy.server.dto;
 
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 

@@ -1,8 +1,8 @@
 package com.bidnbuy.server.controller;
 
-import com.bidnbuy.server.dto.ResponseDto;
-import com.bidnbuy.server.dto.UserDto;
+import com.bidnbuy.server.dto.*;
 import com.bidnbuy.server.entity.UserEntity;
+import com.bidnbuy.server.security.JwtProvider;
 import com.bidnbuy.server.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -14,10 +14,17 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/auth")
 public class UserController {
-    @Autowired
-    private UserService service;
 
-    @PostMapping("signup")
+    private final UserService userService;
+    private final JwtProvider tokenProvider;
+
+    @Autowired
+    public UserController(UserService userService, JwtProvider tokenProvider){
+        this.userService = userService;
+        this.tokenProvider = tokenProvider;
+    }
+
+    @PostMapping("/signup")
     public ResponseEntity<?> registerUser(@RequestBody UserDto userDto){
         try{
             UserEntity user  = UserEntity.builder()
@@ -25,7 +32,7 @@ public class UserController {
                     .nickname(userDto.getNickname())
                     .password(userDto.getPassword())
                     .build();
-            UserEntity registeredUser = service.create(user);
+            UserEntity registeredUser = userService.create(user);
 
             UserDto responseUserDto = UserDto.builder()
                     .email(registeredUser.getEmail())
@@ -34,25 +41,33 @@ public class UserController {
             return ResponseEntity.ok().body(responseUserDto);
         }catch(Exception e){
             ResponseDto responseDto = ResponseDto.builder().error(e.getMessage()).build();
-
             return ResponseEntity.badRequest().body(responseDto);
         }
     }
 
     @PostMapping("/login")
     public ResponseEntity<?> loginUser(@RequestBody UserDto userDto){
-        UserEntity loginUser = service.findByEmailAndPassword(
+        UserEntity loginUser = userService.findByEmailAndPassword(
                 userDto.getEmail(),
                 userDto.getPassword()
         );
         //로그인 성공/실패 응답 처리
         if(loginUser != null){
-            //토큰 응답 추후 구현
-            UserDto reponseUserDto = UserDto.builder()
-                    .email(userDto.getEmail())
-                    .nickname(userDto.getNickname())
+            //로그인 성공 시 토큰 생성
+            String accessToken = tokenProvider.createAccessToken(loginUser.getUserId());
+
+            TokenResponseDto tokenInfo = TokenResponseDto.builder()
+                    .accessToken(accessToken)
+                    .refreshToken(null)
+                    .grantType(tokenProvider.getGrantType())
+                    .accessTokenExpiresIn(tokenProvider.getAccessTokenExpirationTime())
                     .build();
-            return ResponseEntity.ok().body(reponseUserDto);
+            AuthResponseDto reponseDto = AuthResponseDto.builder()
+                    .email(loginUser.getEmail())
+                    .nickname(loginUser.getNickname())
+                    .tokenInfo(tokenInfo)
+                    .build();
+            return ResponseEntity.ok().body(reponseDto);
         }else{
             ResponseDto responseDto = ResponseDto.builder()
                     .error("Login failed. Check your email and password.")
