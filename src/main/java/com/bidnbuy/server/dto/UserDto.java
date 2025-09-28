@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @Setter
 @AllArgsConstructor
 @Builder
-public class UserDTO {
+public class UserDto {
     private long userId;
     private long adminId;
     private long addressId;
