@@ -1,13 +1,14 @@
 package com.bidnbuy.server.entity;
 
+import com.bidnbuy.server.enums.IsDeletedStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 import java.time.LocalDateTime;
 
+// 찜목록
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -32,6 +33,6 @@ public class WishLisEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "is_deleted", nullable = false)
-    private IsDeletedStatus  is_deleted;
+    private IsDeletedStatus is_deleted;
 
 }
