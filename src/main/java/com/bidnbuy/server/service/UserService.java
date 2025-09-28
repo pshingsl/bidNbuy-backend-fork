@@ -20,12 +20,23 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
+    private static final String PASSWORD_REGEX =
+            "^(?=.*[a-zA-Z])(?=.*[0-9]).{8,}$";
+
     //회원가입
     public UserEntity create(final UserEntity userEntity){
         //유효성 검사 - 이메일, 비밀번호  >>누락<<
         if(userEntity == null || userEntity.getEmail() == null || userEntity.getPassword() == null){
             throw new RuntimeException("Invalid argument");
         }
+
+        //비밀번호 유효성 검사
+        final String password = userEntity.getPassword();
+        if(!password.matches(PASSWORD_REGEX)){
+            log.warn("password does not meet conditions:{}", password);
+            throw new RuntimeException("비밀번호는 영문과 숫자를 포함해서 8자리 이상이어야 합니다.");
+        }
+
         //중복 이메일 검사
         final String email = userEntity.getEmail();
         if(repository.existsByEmail(email)){
