@@ -49,9 +49,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if(token !=null){
                 //토큰 검증, 사용자id 추출
-                String userId = jwtProvider.validateAndGetUserId(token);
+                String userIdStr = jwtProvider.validateAndGetUserId(token);
                 //유효한 토큰
-                if(userId !=null){
+                if(userIdStr !=null){
+                    Long userId = Long.valueOf(userIdStr);
                     log.info("Authenticated user Id : {}", userId);
                     //Security Context에 저장할 인증 토큰 생성
                     AbstractAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(

@@ -26,10 +26,10 @@ public class AuctionProductsEntity {
     @Column(name = "auction_id")
     private Long auctionId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "wishlist_id", nullable = false)
-    private WishlistEntity wishlist;
+//    @Column(name = "wishlist_id", nullable = false)
+//    private WishlistEntity wishlist;
 
+    // 유저테이블의 외래키 연결
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user;
@@ -53,7 +53,7 @@ public class AuctionProductsEntity {
     @Column(name = "current_price", nullable = false)
     private Integer currentPrice;
 
-    @Column(name = "min_bid_price", nullable = false)
+    @Column(name = "min_bid_price", nullable = true)
     private Integer minBidPrice;
 
     @Enumerated(EnumType.STRING)
@@ -70,7 +70,17 @@ public class AuctionProductsEntity {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    @ColumnDefault("'1970-01-01 00:00:00'")
-    @Column(name = "delete_at", nullable = true) // nullable=true만 남김
+    @Column(name = "deleted_at", nullable = true) // nullable=true만 남김
     private LocalDateTime deletedAt;
+
+    /*
+     * 아래 메서드는 JPA는 객체와 DB와 매핑하지만, 영속성 컨텍스트(Persistence Context)안에서
+     * 객체를 다룰 때는 객체 자체를의 상태를 직접 관리해야한다.
+     * */
+    public void setUser(UserEntity user) {
+        this.user = user;
+        if (user != null && !user.getAuctionProducts().contains(this)) {
+            user.getAuctionProducts().add(this);
+        }
+    }
 }
