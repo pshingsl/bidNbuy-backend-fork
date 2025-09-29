@@ -37,7 +37,6 @@ public class SecurityConfig {
 
             .authorizeHttpRequests(authorize -> authorize
                     .requestMatchers("/auth/**").permitAll()
-                    .requestMatchers(HttpMethod.POST, "/auctions").permitAll()
                     .anyRequest().authenticated()
             );
         http.addFilterBefore(
