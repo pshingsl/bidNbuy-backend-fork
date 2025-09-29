@@ -11,7 +11,7 @@ import java.time.Instant;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Getter
 @Entity
-@Table(name = "refreshtoken")
+@Table(name = "RefreshToken")
 @DynamicUpdate
 public class RefreshTokenEntity {
     @Id

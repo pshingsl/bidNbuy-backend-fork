@@ -103,6 +103,25 @@ public class JwtProvider {
         return null;
     }
 
+    //토큰 유효성 검증
+    public boolean validateToken(String token){
+        return validateAndGetUserId(token) !=null;
+    }
+
+    //RTR(리프레시토큰 회전)을 위한 메서드
+    public Long getUserIdFromToken(String token){
+        try{
+            String userId = getParser()
+                    .parseSignedClaims(token)
+                    .getPayload()
+                    .getSubject();
+            return Long.parseLong(userId);
+        }catch (Exception e){
+            log.error("error extracting UserId from token:{}", e.getMessage());
+            throw new RuntimeException("토큰에서 사용자 정보를 추출할 수 없음");
+        }
+    }
+
     //refresh token 만료시간 instant객체로 반환
     public Instant getRefreshTokenExpiryDate(){
         return Instant.now().plus(REFRESH_EXPIRATION_TIME, ChronoUnit.MILLIS);

@@ -16,7 +16,7 @@ import java.util.Optional;
 public class RefreshTokenService {
     private final RefreshTokenRepository refreshTokenRepository;
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public void saveOrUpdate(UserEntity user, String tokenValue, Instant expiryDate){
         Optional<RefreshTokenEntity> existingToken = refreshTokenRepository.findByUser(user);
         if(existingToken.isPresent()){
