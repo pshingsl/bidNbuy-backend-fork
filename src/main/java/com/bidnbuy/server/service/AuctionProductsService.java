@@ -1,16 +1,15 @@
 package com.bidnbuy.server.service;
 
-import com.bidnbuy.server.dto.CreateAuctionDTO;
+import com.bidnbuy.server.dto.CreateAuctionDto;
 import com.bidnbuy.server.entity.*;
 import com.bidnbuy.server.enums.SellingStatus;
 import com.bidnbuy.server.repository.*;
 import jakarta.persistence.EntityNotFoundException;
-import lombok.extern.slf4j.Slf4j;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Service
 public class AuctionProductsService {
@@ -18,56 +17,44 @@ public class AuctionProductsService {
     private AuctionProductsRepository auctionProductsRepository;
 
     @Autowired
-    private ImageRepository imageRepository;
-
-    @Autowired
     private UserRepository userRepository;
 
     @Autowired
-    private AuctionProductsRepository auctionRepository;
-
-    @Autowired
     private CategoryRepository categoryRepository;
-
-    @Autowired
-    private WishlistRepository wishlistRepository;
-
     // create
-    public Long createAuctionProduct(CreateAuctionDTO dto, Long userId) {
-
-        // 1. 필수 연관 엔티티 조회 (유효성 검사)
+    @Transactional
+    public AuctionProductsEntity create(CreateAuctionDto dto, Long userId) {
         UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없습니다."));
+                .orElseThrow(() -> new RuntimeException("등록자(User)를 찾을 수 없습니다. ID: " + userId));
 
-        // TODO: 아직 카테고리 구현이 안돼 하드코딩 처리
-        Long TEMPORARY_CATEGORY_ID = 1L;
-        CategoryEntity category = categoryRepository.findById(TEMPORARY_CATEGORY_ID)
-                .orElseThrow(() -> new EntityNotFoundException("임시 카테고리 ID " + TEMPORARY_CATEGORY_ID + "를 찾을 수 없습니다."));
+        // 1-2. 카테고리 조회 및 유효성 검증
+        // TODO: DTO 확장 후 categoryRepository.findById(dto.getCategoryId())로 변경 필요
+        Long tempCategoryId = 1L;
+        CategoryEntity category = categoryRepository.findById(dto.getCategoryId())
+                .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다. ID: " + dto.getCategoryId()));
 
-        // 💡 TODO: 아직 찜목록 구현이 안돼 하드코딩 처리
-        final Long TEMPORARY_WISHLIST_ID = 1L;
-        WishlistEntity wishlist = wishlistRepository.findById(TEMPORARY_WISHLIST_ID)
-                .orElseThrow(() -> new EntityNotFoundException("임시 위시리스트 ID " + TEMPORARY_WISHLIST_ID + "를 찾을 수 없습니다."));
-
-        // 2. DTO -> AuctionProductsEntity 변환 및 저장
         AuctionProductsEntity auctionProduct = AuctionProductsEntity.builder()
-                .user(user)
-                .category(category) // 카테고리 추가
-                // DTO 필드명 수정 (start_price -> startPrice 등)
                 .title(dto.getTitle())
-                .wishlist(wishlist)
                 .description(dto.getDescription())
-                .startPrice(dto.getStart_price())
-                .minBidPrice(dto.getMin_bid_price())
-                .startTime(dto.getStart_time())
-                .endTime(dto.getEnd_time())
-                .sellingStatus(SellingStatus.SALE) // 기본값 설정
-                .currentPrice(dto.getStart_price()) // 등록 시점에는 시작가로 설정
-                .deletedAt(LocalDateTime.of(1970, 1, 1, 0, 0, 0))
+                .startPrice(dto.getStartPrice())
+                .currentPrice(dto.getStartPrice())
+                .minBidPrice(dto.getMinBidPrice())
+                .startTime(dto.getStartTime())
+                .endTime(dto.getEndTime())
+                .sellingStatus(SellingStatus.SALE)
+                .category(category)
                 .build();
 
-        AuctionProductsEntity savedAuction = auctionRepository.save(auctionProduct);
+        auctionProduct.setUser(user);
 
-        return savedAuction.getAuctionId();
+        return auctionProductsRepository.save(auctionProduct);
     }
+
+
+    /*
+    * CreateAuctionDto를 부른다.
+    * -> 위 캡션 이미지에서 데이터 등록
+    * -> 지금은 이미지, 카테고리를 구현 안해서 제외하고 구현
+    * -> 요구사항 명세서에서 입력을 안하면 해당 미입력 부분 에러 발생
+    * */
 }
