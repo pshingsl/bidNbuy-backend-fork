@@ -1,7 +1,6 @@
 package com.bidnbuy.server.service;
 
-import com.bidnbuy.server.dto.ImageDTO;
-import com.bidnbuy.server.entity.AuctionProductsEntity;
+import com.bidnbuy.server.dto.ImageDto;
 import com.bidnbuy.server.entity.ImageEntity;
 import com.bidnbuy.server.entity.UserEntity;
 import com.bidnbuy.server.repository.AuctionProductsRepository;
@@ -27,7 +26,7 @@ public class ImageService {
     private UserRepository userRepository;
 
     @Transactional
-    public ImageEntity create(ImageDTO dto, Long userId) {
+    public ImageEntity create(ImageDto dto, Long userId) {
 
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없습니다!"));
