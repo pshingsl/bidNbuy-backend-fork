@@ -24,12 +24,12 @@ public class AuctionProductsService {
     // create
     @Transactional
     public AuctionProductsEntity create(CreateAuctionDto dto, Long userId) {
+
+        //
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("등록자(User)를 찾을 수 없습니다. ID: " + userId));
 
         // 1-2. 카테고리 조회 및 유효성 검증
-        // TODO: DTO 확장 후 categoryRepository.findById(dto.getCategoryId())로 변경 필요
-        Long tempCategoryId = 1L;
         CategoryEntity category = categoryRepository.findById(dto.getCategoryId())
                 .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다. ID: " + dto.getCategoryId()));
 
