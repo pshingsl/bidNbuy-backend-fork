@@ -1,23 +1,18 @@
 package com.bidnbuy.server.controller;
 
 import com.bidnbuy.server.dto.*;
-import com.bidnbuy.server.entity.RefreshTokenEntity;
 import com.bidnbuy.server.entity.UserEntity;
 import com.bidnbuy.server.exception.CustomAuthenticationException;
-import com.bidnbuy.server.security.JwtProvider;
 import com.bidnbuy.server.service.AuthService;
-import com.bidnbuy.server.service.RefreshTokenService;
 import com.bidnbuy.server.service.UserService;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-
-import java.time.Instant;
-import java.util.Optional;
 
 @Slf4j
 @RestController
@@ -85,6 +80,19 @@ public class UserController {
             return ResponseEntity.status(500).body(responseDto);
         }
 
+    }
+
+    @GetMapping("/kakao")
+    public ResponseEntity<?> kakaoLogin (@RequestParam("code") String code) {
+        try {
+            AuthResponseDto responseDto = authService.kakaoLogin(code);
+            return ResponseEntity.ok(responseDto);
+        } catch (Exception e) {
+            log.error("&&&&&&&&&&&&&&&&&&&&&&&&&&카카오 로그인 처리 중 에러 발생: {}", e.getMessage(), e);
+            // 에러 발생 시 문자열(String)을 반환하려고 시도 (예상)
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(e.getMessage());
+        }
     }
 
 

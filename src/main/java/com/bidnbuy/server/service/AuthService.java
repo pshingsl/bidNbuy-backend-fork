@@ -1,6 +1,8 @@
 package com.bidnbuy.server.service;
 
 import com.bidnbuy.server.dto.AuthResponseDto;
+import com.bidnbuy.server.dto.KakaoTokenResponseDto;
+import com.bidnbuy.server.dto.KakaoUserInfoResponseDto;
 import com.bidnbuy.server.dto.TokenResponseDto;
 import com.bidnbuy.server.entity.RefreshTokenEntity;
 import com.bidnbuy.server.entity.UserEntity;
@@ -8,6 +10,7 @@ import com.bidnbuy.server.exception.CustomAuthenticationException;
 import com.bidnbuy.server.security.JwtProvider;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -18,6 +21,7 @@ public class AuthService {
     private final JwtProvider jwtProvider;
     private final RefreshTokenService refreshTokenService;
     private final UserService userService;
+    private final KakaoApiService kakaoApiService;
 
     public AuthResponseDto login(String email, String password) {
         // 1. 사용자 인증 시도
@@ -92,6 +96,43 @@ public class AuthService {
                 .tokenInfo(tokenInfo)
                 .email(user.getEmail())
                 .nickname(user.getNickname())
+                .build();
+    }
+
+    //카카오
+    @Transactional
+    public AuthResponseDto kakaoLogin(String code){
+        //인가코드로 카카오엑세스토큰 획득
+        KakaoTokenResponseDto kakaoToken = kakaoApiService.getKakaoAccessToken(code);
+
+        //엑세스토큰으로 사용자 정보 가져오기
+        KakaoUserInfoResponseDto userInfo = kakaoApiService.getKakaoUserInfo(kakaoToken.getAccessToken());
+
+        //사용자 정보 디비에 저장, 로그인
+        String userEmail = userInfo.getKakao_account().getEmail();
+        String userNickname = userInfo.getKakao_account().getProfile().getNickname();
+
+        UserEntity loginUser = userService.findOrCreateUser(userEmail, userNickname);
+        Long userId = loginUser.getUserId();
+
+        //자체엑세스 리프레시 토큰 생성, 저장
+        String accessToken = jwtProvider.createAccessToken(userId);
+        String refreshToken = jwtProvider.createRefreshToken(userId);
+
+        Instant expiryDate = jwtProvider.getRefreshTokenExpiryDate();
+        refreshTokenService.saveOrUpdate(loginUser, refreshToken, expiryDate);
+
+        //응담시간 dto
+        TokenResponseDto tokenInfo = TokenResponseDto.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .grantType(jwtProvider.getGrantType())
+                .accessTokenExpiresIn(jwtProvider.getAccessTokenExpirationTime())
+                .build();
+        return AuthResponseDto.builder()
+                .email(userEmail)
+                .nickname(userNickname)
+                .tokenInfo(tokenInfo)
                 .build();
     }
 }

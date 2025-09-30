@@ -2,12 +2,13 @@ package com.bidnbuy.server.service;
 
 import com.bidnbuy.server.entity.UserEntity;
 import com.bidnbuy.server.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -16,6 +17,8 @@ public class UserService {
 //    private UserRepository repository;
     private final UserRepository repository; //불변성, 초기화 문제 해결을 위해 @Autowired 대신 final이랑 생성자 주입으로 바꿈
     private final PasswordEncoder passwordEncoder;
+
+
 
     public UserService(UserRepository repository, PasswordEncoder passwordEncoder){
         this.repository = repository;
@@ -55,7 +58,9 @@ public class UserService {
 
     //로그인 검증
     public UserEntity findByEmailAndPassword(final String email, String password){
-        final UserEntity ogUser = repository.findByEmail(email);
+        final Optional<UserEntity> userOptional  = repository.findByEmail(email);
+        final UserEntity ogUser = userOptional.orElse(null);
+
         //사용자 존재 여부 확인
         if(ogUser == null){
             log.warn("User not found for email:{}", email);
@@ -72,6 +77,19 @@ public class UserService {
     public UserEntity getById(final Long id){
         Optional<UserEntity> userOptional = repository.findById(id);
         return userOptional.orElse(null);
+    }
+
+    @Transactional
+    public UserEntity findOrCreateUser(String email, String nickname){
+        return repository.findByEmail(email).orElseGet(()->{
+            UserEntity newUser = UserEntity.builder()
+                    .email(email)
+                    .nickname(nickname)
+                    .password(passwordEncoder.encode(UUID.randomUUID().toString())) //소셜로그인 비번을 채우기 위한 더미
+                    .role("ROLE_USER")
+                    .build();
+            return repository.save(newUser);
+        });
     }
 
 }
