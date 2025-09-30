@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
+// 옥션 컨트롤러
 @RestController
 @RequestMapping("/auctions")
 public class AuctionProductsController {
