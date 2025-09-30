@@ -11,6 +11,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.Instant;
 import java.time.LocalDateTime;
 
+// 이미지 엔티티
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -24,11 +25,11 @@ public class ImageEntity {
     private Long imageId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "auction_id", nullable = false)
+    @JoinColumn(name = "auction_id", nullable = true)
     private AuctionProductsEntity auctionProduct ;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = true)
     private UserEntity user;
 
     @Column(name = "image_url", nullable = false)

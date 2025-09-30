@@ -1,6 +1,7 @@
 package com.bidnbuy.server.controller;
 
 import com.bidnbuy.server.dto.CreateAuctionDto;
+import com.bidnbuy.server.dto.ImageDto;
 import com.bidnbuy.server.entity.AuctionProductsEntity;
 import com.bidnbuy.server.service.AuctionProductsService;
 import jakarta.validation.Valid;
@@ -8,44 +9,37 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-// 옥션 컨트롤러
 @RestController
 @RequestMapping("/auctions")
 public class AuctionProductsController {
 
     @Autowired
-    private AuctionProductsService auctionProductsService;
+    private AuctionProductsService auctionProductsService; // 💡 Service 주입
 
-    // 등록
+
     @PostMapping
-    public ResponseEntity<?> create(
-            @AuthenticationPrincipal long userId,
+    public ResponseEntity<?> createAuction(
+            @AuthenticationPrincipal Long userId,
+            // 💡 JSON 본문 전체를 DTO로 받습니다.
             @RequestBody @Valid CreateAuctionDto dto
-    ){
-        try {
-            AuctionProductsEntity newProduct = auctionProductsService.create(dto, userId);
+    ) {
+        List<ImageDto> images = dto.getImages();
+        AuctionProductsEntity newProduct = auctionProductsService.create(dto,images,userId);
 
-            Map<String, Object> response = Map.of(
-                    "success", true,
-                    "message", "경매 상품이 성공적으로 등록되었습니다.",
-                    "auctionId", newProduct.getAuctionId()
-            );
+        // 2. 응답 DTO 생성 및 HTTP 201 Created 반환
+        Map<String, Object> response = new HashMap<>();
+        response.put("auctionId", newProduct.getAuctionId());
+        response.put("title", newProduct.getTitle());
+        response.put("message", "경매 상품과 이미지 정보가 성공적으로 등록되었습니다.");
 
-            return ResponseEntity.ok().body(response);
-        }catch (Exception e) {
-                Map<String, String> error= Map.of(
-                        "success", "false",
-                        "message", "경매 상품 등록 중 오류가 발생했습니다: " + e.getMessage()
-                );
-                return ResponseEntity.badRequest().body(error);
-            }
-        }
+        // DTO를 사용하지 않으므로, 이 방법이 가장 간결합니다.
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+}

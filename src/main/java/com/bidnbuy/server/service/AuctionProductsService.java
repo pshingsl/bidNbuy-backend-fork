@@ -1,6 +1,7 @@
 package com.bidnbuy.server.service;
 
 import com.bidnbuy.server.dto.CreateAuctionDto;
+import com.bidnbuy.server.dto.ImageDto;
 import com.bidnbuy.server.entity.*;
 import com.bidnbuy.server.enums.SellingStatus;
 import com.bidnbuy.server.repository.*;
@@ -8,8 +9,10 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class AuctionProductsService {
@@ -21,15 +24,17 @@ public class AuctionProductsService {
 
     @Autowired
     private CategoryRepository categoryRepository;
+
+    @Autowired ImageService imageService;
     // create
     @Transactional
-    public AuctionProductsEntity create(CreateAuctionDto dto, Long userId) {
+    public AuctionProductsEntity create(CreateAuctionDto dto, List<ImageDto> images, Long userId) {
 
-        //
+        // 유저 아이디 유효성 검증
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("등록자(User)를 찾을 수 없습니다. ID: " + userId));
 
-        // 1-2. 카테고리 조회 및 유효성 검증
+        // 카테고리 조회 및 유효성 검증
         CategoryEntity category = categoryRepository.findById(dto.getCategoryId())
                 .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다. ID: " + dto.getCategoryId()));
 
@@ -47,14 +52,13 @@ public class AuctionProductsService {
 
         auctionProduct.setUser(user);
 
-        return auctionProductsRepository.save(auctionProduct);
+        // DB에 저장하여 auctionId  확보
+        AuctionProductsEntity auctionProducts = auctionProductsRepository.save(auctionProduct);
+
+        // 이미지 검증
+        if(images == null || images.size() == 0 ||images.size() > 10) {
+            throw new IllegalArgumentException("이미지는 1장 이상 10장 이하로 등록해야 합니다.");
+        }
+        return auctionProducts;
     }
-
-
-    /*
-    * CreateAuctionDto를 부른다.
-    * -> 위 캡션 이미지에서 데이터 등록
-    * -> 지금은 이미지, 카테고리를 구현 안해서 제외하고 구현
-    * -> 요구사항 명세서에서 입력을 안하면 해당 미입력 부분 에러 발생
-    * */
 }
