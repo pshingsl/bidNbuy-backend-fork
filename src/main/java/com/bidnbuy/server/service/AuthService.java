@@ -6,6 +6,7 @@ import com.bidnbuy.server.dto.KakaoUserInfoResponseDto;
 import com.bidnbuy.server.dto.TokenResponseDto;
 import com.bidnbuy.server.entity.RefreshTokenEntity;
 import com.bidnbuy.server.entity.UserEntity;
+import com.bidnbuy.server.enums.AuthStatus;
 import com.bidnbuy.server.exception.CustomAuthenticationException;
 import com.bidnbuy.server.security.JwtProvider;
 import jakarta.transaction.Transactional;
@@ -113,6 +114,9 @@ public class AuthService {
         String userNickname = userInfo.getKakao_account().getProfile().getNickname();
 
         UserEntity loginUser = userService.findOrCreateUser(userEmail, userNickname);
+        if(loginUser.getAuthStatus() != AuthStatus.Y){
+            loginUser.setAuthStatus(AuthStatus.Y); //카카오 로그인 유저 이메일 인증상태 Y로 변경
+        }
         Long userId = loginUser.getUserId();
 
         //자체엑세스 리프레시 토큰 생성, 저장

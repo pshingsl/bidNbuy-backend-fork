@@ -88,7 +88,7 @@ public class UserController {
             AuthResponseDto responseDto = authService.kakaoLogin(code);
             return ResponseEntity.ok(responseDto);
         } catch (Exception e) {
-            log.error("&&&&&&&&&&&&&&&&&&&&&&&&&&카카오 로그인 처리 중 에러 발생: {}", e.getMessage(), e);
+//            log.error("&&&&&&&&&&&&&&&&&&&&&&&&&&카카오 로그인 처리 중 에러 발생: {}", e.getMessage(), e);
             // 에러 발생 시 문자열(String)을 반환하려고 시도 (예상)
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(e.getMessage());
