@@ -1,7 +1,9 @@
 package com.bidnbuy.server.controller;
 
+import com.bidnbuy.server.dto.AuctionListResponseDto;
 import com.bidnbuy.server.dto.CreateAuctionDto;
 import com.bidnbuy.server.dto.ImageDto;
+import com.bidnbuy.server.dto.PagingResponseDto;
 import com.bidnbuy.server.entity.AuctionProductsEntity;
 import com.bidnbuy.server.service.AuctionProductsService;
 import jakarta.validation.Valid;
@@ -39,7 +41,17 @@ public class AuctionProductsController {
         response.put("message", "경매 상품과 이미지 정보가 성공적으로 등록되었습니다.");
 
         // DTO를 사용하지 않으므로, 이 방법이 가장 간결합니다.
-
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+
+    @GetMapping
+    public ResponseEntity<?> getAuctionList(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+            ){
+        PagingResponseDto<AuctionListResponseDto> list = auctionProductsService.getAuctionList(page, size);
+        return ResponseEntity.ok(list);
+    }
+
+
 }

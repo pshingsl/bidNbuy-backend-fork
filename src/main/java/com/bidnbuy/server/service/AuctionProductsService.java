@@ -2,14 +2,17 @@ package com.bidnbuy.server.service;
 
 import com.bidnbuy.server.dto.CreateAuctionDto;
 import com.bidnbuy.server.dto.ImageDto;
+import com.bidnbuy.server.dto.PagingResponseDto;
+import com.bidnbuy.server.dto.AuctionListResponseDto;
 import com.bidnbuy.server.entity.*;
 import com.bidnbuy.server.enums.SellingStatus;
 import com.bidnbuy.server.repository.*;
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,6 +27,9 @@ public class AuctionProductsService {
 
     @Autowired
     private CategoryRepository categoryRepository;
+
+    @Autowired
+    private ImageRepository imageRepository;
 
     @Autowired ImageService imageService;
     // create
@@ -61,4 +67,53 @@ public class AuctionProductsService {
         }
         return auctionProducts;
     }
+
+    // 조회
+    @Transactional(readOnly = true)
+    public PagingResponseDto<AuctionListResponseDto> getAuctionList(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<AuctionProductsEntity> auctionPage = auctionProductsRepository.findRunningAuctionsWithDetails(pageable);
+
+        List<AuctionListResponseDto> dtoList = auctionPage.getContent().stream()
+                .map(product ->{
+                    String mainImageUrl = imageRepository.findMainImageUrl(product.getAuctionId())
+                            .orElse("default_product.png"); // 이미지가 없을 때 기본값 처리
+
+                   return AuctionListResponseDto.builder()
+                        .auctionId(product.getAuctionId())
+                        .title(product.getTitle())
+                        .currentPrice(product.getCurrentPrice())
+                        .endTime(product.getEndTime())
+                        .sellingStatus(calculateSellingStatus(product))
+                        .categoryName(product.getCategory().getCategoryName())
+                        .mainImageUrl(mainImageUrl)
+                        .build();
+                })
+                        .toList();
+
+        return PagingResponseDto.<AuctionListResponseDto>builder()
+                .data(dtoList)
+                .totalPages(auctionPage.getTotalPages())
+                .totalElements(auctionPage.getTotalElements())
+                .currentPage(auctionPage.getNumber())
+                .pageSize(auctionPage.getSize())
+                .isFirst(auctionPage.isFirst())
+                .isLast(auctionPage.isLast())
+                .build();
+    }
+
+    private String calculateSellingStatus(AuctionProductsEntity product) {
+        LocalDateTime now = LocalDateTime.now();
+        if(now.isBefore(product.getStartTime())){
+            return "시작";
+    }else if (now.isAfter(product.getEndTime())) {
+            return "종료";
+        } else{
+            return "진행 중";
+        }
+}
+
+//    @Transactional(readOnly = true)
+//    public AuctionDe
 }
