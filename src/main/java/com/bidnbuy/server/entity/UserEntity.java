@@ -70,4 +70,14 @@ public class UserEntity {
     private List<AuctionProductsEntity> auctionProducts = new ArrayList<>();
 
     private String role;
+
+    //임시비번 해시값
+    @Column(name = "temp_password_hash", length = 100)
+    private String tempPasswordHash;
+
+    //임시비번 만료시간
+    @Column(name = "temp_password_expiry_date")
+    private LocalDateTime tempPasswordExpiryDate;
+
+
 }
