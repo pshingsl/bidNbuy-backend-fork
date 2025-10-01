@@ -34,7 +34,7 @@ public class CategoryController {
     }
 
     @GetMapping("/children/{parentId}")
-    public ResponseEntity<List<CategoryDto>> getChildrenCategories(@PathVariable Long parentId) {
+    public ResponseEntity<List<CategoryDto>> getChildrenCategories(@PathVariable Integer parentId) {
         try {
             // Service의 findChildrenByParentId() 호출 (findByParent_CategoryId 기반)
             List<CategoryDto> children = categoryService.findChildrenByParentId(parentId);
