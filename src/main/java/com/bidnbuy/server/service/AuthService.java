@@ -1,9 +1,6 @@
 package com.bidnbuy.server.service;
 
-import com.bidnbuy.server.dto.AuthResponseDto;
-import com.bidnbuy.server.dto.KakaoTokenResponseDto;
-import com.bidnbuy.server.dto.KakaoUserInfoResponseDto;
-import com.bidnbuy.server.dto.TokenResponseDto;
+import com.bidnbuy.server.dto.*;
 import com.bidnbuy.server.entity.RefreshTokenEntity;
 import com.bidnbuy.server.entity.UserEntity;
 import com.bidnbuy.server.enums.AuthStatus;
@@ -23,6 +20,7 @@ public class AuthService {
     private final RefreshTokenService refreshTokenService;
     private final UserService userService;
     private final KakaoApiService kakaoApiService;
+    private final NaverApiService naverApiService;
 
     public AuthResponseDto login(String email, String password) {
         // 1. 사용자 인증 시도
@@ -127,6 +125,45 @@ public class AuthService {
         refreshTokenService.saveOrUpdate(loginUser, refreshToken, expiryDate);
 
         //응담시간 dto
+        TokenResponseDto tokenInfo = TokenResponseDto.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .grantType(jwtProvider.getGrantType())
+                .accessTokenExpiresIn(jwtProvider.getAccessTokenExpirationTime())
+                .build();
+        return AuthResponseDto.builder()
+                .email(userEmail)
+                .nickname(userNickname)
+                .tokenInfo(tokenInfo)
+                .build();
+    }
+
+    //네이버
+    @Transactional
+    public AuthResponseDto naverLogin(String code, String state){
+        //네이버 엑세스토큰 획득
+        NaverTokenResponseDto naverToken = naverApiService.getNaverAccessToken(code, state);
+
+        //엑세스 토큰으로 사용자 정보 가져오기
+        NaverUserInfoResponseDto userInfo = naverApiService.getNaverUserInfo(naverToken.getAccessToken());
+
+        //사용자 정보 디비 저장, 로그인
+        String userEmail = userInfo.getResponse().getEmail();
+        String userNickname = userInfo.getResponse().getNickname();
+
+        UserEntity loginUser = userService.findOrCreateUser(userEmail, userNickname);
+        if(loginUser.getAuthStatus() !=AuthStatus.Y){
+            loginUser.setAuthStatus((AuthStatus.Y)); //인증된 사용자로 변경
+        }
+        Long userId = loginUser.getUserId();
+
+        //자체 엑세스, 리프레시 토큰 생성
+        String accessToken = jwtProvider.createAccessToken(userId);
+        String refreshToken = jwtProvider.createRefreshToken(userId);
+
+        Instant expiryDate = jwtProvider.getRefreshTokenExpiryDate();
+        refreshTokenService.saveOrUpdate(loginUser, refreshToken, expiryDate);
+
         TokenResponseDto tokenInfo = TokenResponseDto.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
