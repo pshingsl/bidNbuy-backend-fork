@@ -3,16 +3,20 @@ package com.bidnbuy.server.controller;
 import com.bidnbuy.server.dto.*;
 import com.bidnbuy.server.entity.UserEntity;
 import com.bidnbuy.server.exception.CustomAuthenticationException;
+import com.bidnbuy.server.security.JwtProvider;
 import com.bidnbuy.server.service.AuthService;
 import com.bidnbuy.server.service.UserService;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.view.RedirectView;
 
 @Slf4j
 @RestController
@@ -21,12 +25,20 @@ public class UserController {
 
     private final UserService userService;
     private final AuthService authService;
+    private final JwtProvider jwtProvider;
 
     @Autowired
-    public UserController(UserService userService, AuthService authService){
+    public UserController(UserService userService, AuthService authService, JwtProvider jwtProvider){
         this.userService = userService;
         this.authService = authService;
+        this.jwtProvider = jwtProvider;
     }
+
+    @Value("${naver.client.id}")
+    private String naverClientId;
+
+    @Value("${naver.uri.redirect}")
+    private String redirectUri;
 
     @PostMapping("/signup")
     public ResponseEntity<?> registerUser(@RequestBody UserDto userDto){
@@ -89,6 +101,38 @@ public class UserController {
             return ResponseEntity.ok(responseDto);
         } catch (Exception e) {
 //            log.error("&&&&&&&&&&&&&&&&&&&&&&&&&&카카오 로그인 처리 중 에러 발생: {}", e.getMessage(), e);
+            // 에러 발생 시 문자열(String)을 반환하려고 시도 (예상)
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/naver/loginstart")
+    public RedirectView redirectToNaver(HttpSession session){
+        String state = jwtProvider.generateStateToken();
+        session.setAttribute("naver_oauth_state", state);
+        String naverAuthUrl = "https://nid.naver.com/oauth2.0/authorize" +
+                                "?response_type=code" +
+                                "&client_id=" + naverClientId +
+                                "&redirect_uri=" + redirectUri +
+                                "&state=" + state;
+        return new RedirectView(naverAuthUrl);
+        //http://localhost:8080/auth/naver/loginstart
+    }
+
+
+    @GetMapping("/naver")
+    public ResponseEntity<?> naverLogin (@RequestParam("code") String code, @RequestParam("state") String state, HttpSession session) {
+        String savedState = (String) session.getAttribute("naver_oauth_state");
+        if (savedState == null || !savedState.equals(state)){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("State token mismatch.");
+        }
+        session.removeAttribute("naver_oauth_state");
+        try {
+            AuthResponseDto responseDto = authService.naverLogin(code, state);
+            return ResponseEntity.ok(responseDto);
+        } catch (Exception e) {
+//            log.error("&&&&&&&&&&&&&&&&&&&&&&&&&&네이버 로그인 처리 중 에러 발생: {}", e.getMessage(), e);
             // 에러 발생 시 문자열(String)을 반환하려고 시도 (예상)
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(e.getMessage());
