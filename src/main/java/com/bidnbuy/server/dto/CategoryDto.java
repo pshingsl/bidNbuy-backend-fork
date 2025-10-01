@@ -11,9 +11,9 @@ import java.util.stream.Collectors;
 @Data
 @Builder
 public class CategoryDto {
-    private Long categoryId;
+    private Integer categoryId;
     private String categoryName;
-    private Long parentId;
+    private Integer parentId;
     private List<CategoryDto> children;
 
     public static CategoryDto from(CategoryEntity entity) {

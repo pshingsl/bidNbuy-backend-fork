@@ -27,7 +27,7 @@ public class CategoryService {
 
     // 중분류
     @Transactional(readOnly = true)
-    public List<CategoryDto> findChildrenByParentId(Long parentId){
+    public List<CategoryDto> findChildrenByParentId(Integer parentId){
 
         // 유효성 검사
         categoryRepository.findById(parentId)
