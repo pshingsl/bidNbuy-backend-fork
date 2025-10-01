@@ -32,10 +32,11 @@ public class AuctionProductsController {
         AuctionProductsEntity newProduct = auctionProductsService.create(dto,images,userId);
 
         // 2. 응답 DTO 생성 및 HTTP 201 Created 반환
-        Map<String, Object> response = new HashMap<>();
-        response.put("auctionId", newProduct.getAuctionId());
-        response.put("title", newProduct.getTitle());
-        response.put("message", "경매 상품과 이미지 정보가 성공적으로 등록되었습니다.");
+        AuctionCreationResponseDto response = AuctionCreationResponseDto.builder()
+                .auctionId(newProduct.getAuctionId())
+                .title(newProduct.getTitle())
+                .message("경매 상품이 성공적으로 등록되었습니다.")
+                .build();
 
         // DTO를 사용하지 않으므로, 이 방법이 가장 간결합니다.
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -44,9 +45,27 @@ public class AuctionProductsController {
     @GetMapping
     public ResponseEntity<?> getAuctionList(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
-            ){
-        PagingResponseDto<AuctionListResponseDto> list = auctionProductsService.getAuctionList(page, size);
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) Integer categoryId,
+            @RequestParam(required = false) String searchKeyword,
+            @RequestParam(defaultValue = "false") Boolean includeEnded,
+            @RequestParam(defaultValue = "latest") String sortBy,
+            // 💡 가격 범위 파라미터 추가
+            @RequestParam(required = false) Integer minPrice,
+            @RequestParam(required = false) Integer maxPrice
+    ) {
+
+        PagingResponseDto<AuctionListResponseDto> list = auctionProductsService.getAuctionList(
+                page,
+                size,
+                categoryId,
+                searchKeyword,
+                includeEnded,
+                sortBy,
+                // 💡 가격 파라미터 전달
+                minPrice,
+                maxPrice
+        );
         return ResponseEntity.ok(list);
     }
 
