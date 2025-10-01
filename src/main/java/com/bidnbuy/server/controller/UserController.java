@@ -5,8 +5,8 @@ import com.bidnbuy.server.entity.UserEntity;
 import com.bidnbuy.server.exception.CustomAuthenticationException;
 import com.bidnbuy.server.security.JwtProvider;
 import com.bidnbuy.server.service.AuthService;
+import com.bidnbuy.server.service.EmailService;
 import com.bidnbuy.server.service.UserService;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
 
@@ -26,12 +27,14 @@ public class UserController {
     private final UserService userService;
     private final AuthService authService;
     private final JwtProvider jwtProvider;
+    private final EmailService emailService;
 
     @Autowired
-    public UserController(UserService userService, AuthService authService, JwtProvider jwtProvider){
+    public UserController(UserService userService, AuthService authService, JwtProvider jwtProvider, EmailService emailService){
         this.userService = userService;
         this.authService = authService;
         this.jwtProvider = jwtProvider;
+        this.emailService = emailService;
     }
 
     @Value("${naver.client.id}")
@@ -137,6 +140,16 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(e.getMessage());
         }
+    }
+
+    @PostMapping("/password/request")
+    public ResponseEntity<?> requestPasswordReset(@RequestBody PasswordResetRequestDto request){
+        UserEntity user = userService.findByEmail(request.getEmail())
+                .orElseThrow(()->new UsernameNotFoundException("User not found"));
+
+        String tempPassword = userService.generateAndSaveTempPassword(user);
+        emailService.sendTempPasswordEmail(user.getEmail(), tempPassword);
+        return ResponseEntity.ok().build();
     }
 
 

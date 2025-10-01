@@ -37,7 +37,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         log.info("###################3shouldNotFilter path: {}", path);
 //        if(path.startsWith("/auth")){
         if(path.equals("/auth/signup") || path.equals("/auth/login") || path.equals("/favicon.ico") || path.startsWith("/auth/kakao")
-                || path.startsWith("/auth/naver")|| path.startsWith("/auth/email")){
+                || path.startsWith("/auth/naver")|| path.startsWith("/auth/email")|| path.startsWith("/auth/password")){
             return true;
         }//인증 필터링 건너뛰기
         return false;
@@ -45,6 +45,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException{
+        if (shouldNotFilter(request)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
         try{
             //요청 헤더에서 토큰 추출
             String token = parseBearerToken(request);

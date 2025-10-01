@@ -7,6 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.security.SecureRandom;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -94,6 +96,33 @@ public class UserService {
                     .build();
             return repository.save(newUser);
         });
+    }
+    //임시비번 생성, 저장
+    public String generateAndSaveTempPassword(UserEntity user){
+        String tempPassword = generateRandomPassword();
+        //해시로 엔티티저장
+        String hashedPassword = passwordEncoder.encode(tempPassword);
+        user.setTempPasswordHash(hashedPassword);
+
+        LocalDateTime expiryDate = LocalDateTime.now().plusMinutes(10);
+        user.setTempPasswordExpiryDate(expiryDate);
+
+        userRepository.save(user);
+
+        return tempPassword;
+
+    }
+
+    //임시비번 랜덤문자열 생성하기
+    private String generateRandomPassword(){
+        String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        SecureRandom random = new SecureRandom();
+        StringBuilder sb = new StringBuilder(8);
+
+        for(int i=0; i<8; i++){
+            sb.append(CHARACTERS.charAt(random.nextInt(CHARACTERS.length())));
+        }
+        return sb.toString();
     }
 
 }
