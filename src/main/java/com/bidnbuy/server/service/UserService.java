@@ -1,14 +1,18 @@
 package com.bidnbuy.server.service;
 
 import com.bidnbuy.server.entity.UserEntity;
+import com.bidnbuy.server.exception.CustomAuthenticationException;
 import com.bidnbuy.server.repository.UserRepository;
 import jakarta.transaction.Transactional;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -125,4 +129,40 @@ public class UserService {
         return sb.toString();
     }
 
+    //비밀번호 업데이트
+    public void updatePassword(UserEntity user, String newPw){
+        String hashedPw = passwordEncoder.encode(newPw);
+        user.setPassword(hashedPw);
+        userRepository.save(user);
+    }
+
+    //비번 재설정 확인, 업데이트
+    public void verifyAndSetNewPassword(String email, String tempPw, String newPw){
+        UserEntity user = findByEmail(email).orElseThrow(()->new UsernameNotFoundException("user not found" +email));
+        //임시 비밀번호 유효성, 만료 시간 검사하기
+        if(!isTempPasswordValid(user, tempPw)){
+            throw new RuntimeException(("timeout"));
+        }
+        clearTempPw(user);
+        updatePassword(user, newPw);
+    }
+
+    //비번 유효성 검증
+    private boolean isTempPasswordValid(UserEntity user, String tempPw){
+        if(user.getTempPasswordExpiryDate().isBefore(LocalDateTime.now())){
+            return false; // 만료시간 지남
+        }
+
+        if(passwordEncoder.matches(tempPw, user.getTempPasswordHash())){
+            return true;
+        }//임시비번이 맞게 입력?
+        return false;
+    }
+
+    //임시비번 초기화
+    private void clearTempPw(UserEntity user){
+        user.setTempPasswordHash(null);
+        user.setTempPasswordExpiryDate(null);
+        userRepository.save(user);
+    }
 }

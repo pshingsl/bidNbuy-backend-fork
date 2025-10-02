@@ -152,6 +152,24 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/password/confirm")
+    public ResponseEntity<?> confirmPasswordUpdate(@RequestBody PasswordConfirmRequestDto requestDto){
+        try{
+            userService.verifyAndSetNewPassword(
+                requestDto.getEmail(),
+                requestDto.getTempPassword(),
+                requestDto.getNewPassword()
+            );
+            return ResponseEntity.ok().body("비밀번호 재설정 성공!");
+        }catch (UsernameNotFoundException e){
+            return ResponseEntity.badRequest().body("해당 유저를 찾을 수 없습니다.");
+        }catch (RuntimeException e){
+            return ResponseEntity.badRequest().body("임시 비밀번호 시간이 만료되었거나, 일치하지 않습니다.");
+        }catch (Exception e){
+            return ResponseEntity.badRequest().body("알 수 없는 오류발생 다시 시도해주세요.");
+        }
+
+    }
 
     //토큰 테스트를 위한 테스트 메서드
     @GetMapping("/test")
