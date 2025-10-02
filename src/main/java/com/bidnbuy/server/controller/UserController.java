@@ -152,15 +152,15 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/password/confirm")
+    //임시비밀번호 검증
+    @PostMapping("/password/verify")
     public ResponseEntity<?> confirmPasswordUpdate(@RequestBody PasswordConfirmRequestDto requestDto){
         try{
-            userService.verifyAndSetNewPassword(
+            userService.verifyTempPassword(
                 requestDto.getEmail(),
-                requestDto.getTempPassword(),
-                requestDto.getNewPassword()
+                requestDto.getTempPassword()
             );
-            return ResponseEntity.ok().body("비밀번호 재설정 성공!");
+            return ResponseEntity.ok().body("임시 비밀번호가 확인되었습니다. 새 비번을 설정하세요.");
         }catch (UsernameNotFoundException e){
             return ResponseEntity.badRequest().body("해당 유저를 찾을 수 없습니다.");
         }catch (RuntimeException e){
@@ -168,7 +168,20 @@ public class UserController {
         }catch (Exception e){
             return ResponseEntity.badRequest().body("알 수 없는 오류발생 다시 시도해주세요.");
         }
+    }
 
+    //찐 비밀번호 재설정
+    @PostMapping("/password/reset")
+    public ResponseEntity<?> resetPassword(@RequestBody PasswordRequestDto requestDto){
+        try{
+            userService.finalResetPassword(
+                    requestDto.getEmail(),
+                    requestDto.getNewPassword()
+            );
+            return ResponseEntity.ok().body("새 비밀번호 성공적으로 설정 완료");
+        }catch (Exception e){
+            return ResponseEntity.badRequest().body("알 수 없는 오류발생 다시 시도해주세요.");
+        }
     }
 
     //토큰 테스트를 위한 테스트 메서드

@@ -6,6 +6,7 @@ import com.bidnbuy.server.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -129,25 +130,7 @@ public class UserService {
         return sb.toString();
     }
 
-    //비밀번호 업데이트
-    public void updatePassword(UserEntity user, String newPw){
-        String hashedPw = passwordEncoder.encode(newPw);
-        user.setPassword(hashedPw);
-        userRepository.save(user);
-    }
-
-    //비번 재설정 확인, 업데이트
-    public void verifyAndSetNewPassword(String email, String tempPw, String newPw){
-        UserEntity user = findByEmail(email).orElseThrow(()->new UsernameNotFoundException("user not found" +email));
-        //임시 비밀번호 유효성, 만료 시간 검사하기
-        if(!isTempPasswordValid(user, tempPw)){
-            throw new RuntimeException(("timeout"));
-        }
-        clearTempPw(user);
-        updatePassword(user, newPw);
-    }
-
-    //비번 유효성 검증
+    //비번 단순 유효성 검증
     private boolean isTempPasswordValid(UserEntity user, String tempPw){
         if(user.getTempPasswordExpiryDate().isBefore(LocalDateTime.now())){
             return false; // 만료시간 지남
@@ -158,6 +141,14 @@ public class UserService {
         }//임시비번이 맞게 입력?
         return false;
     }
+    //임시비번 유효성 검증 후 업데이트 권한
+    public void verifyTempPassword(String email, String tempPw){
+        UserEntity user =  findByEmail(email)
+                .orElseThrow(()->new UsernameNotFoundException("user not found:{}" +email));
+        if(!isTempPasswordValid(user, tempPw)){
+            throw  new RuntimeException("password not match");
+        }
+    }
 
     //임시비번 초기화
     private void clearTempPw(UserEntity user){
@@ -165,4 +156,20 @@ public class UserService {
         user.setTempPasswordExpiryDate(null);
         userRepository.save(user);
     }
+
+    //비밀번호 업데이트
+    public void updatePassword(UserEntity user, String newPw){
+        String hashedPw = passwordEncoder.encode(newPw);
+        user.setPassword(hashedPw);
+        userRepository.save(user);
+    }
+
+    //비밀번호 최종 재설정
+    public void finalResetPassword(String email, String newPw){
+        UserEntity user =  findByEmail(email)
+                .orElseThrow(()->new UsernameNotFoundException("user not found:{}" +email));
+        clearTempPw(user);
+        updatePassword(user, newPw);
+    }
+
 }
