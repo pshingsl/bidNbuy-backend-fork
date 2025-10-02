@@ -19,13 +19,12 @@ import java.util.Map;
 public class AuctionProductsController {
 
     @Autowired
-    private AuctionProductsService auctionProductsService; // 💡 Service 주입
+    private AuctionProductsService auctionProductsService;
 
 
     @PostMapping
     public ResponseEntity<?> createAuction(
             @AuthenticationPrincipal Long userId,
-            // 💡 JSON 본문 전체를 DTO로 받습니다.
             @RequestBody @Valid CreateAuctionDto dto
     ) {
         List<ImageDto> images = dto.getImages();

@@ -1,13 +1,11 @@
-// com.bidnbuy.server.service.AuctionProductsService.java
-
 package com.bidnbuy.server.service;
 
 import com.bidnbuy.server.dto.*;
 import com.bidnbuy.server.entity.*;
 import com.bidnbuy.server.enums.SellingStatus;
 import com.bidnbuy.server.repository.*;
+import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -20,52 +18,44 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor // 생성자 자동화 주입 역할
 public class AuctionProductsService {
-    @Autowired
-    private AuctionProductsRepository auctionProductsRepository;
 
-    @Autowired
-    private UserRepository userRepository;
+    // 불변성을 보장하기 위해 final로 사용
+    private final AuctionProductsRepository auctionProductsRepository;
+    private final UserRepository userRepository;
+    private final CategoryRepository categoryRepository;
+    private final ImageRepository imageRepository;
 
-    @Autowired
-    private CategoryRepository categoryRepository;
-
-    @Autowired
-    private ImageRepository imageRepository;
-
-    // create 메서드는 그대로 유지
+    // create -> 인증된 사용자만 등록 유저 검증 필요,
     @Transactional
     public AuctionProductsEntity create(CreateAuctionDto dto, List<ImageDto> images, Long userId) {
-        // ... (기존 create 로직 유지)
 
         // 유저 아이디 유효성 검증
         UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("등록자(User)를 찾을 수 없습니다. ID: " + userId));
+                .orElseThrow(() -> new RuntimeException("해당 유저 ID가 없습니다"));
 
         // 카테고리 조회 및 유효성 검증
         CategoryEntity category = categoryRepository.findById(dto.getCategoryId())
-                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 카테고리 ID입니다."));
+                .orElseThrow(() -> new RuntimeException("해당 카테고리 ID가 없습니다"));
 
         // AuctionProductsEntity 생성
         AuctionProductsEntity auctionProducts = AuctionProductsEntity.builder()
                 .title(dto.getTitle())
+                .user(user)         // 연관 관계 설정
+                .category(category) // 연관 관계 설정
                 .description(dto.getDescription())
                 .startPrice(dto.getStartPrice())
-                .currentPrice(dto.getStartPrice()) // 시작 가격으로 현재 가격 초기화
+                .currentPrice(dto.getStartPrice())
                 .minBidPrice(dto.getMinBidPrice())
-                .sellingStatus(SellingStatus.SALE)
+                .sellingStatus(SellingStatus.PROGRESS)
                 .startTime(dto.getStartTime())
                 .endTime(dto.getEndTime())
                 .build();
-
-        // 연관 관계 설정
-        auctionProducts.setUser(user);
-        auctionProducts.setCategory(category);
-
         // 저장
         auctionProductsRepository.save(auctionProducts);
 
-        // 이미지 저장 로직 (ImageService를 사용하는 것이 좋으나, 현재 코드 구조 유지)
+        // 이미지 저장
         if (images != null) {
             for (ImageDto imageDto : images) {
                 ImageEntity image = ImageEntity.builder()
@@ -80,7 +70,7 @@ public class AuctionProductsService {
         return auctionProducts;
     }
 
-    // 💡 목록 조회 메서드 확장 및 수정 (가격 범위 필터링 적용)
+    //  목록 조회 메서드
     @Transactional(readOnly = true)
     public PagingResponseDto<AuctionListResponseDto> getAuctionList(
             int page,
@@ -89,20 +79,19 @@ public class AuctionProductsService {
             String searchKeyword,
             Boolean includeEnded,
             String sortBy,
-            // 💡 [변경] 가격 범위 필터링 파라미터 추가
             Integer minPrice,
             Integer maxPrice
     ) {
 
-        // 1. 경매 상태 리스트 결정 (기존 로직 유지)
+        // 1. 경매 상태 리스트 결정
         List<SellingStatus> statuses;
         if (Boolean.TRUE.equals(includeEnded)) {
-            statuses = Arrays.asList(SellingStatus.SALE, SellingStatus.COMPLETED, SellingStatus.CANCEL);
+            statuses = Arrays.asList(SellingStatus.COMPLETED, SellingStatus.PROGRESS, SellingStatus.FINISH);
         } else {
-            statuses = List.of(SellingStatus.SALE);
+            statuses = List.of(SellingStatus.PROGRESS);
         }
 
-        // 2. 정렬 기준(Sort) 설정 (기존 로직 유지)
+        // 2. 정렬 기준(Sort)
         Sort sort = switch (sortBy != null ? sortBy.toLowerCase() : "latest") {
             case "price" -> Sort.by("currentPrice").descending();
             case "end_time" -> Sort.by("endTime").ascending();
@@ -111,20 +100,18 @@ public class AuctionProductsService {
         Pageable pageable = PageRequest.of(page, size, sort);
 
         // 3. Repository의 새로운 쿼리 메서드 호출
-        // (AuctionProductsRepository의 findFilteredAuctionsByStatus 메서드 시그니처가 변경되었습니다.)
         Page<AuctionProductsEntity> auctionPage = auctionProductsRepository.findFilteredAuctionsByStatus(
                 categoryId,
                 searchKeyword,
                 statuses,
-                // 💡 [변경] 가격 파라미터 전달
                 minPrice,
                 maxPrice,
                 pageable
         );
 
-        // 4. DTO 매핑 (기존 로직 유지)
+        // 4. DTO
         List<AuctionListResponseDto> dtoList = auctionPage.getContent().stream()
-                .map(product ->{
+                .map(product -> {
                     String mainImageUrl = imageRepository.findMainImageUrl(product.getAuctionId())
                             .orElse("default_product.png");
 
@@ -152,26 +139,25 @@ public class AuctionProductsService {
                 .build();
     }
 
-    // 💡 calculateSellingStatus 메서드 유지
+    //  경매 상태
     private String calculateSellingStatus(AuctionProductsEntity product) {
-        // AuctionProductsEntity의 SellingStatus Enum 값을 한글로 변환하여 반환
         return switch (product.getSellingStatus()) {
-            case SALE -> {
+            case PROGRESS -> {
                 LocalDateTime now = LocalDateTime.now();
-                if(now.isBefore(product.getStartTime())){
-                    yield "시작 예정"; // 시작 전
-                } else if(now.isAfter(product.getEndTime())) {
-                    yield "종료"; // DB 상태와 별개로 시간이 지난 경우 (COMPLETED 또는 CANCEL로 업데이트 되어야 하지만 안전 장치)
+                if (now.isBefore(product.getStartTime())) {
+                    yield "시작"; // 시작 전
+                } else if (now.isAfter(product.getEndTime())) {
+                    yield "종료";
                 } else {
                     yield "진행 중"; // 판매 중
                 }
             }
             case COMPLETED -> "거래 완료";
-            case CANCEL -> "취소/삭제";
+            case FINISH -> "종료";
         };
     }
 
-    // 💡 getAuctionFind 메서드 유지
+    //  경매물품 상세 조회
     @Transactional(readOnly = true)
     public AuctionFindDto getAuctionFind(Long auctionId, Long userId) {
         AuctionProductsEntity products = auctionProductsRepository.findByIdWithDetails(auctionId)
@@ -195,10 +181,8 @@ public class AuctionProductsService {
                 .currentPrice(products.getCurrentPrice())
                 .minBidPrice(products.getMinBidPrice())
                 .endTime(products.getEndTime())
-
                 .categoryId(products.getCategory().getCategoryId().longValue())
                 .categoryName(products.getCategory().getCategoryName())
-
                 .sellerId(products.getUser().getUserId())
                 .sellerNickname(products.getUser().getNickname())
                 .images(imageDtos)
