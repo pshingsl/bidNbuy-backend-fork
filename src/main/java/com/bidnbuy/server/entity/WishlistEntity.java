@@ -6,6 +6,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
+
 import java.time.LocalDateTime;
 
 // 찜목록
@@ -14,7 +18,9 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Data
 @Entity
-@Table(name="WishList")
+@Table(name="WishList", uniqueConstraints = {
+        @UniqueConstraint(name = "USER_AUCTION_WISH", columnNames = {"user_id", "auction_id"})
+})
 public class WishlistEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,14 +31,18 @@ public class WishlistEntity {
     @JoinColumn(name = "user_id", nullable = false) // FK 컬럼 이름 지정
     private UserEntity user;
 
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime created_at;
+    @ManyToOne(fetch = FetchType.LAZY) // 지연 로딩 설정
+    @JoinColumn(name = "auction_id", nullable = false) // FK 컬럼 이름 지정
+    private AuctionProductsEntity auction;
 
-    @Column(name = "update_at", nullable = false)
-    private LocalDateTime update_at;
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "update_at", nullable = true)
+    private LocalDateTime updateAt;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "is_deleted", nullable = false)
-    private IsDeletedStatus is_deleted;
+    @Column(name = "is_deleted", nullable = true)
+    private IsDeletedStatus isDeleted;
 
 }
