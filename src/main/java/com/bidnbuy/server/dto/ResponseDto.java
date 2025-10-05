@@ -14,5 +14,6 @@ import java.util.List;
 public class ResponseDto<T> {
     private String error;
     private String message;
+    private T item;
     private List<T> data;
 }

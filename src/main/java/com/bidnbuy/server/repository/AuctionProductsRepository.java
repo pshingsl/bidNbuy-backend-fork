@@ -2,9 +2,11 @@ package com.bidnbuy.server.repository;
 
 import com.bidnbuy.server.entity.AuctionProductsEntity;
 import com.bidnbuy.server.enums.SellingStatus;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -51,4 +53,9 @@ public interface AuctionProductsRepository extends JpaRepository<AuctionProducts
             @Param("maxPrice") Integer maxPrice,
             Pageable pageable
     );
+
+    // 입찰 시 동시성 제어를 위한 락(LOCK)을 거는 조회 메서드 레디스를 안사용해서 사용
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT a FROM AuctionProductsEntity a WHERE a.auctionId = :auctionId")
+    Optional<AuctionProductsEntity> findByIdWithLock(Long auctionId);
 }
