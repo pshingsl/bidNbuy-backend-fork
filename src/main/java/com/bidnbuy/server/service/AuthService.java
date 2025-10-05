@@ -42,7 +42,14 @@ public class AuthService {
         }
 
         //아메일 인증상태 검증
+        if(loginUser.getAuthStatus() != AuthStatus.Y){
+            throw new CustomAuthenticationException("이메일 인증이 필요합니다.");
+        }
 
+        if (loginUser == null) {
+            // 인증 실패 시 예외 처리
+            throw new CustomAuthenticationException("Login failed. Check your email and password.");
+        }
 
         // 2. 로그인 성공 시 access/refresh 토큰 생성
         String accessToken = jwtProvider.createAccessToken(loginUser.getUserId());
