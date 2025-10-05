@@ -23,11 +23,11 @@ public class ChatRoomEntity {
     @JoinColumn(name="buyer_id", nullable = false)
     private UserEntity buyerId; //fk
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="seller_id", nullable = false)
     private UserEntity sellerId; //fk
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="auction_id", nullable = false)
     private AuctionProductsEntity auctionId; //fk
 

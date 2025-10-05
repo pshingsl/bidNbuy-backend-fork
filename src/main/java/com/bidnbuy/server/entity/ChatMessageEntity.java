@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @Entity
-@Table(name="ChatRoom")
+@Table(name="ChatMessage")
 public class ChatMessageEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,9 +23,9 @@ public class ChatMessageEntity {
     @JoinColumn(name="chatroom_id", nullable = false)
     private ChatRoomEntity chatroomId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name="buyer_id", nullable = false)
-    private UserEntity buyerId;
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(name="buyer_id", nullable = false)
+//    private UserEntity buyerId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="sender_id", nullable = false)

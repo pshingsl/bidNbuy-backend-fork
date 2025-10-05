@@ -15,8 +15,10 @@ import java.time.LocalDateTime;
 public class ChatMessageDto {
     private long chatmessageId;
     private long chatroomId;
-    private long buyerId;
-    private long sellerId;
+    private long senderId;
+    private String message;
+//    private long buyerId;
+//    private long sellerId;
     private String imageUrl;
     private ChatMessageEntity.MessageType messageType;
     private LocalDateTime createdAt;
