@@ -21,7 +21,7 @@ import java.util.List;
 public class UserEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_id", nullable = true)
+    @Column(name = "user_id", nullable = false)
     private long userId;
 
     @ManyToOne
