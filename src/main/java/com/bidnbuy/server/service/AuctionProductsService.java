@@ -51,6 +51,7 @@ public class AuctionProductsService {
                 .sellingStatus(SellingStatus.PROGRESS)
                 .startTime(dto.getStartTime())
                 .endTime(dto.getEndTime())
+                .bidCount(0)
                 .build();
         // 저장
         auctionProductsRepository.save(auctionProducts);

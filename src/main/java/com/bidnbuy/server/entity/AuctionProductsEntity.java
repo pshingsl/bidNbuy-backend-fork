@@ -26,9 +26,6 @@ public class AuctionProductsEntity {
     @Column(name = "auction_id")
     private Long auctionId;
 
-//    @Column(name = "wishlist_id", nullable = false)
-//    private WishlistEntity wishlist;
-
     // 유저테이블의 외래키 연결
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -55,6 +52,10 @@ public class AuctionProductsEntity {
 
     @Column(name = "min_bid_price", nullable = true)
     private Integer minBidPrice;
+
+    @ColumnDefault("0")
+    @Column(name = "bid_count", nullable = false)
+    private Integer bidCount = 0;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "selling_status", nullable = false)
