@@ -15,6 +15,10 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 public class AuctionBidService {
@@ -79,4 +83,29 @@ public class AuctionBidService {
                 .bidTime(newBid.getBidTime())
                 .build();
     }
+
+    @Transactional(readOnly = true) // ⭐️ 조회 전용 트랜잭션으로 설정
+    public List<AuctionBidDto> getBidsByAuction(Long auctionId) {
+
+        // 1. 입찰기록 최고가 순으로 조화
+        List<AuctionBidsEntity> bids = auctionBidRepository.findByAuction_AuctionIdOrderByBidPriceDesc(auctionId);
+
+        // 2. 조회된 Entity 리스트를 DTO 리스트로 변환
+        if (bids.isEmpty()) {
+            // 입찰 기록이 없는 경우 빈 리스트 반환
+            return Collections.emptyList();
+        }
+
+        // 3. Stream을 사용하여 Entity를 DTO로 매핑
+        return bids.stream()
+                .map(bid -> AuctionBidDto.builder()
+                        .bidId(bid.getBidId())
+                        .userId(bid.getUser().getUserId()) // User Entity에서 ID 추출
+                        .auctionId(auctionId)
+                        .bidPrice(bid.getBidPrice())
+                        .bidTime(bid.getBidTime())
+                        .build())
+                .collect(Collectors.toList());
+    }
 }
+

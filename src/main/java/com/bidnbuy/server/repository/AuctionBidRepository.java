@@ -6,6 +6,7 @@ import com.bidnbuy.server.entity.UserEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -15,4 +16,6 @@ public interface AuctionBidRepository extends JpaRepository<AuctionBidsEntity, L
 
     // 특정 겸매 물품의 현재 최고가를 찾는 메서드
     Optional<AuctionBidsEntity> findTopByAuctionOrderByBidPriceDesc(AuctionProductsEntity auction);
+
+   List<AuctionBidsEntity> findByAuction_AuctionIdOrderByBidPriceDesc(Long  auctionId);
 }
