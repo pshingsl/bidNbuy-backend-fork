@@ -192,4 +192,10 @@ public class UserService {
         }
         userRepository.deleteById(userId);
     }
+
+    //userId로 찾기
+    public UserEntity findById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("user not found:{} " + userId));
+    }
 }

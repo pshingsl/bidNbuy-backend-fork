@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Getter
 @AllArgsConstructor
 @Builder
-public class ChatroomDto {
+public class ChatRoomDto {
     private long chatroomId;
     private long buyerId;
     private long sellerId;
