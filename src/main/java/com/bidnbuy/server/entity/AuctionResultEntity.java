@@ -2,17 +2,14 @@ package com.bidnbuy.server.entity;
 
 import com.bidnbuy.server.enums.ResultStatus;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Data
+@Getter
 @Entity
 @Table(name="Auction_Result")
 public class AuctionResultEntity {
@@ -40,9 +37,9 @@ public class AuctionResultEntity {
     @Column(name = "result_status", nullable = false)
     private ResultStatus resultStatus;
 
-    @Column(name = "final_price")
+    @Column(name = "final_price", nullable = false)
     private Integer finalPrice;
 
-    @Column(name = "closed_at")
+    @Column(name = "closed_at", nullable = false)
     private LocalDateTime closedAt;
 }
