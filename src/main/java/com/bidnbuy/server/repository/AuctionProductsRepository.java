@@ -64,4 +64,8 @@ public interface AuctionProductsRepository extends JpaRepository<AuctionProducts
             LocalDateTime now,
             SellingStatus sellingStatus
     );
+
+    //판매 중인 상품 조회
+    Optional<AuctionProductsEntity> findByAuctionIdAndSellingStatus(Long auctionId, SellingStatus sellingStatus);
+
 }

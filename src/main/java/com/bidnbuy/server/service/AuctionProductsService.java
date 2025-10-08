@@ -194,7 +194,7 @@ public class AuctionProductsService {
     //상품아이디로 상품엔티티조회하기
     @Transactional(readOnly = true)
     public AuctionProductsEntity findById(Long auctionId){
-        return auctionProductsRepository.findById(auctionId)
+        return auctionProductsRepository.findByAuctionIdAndSellingStatus(auctionId, SellingStatus.PROGRESS)
                 .orElseThrow(()->new RuntimeException("Auction product not found"));
     }
 

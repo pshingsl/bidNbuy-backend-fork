@@ -8,10 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RequestMapping("/chatrooms")
@@ -20,9 +17,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class ChatRoomController {
     private final ChatRoomService chatRoomService;
 
-    @PostMapping("/create")
-    public ResponseEntity<ChatRoomDto> createChatRoom(@RequestBody ChatRoomCreateRequestDto requestDto,
-                            @AuthenticationPrincipal Long userId){
+    @PostMapping("/{auctionId}")
+    public ResponseEntity<ChatRoomDto> createChatRoom(@PathVariable Long auctionId,
+                                                      @AuthenticationPrincipal Long userId,
+                                                      @RequestBody ChatRoomCreateRequestDto requestDto){
+        requestDto.setAuctionId(auctionId);
         requestDto.setBuyerId(userId);
         try{
             ChatRoomDto chatRoom = chatRoomService.findOrCreateChatRoom(requestDto);
