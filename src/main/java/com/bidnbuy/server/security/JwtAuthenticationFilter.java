@@ -37,7 +37,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         log.info("###################3shouldNotFilter path: {}", path);
 //        if(path.startsWith("/auth")){
         if(path.equals("/auth/signup") || path.equals("/auth/login") || path.equals("/favicon.ico") || path.startsWith("/auth/kakao")
-                || path.startsWith("/auth/naver")|| path.startsWith("/auth/email")|| path.startsWith("/auth/password")){
+                || path.startsWith("/auth/naver")|| path.startsWith("/auth/email")|| path.startsWith("/auth/password")
+                || path.startsWith("/chat_test")|| path.startsWith("/ws/bid")){
             return true;
         }//인증 필터링 건너뛰기
         return false;
