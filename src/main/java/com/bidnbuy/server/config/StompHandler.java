@@ -8,9 +8,13 @@ import org.springframework.messaging.MessageDeliveryException;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import java.security.Principal;
+import java.util.Collections;
 
 @Component
 @RequiredArgsConstructor
@@ -24,22 +28,33 @@ public class StompHandler implements ChannelInterceptor {
         //stomp 연결 명령
         if(StompCommand.CONNECT.equals(accessor.getCommand())){
             //토큰 추출
-            String authorizationHeader = accessor.getFirstNativeHeader(("Authorization"));
+            String authorizationHeader = accessor.getFirstNativeHeader(("authorization"));
 
             if(authorizationHeader !=null && authorizationHeader.startsWith("Bearer")){
-                String token = authorizationHeader.substring(7).trim();
+                String token = (String) accessor.getFirstNativeHeader("Auth-Token");
                 //토큰 유효성 검증 및 userID추출
                 if(jwtProvider.validateToken(token)){
-                    final Long userId = Long.valueOf(jwtProvider.getUserIdFromToken(token));
-                    //객체로 만들어 저장
-                    accessor.setUser(new Principal() {
-                        @Override
-                        public String getName() {
-                            return String.valueOf(userId);
+                    try{
+                        final Long userIdLong = jwtProvider.getUserIdFromToken(token);
+
+                        if (userIdLong != null) {
+                            final String userIdStr = String.valueOf(userIdLong);
+
+                        Authentication authentication = new UsernamePasswordAuthenticationToken(
+                                userIdStr,
+                                null,
+                                Collections.emptyList()
+//                                Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
+                        );
+                        accessor.setUser(authentication);
+                        } else {
+                            throw new MessageDeliveryException("토큰 검증 후 ID 추출 실패 (ID null).");
                         }
-                    });
+                    } catch (Exception e) {
+                        throw new MessageDeliveryException("JWT 처리 중 치명적인 오류 발생 (서버 로그 확인): " + e.getMessage());
+                    }
                 }else{
-                    throw new MessageDeliveryException("invalid jwt token");
+                throw new MessageDeliveryException("invalid jwt token");
                 }
             }else{
                 throw new MessageDeliveryException("토큰 없음, 인증되지 않은 연결이라 거부합니다~");
