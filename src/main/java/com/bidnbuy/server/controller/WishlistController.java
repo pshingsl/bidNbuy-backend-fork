@@ -1,15 +1,15 @@
 package com.bidnbuy.server.controller;
 
 import com.bidnbuy.server.dto.WishlistDto;
+import com.bidnbuy.server.dto.WishlistResponseDto;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import com.bidnbuy.server.service.WishlistService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/wishs")
@@ -31,6 +31,21 @@ public class WishlistController {
 
         // 결과
         WishlistDto response = wishlistService.like(userId, auctionId);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping
+    public ResponseEntity<?> likelist(
+            @AuthenticationPrincipal Long userId
+    ) {
+        // 로그인한 사용자가 아니면 401로 처리
+        if (userId == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        // 결과
+        List<WishlistResponseDto> response = wishlistService.getWishlist(userId);
 
         return ResponseEntity.ok(response);
     }

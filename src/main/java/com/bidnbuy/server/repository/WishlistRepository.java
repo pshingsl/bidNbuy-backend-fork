@@ -18,7 +18,7 @@ public interface WishlistRepository extends JpaRepository<WishlistEntity, Long> 
     Optional<WishlistEntity> findByUserAndAuction(UserEntity user, AuctionProductsEntity auction);
 
     // select count(auction) from wishlist w where w.auction
-    long countByAuction(AuctionProductsEntity auction);
+    Integer countByAuction(AuctionProductsEntity auction);
 
     // select from wishlist w where useer.w
     List<WishlistEntity> findByUser(UserEntity user);

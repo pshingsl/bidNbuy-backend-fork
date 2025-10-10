@@ -7,6 +7,6 @@ import lombok.Data;
 @Builder
 public class WishlistDto {
     private Long auctionId;
-    private Long likeCount;
+    private Integer likeCount;
     private boolean isLiked;
 }

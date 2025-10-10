@@ -1,5 +1,6 @@
 package com.bidnbuy.server.config;
 
+import com.bidnbuy.server.security.JwtTokenInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
@@ -14,7 +15,8 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
-    private final StompHandler stompHandler;
+//    private final StompHandler stompHandler;
+    private final JwtTokenInterceptor jwtTokenInterceptor;
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
@@ -37,7 +39,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     //jwt토큰 검증 인터셉터 추가
     @Override
-    public void configureClientInboundChannel(ChannelRegistration registration){
-        registration.interceptors(stompHandler);
+    public void configureClientInboundChannel(ChannelRegistration  registration){
+        registration.interceptors(jwtTokenInterceptor);
     }
 }

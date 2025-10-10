@@ -26,6 +26,7 @@ public class AuctionProductsService {
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final ImageRepository imageRepository;
+    private final WishlistRepository wishlistRepository;
 
     // create -> 인증된 사용자만 등록 유저 검증 필요,
     @Transactional
@@ -94,7 +95,8 @@ public class AuctionProductsService {
 
         // 2. 정렬 기준(Sort)
         Sort sort = switch (sortBy != null ? sortBy.toLowerCase() : "latest") {
-            case "price" -> Sort.by("currentPrice").descending();
+            case "price_desc" -> Sort.by("currentPrice").descending();
+            case "price_asc" -> Sort.by("currentPrice").ascending();
             case "end_time" -> Sort.by("endTime").ascending();
             default -> Sort.by("createdAt").descending();
         };
@@ -113,6 +115,9 @@ public class AuctionProductsService {
         // 4. DTO
         List<AuctionListResponseDto> dtoList = auctionPage.getContent().stream()
                 .map(product -> {
+                    // 찜 개수 조회
+                    Integer wishCount= wishlistRepository.countByAuction(product);
+                    // 메인 이미지
                     String mainImageUrl = imageRepository.findMainImageUrl(product.getAuctionId())
                             .orElse("default_product.png");
 
@@ -123,7 +128,9 @@ public class AuctionProductsService {
                             .endTime(product.getEndTime())
                             .sellingStatus(calculateSellingStatus(product))
                             .categoryName(product.getCategory().getCategoryName())
+                            .sellerNickname(product.getUser().getNickname())
                             .mainImageUrl(mainImageUrl)
+                            .wishCount(wishCount)
                             .build();
                 })
                 .toList();
@@ -141,7 +148,7 @@ public class AuctionProductsService {
     }
 
     //  경매 상태
-    private String calculateSellingStatus(AuctionProductsEntity product) {
+    public String calculateSellingStatus(AuctionProductsEntity product) {
         return switch (product.getSellingStatus()) {
             case PROGRESS -> {
                 LocalDateTime now = LocalDateTime.now();
@@ -153,6 +160,7 @@ public class AuctionProductsService {
                     yield "진행 중"; // 판매 중
                 }
             }
+            case SALE -> "시작";
             case COMPLETED -> "거래 완료";
             case FINISH -> "종료";
         };
@@ -174,28 +182,45 @@ public class AuctionProductsService {
 
         String sellingStatus = calculateSellingStatus(products);
 
+        // 찜 개수
+        Integer wishCount = wishlistRepository.countByAuction(products);
+
         return AuctionFindDto.builder()
                 .auctionId(products.getAuctionId())
                 .title(products.getTitle())
                 .description(products.getDescription())
-                .startPrice(products.getStartPrice())
                 .currentPrice(products.getCurrentPrice())
                 .minBidPrice(products.getMinBidPrice())
+                .bidCount(products.getBidCount())
+                .startTime(products.getStartTime())
+                .createdAt(products.getCreatedAt())
                 .endTime(products.getEndTime())
+                .updatedAt(products.getUpdatedAt())
                 .categoryId(products.getCategory().getCategoryId().longValue())
                 .categoryName(products.getCategory().getCategoryName())
                 .sellerId(products.getUser().getUserId())
                 .sellerNickname(products.getUser().getNickname())
+                //.sellerProfileImageUrl(products.getUser().getProfileImageUrl())
                 .images(imageDtos)
                 .sellingStatus(sellingStatus)
+                .wishCount(wishCount)
                 .build();
     }
 
     //상품아이디로 상품엔티티조회하기
+//    @Transactional(readOnly = true)
+//    public AuctionProductsEntity findById(Long auctionId) {
+//        return auctionProductsRepository.findByAuctionIdAndSellingStatus(auctionId, SellingStatus.PROGRESS)
+//                .orElseThrow(() -> new RuntimeException("Auction product not found"));
+//    }
+
     @Transactional(readOnly = true)
-    public AuctionProductsEntity findById(Long auctionId){
-        return auctionProductsRepository.findByAuctionIdAndSellingStatus(auctionId, SellingStatus.PROGRESS)
-                .orElseThrow(()->new RuntimeException("Auction product not found"));
+    public AuctionProductsEntity findById(Long auctionId) {
+
+        List<SellingStatus> allowedStatuses = List.of(SellingStatus.PROGRESS, SellingStatus.SALE);
+
+        return auctionProductsRepository.findByAuctionIdAndSellingStatusIn(auctionId, allowedStatuses)
+                .orElseThrow(() -> new RuntimeException("Auction product not found"));
     }
 
 }

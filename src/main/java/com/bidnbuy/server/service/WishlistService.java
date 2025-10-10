@@ -1,7 +1,9 @@
 package com.bidnbuy.server.service;
 
 import com.bidnbuy.server.dto.WishlistDto;
+import com.bidnbuy.server.dto.WishlistResponseDto;
 import com.bidnbuy.server.entity.AuctionProductsEntity;
+import com.bidnbuy.server.entity.ImageEntity;
 import com.bidnbuy.server.entity.UserEntity;
 import com.bidnbuy.server.entity.WishlistEntity;
 import com.bidnbuy.server.enums.IsDeletedStatus;
@@ -13,6 +15,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +24,7 @@ public class WishlistService {
     private final WishlistRepository wishlistRepository;
     private final UserRepository userRepository;
     private final AuctionProductsRepository auctionProductsRepository;
+    private final AuctionProductsService auctionProductsService;
 
     @Transactional
     public WishlistDto like(Long userId, Long auctionId) {
@@ -39,7 +44,7 @@ public class WishlistService {
                     wishlistRepository.delete(wishlist);
 
                     // 5. 삭제 후, 총 찜 개수와 상태를 반환
-                    long likeCount = wishlistRepository.countByAuction(auction);
+                   Integer likeCount = wishlistRepository.countByAuction(auction);
                     return WishlistDto.builder()
                             .isLiked(false) // 찜 취소됨
                             .likeCount(likeCount)
@@ -57,12 +62,47 @@ public class WishlistService {
                     wishlistRepository.save(newWishlist);
 
                     // 7. 등록 후, 총 찜 개수와 상태를 반환
-                    long likeCount = wishlistRepository.countByAuction(auction);
+                    Integer likeCount = wishlistRepository.countByAuction(auction);
                     return WishlistDto.builder()
                             .isLiked(true) // 찜 등록됨
                             .likeCount(likeCount)
                             .auctionId(auctionId)
                             .build();
                 });
+    }
+
+    // 조회
+    public List<WishlistResponseDto> getWishlist(Long userId) {
+
+        // 1. 유저 존재하는지 확인
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("해당 유저 ID가 없습니다"));
+
+        // 2. 해당 경매 물품이 있는지 확인
+        List<WishlistEntity> list =  wishlistRepository.findByUser(user);
+
+        return list.stream()
+                .map(wish -> {
+                    AuctionProductsEntity product = wish.getAuction();
+
+                    String mainImageUrl = product.getImages().stream()
+                            .filter(image -> "MAIN".equals(image.getImageType())) // ImageEntity에 getImageType()이 있다고 가정
+                            .findFirst()
+                            .map(ImageEntity::getImageUrl) // ImageEntity에 getImageUrl()이 있다고 가정
+                            .orElse(null);
+
+                    String sellingStatus = auctionProductsService.calculateSellingStatus(product);
+
+                    return WishlistResponseDto.builder()
+                            .auctionId(product.getAuctionId())
+                            .title(product.getTitle())
+                            .mainImageUrl(mainImageUrl) // 이미지 리스트 중 메인 이미지를 가져온다고 가정
+                            .currentPrice(product.getCurrentPrice())
+                            .endTime(product.getEndTime())
+                            .sellerNickname(product.getUser().getNickname()) // Fetch Join으로 User가 로드되어야 함
+                            .sellingStatus(sellingStatus)
+                            .build();
+                })
+                .collect(Collectors.toList());
     }
 }

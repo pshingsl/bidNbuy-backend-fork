@@ -206,7 +206,7 @@
 
         // 서버의 @MessageMapping("/chat/message")로 전송할 JSON Payload 생성
         const chatMessage = {
-            roomId: parseInt(roomId), 
+            chatroomId: parseInt(roomId),
             message: messageText,
             type: "CHAT" 
         };

@@ -38,10 +38,8 @@ public class StompHandler implements ChannelInterceptor {
                         final Long userIdLong = jwtProvider.getUserIdFromToken(token);
 
                         if (userIdLong != null) {
-                            final String userIdStr = String.valueOf(userIdLong);
-
-                        Authentication authentication = new UsernamePasswordAuthenticationToken(
-                                userIdStr,
+                            Authentication authentication = new UsernamePasswordAuthenticationToken(
+                                userIdLong,
                                 null,
                                 Collections.emptyList()
 //                                Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))

@@ -71,6 +71,9 @@ public class AuctionProductsEntity {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+
     @Column(name = "deleted_at", nullable = true) // nullable=true만 남김
     private LocalDateTime deletedAt;
 
