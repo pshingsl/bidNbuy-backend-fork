@@ -75,4 +75,21 @@ public class AuctionProductsController {
         return ResponseEntity.ok(find);
     }
 
+    @DeleteMapping("/{auctionId}")
+    public ResponseEntity<?> deleteAuction(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long auctionId
+    ) {
+        try {
+            auctionProductsService.deleteAuction(auctionId, userId);
+
+            return ResponseEntity.noContent().build();
+
+        } catch (IllegalStateException e) {
+            // 포스트맨에서 삭제 메세지 확인하려고함
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
 }

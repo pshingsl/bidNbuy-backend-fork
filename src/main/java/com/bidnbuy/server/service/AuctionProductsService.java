@@ -72,6 +72,20 @@ public class AuctionProductsService {
         return auctionProducts;
     }
 
+    @Transactional
+    public void deleteAuction(Long auctionId, Long userId) {
+        AuctionProductsEntity products = auctionProductsRepository.findByAuctionIdAndDeletedAtIsNull(auctionId)
+                .orElseThrow(() -> new IllegalArgumentException("Auction Not Found or already deleted with ID: " + auctionId));
+
+        Long productUserId = products.getUser().getUserId();
+
+        if (productUserId == null || productUserId.longValue() != userId.longValue()) {
+            throw new SecurityException("상품을 삭제할 권한이 없습니다. (판매자만 삭제 가능)");
+        }
+
+        products.setDeletedAt(LocalDateTime.now());
+    }
+
     //  목록 조회 메서드
     @Transactional(readOnly = true)
     public PagingResponseDto<AuctionListResponseDto> getAuctionList(
