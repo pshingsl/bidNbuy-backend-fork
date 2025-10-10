@@ -49,7 +49,6 @@ public class AuctionProductsController {
             @RequestParam(required = false) String searchKeyword,
             @RequestParam(defaultValue = "false") Boolean includeEnded,
             @RequestParam(defaultValue = "latest") String sortBy,
-            // 💡 가격 범위 파라미터 추가
             @RequestParam(required = false) Integer minPrice,
             @RequestParam(required = false) Integer maxPrice
     ) {
@@ -61,7 +60,6 @@ public class AuctionProductsController {
                 searchKeyword,
                 includeEnded,
                 sortBy,
-                // 💡 가격 파라미터 전달
                 minPrice,
                 maxPrice
         );

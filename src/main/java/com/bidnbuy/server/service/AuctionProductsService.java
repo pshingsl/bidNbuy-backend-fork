@@ -94,7 +94,8 @@ public class AuctionProductsService {
 
         // 2. 정렬 기준(Sort)
         Sort sort = switch (sortBy != null ? sortBy.toLowerCase() : "latest") {
-            case "price" -> Sort.by("currentPrice").descending();
+            case "price_desc" -> Sort.by("currentPrice").descending();
+            case "price_asc" -> Sort.by("currentPrice").ascending();
             case "end_time" -> Sort.by("endTime").ascending();
             default -> Sort.by("createdAt").descending();
         };
@@ -123,6 +124,7 @@ public class AuctionProductsService {
                             .endTime(product.getEndTime())
                             .sellingStatus(calculateSellingStatus(product))
                             .categoryName(product.getCategory().getCategoryName())
+                            .sellerNickname(product.getUser().getNickname())
                             .mainImageUrl(mainImageUrl)
                             .build();
                 })
@@ -153,6 +155,7 @@ public class AuctionProductsService {
                     yield "진행 중"; // 판매 중
                 }
             }
+            case SALE -> "시작";
             case COMPLETED -> "거래 완료";
             case FINISH -> "종료";
         };
@@ -178,24 +181,28 @@ public class AuctionProductsService {
                 .auctionId(products.getAuctionId())
                 .title(products.getTitle())
                 .description(products.getDescription())
-                .startPrice(products.getStartPrice())
                 .currentPrice(products.getCurrentPrice())
                 .minBidPrice(products.getMinBidPrice())
+                .bidCount(products.getBidCount())
+                .startTime(products.getStartTime())
+                .createdAt(products.getCreatedAt())
                 .endTime(products.getEndTime())
+                .updatedAt(products.getUpdatedAt())
                 .categoryId(products.getCategory().getCategoryId().longValue())
                 .categoryName(products.getCategory().getCategoryName())
                 .sellerId(products.getUser().getUserId())
                 .sellerNickname(products.getUser().getNickname())
                 .images(imageDtos)
                 .sellingStatus(sellingStatus)
+             //   .wishCount(products)
                 .build();
     }
 
     //상품아이디로 상품엔티티조회하기
     @Transactional(readOnly = true)
-    public AuctionProductsEntity findById(Long auctionId){
+    public AuctionProductsEntity findById(Long auctionId) {
         return auctionProductsRepository.findByAuctionIdAndSellingStatus(auctionId, SellingStatus.PROGRESS)
-                .orElseThrow(()->new RuntimeException("Auction product not found"));
+                .orElseThrow(() -> new RuntimeException("Auction product not found"));
     }
 
 }
