@@ -18,4 +18,6 @@ public interface ImageRepository extends JpaRepository<ImageEntity, Long> {
 
     // 상품 상세 조회
     List<ImageEntity> findAllByAuctionProduct_AuctionId(Long auctionId);
+
+    Optional<ImageEntity> findByUser_UserId(Long userId);
 }

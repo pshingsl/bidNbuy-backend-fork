@@ -199,6 +199,9 @@ public class AuctionProductsService {
         // 찜 개수
         Integer wishCount = wishlistRepository.countByAuction(products);
 
+        // TODO: 임시온도 설정
+        final Double DEFAULT_TEMP = 36.5;
+
         return AuctionFindDto.builder()
                 .auctionId(products.getAuctionId())
                 .title(products.getTitle())
@@ -213,10 +216,11 @@ public class AuctionProductsService {
                 .categoryName(products.getCategory().getCategoryName())
                 .sellerId(products.getUser().getUserId())
                 .sellerNickname(products.getUser().getNickname())
-                //.sellerProfileImageUrl(products.getUser().getProfileImageUrl())
+                .sellerProfileImageUrl(products.getUser().getProfileImageUrl())
                 .images(imageDtos)
                 .sellingStatus(sellingStatus)
                 .wishCount(wishCount)
+                .sellerTemperature(DEFAULT_TEMP)
                 .build();
     }
 
