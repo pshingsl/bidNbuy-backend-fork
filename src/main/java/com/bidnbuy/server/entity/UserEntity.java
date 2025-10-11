@@ -79,5 +79,7 @@ public class UserEntity {
     @Column(name = "temp_password_expiry_date")
     private LocalDateTime tempPasswordExpiryDate;
 
-
+    // 유저 프로필 이미지
+    @Column(name = "profile_image_url", length = 512, nullable = true)
+    private String profileImageUrl;
 }

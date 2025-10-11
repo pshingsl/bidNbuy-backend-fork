@@ -6,6 +6,7 @@ import com.bidnbuy.server.exception.CustomAuthenticationException;
 import com.bidnbuy.server.security.JwtProvider;
 import com.bidnbuy.server.service.AuthService;
 import com.bidnbuy.server.service.EmailService;
+import com.bidnbuy.server.service.ImageService;
 import com.bidnbuy.server.service.UserService;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
@@ -14,9 +15,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.view.RedirectView;
 
 @Slf4j
@@ -28,13 +31,15 @@ public class UserController {
     private final AuthService authService;
     private final JwtProvider jwtProvider;
     private final EmailService emailService;
+    private final ImageService imageService;
 
     @Autowired
-    public UserController(UserService userService, AuthService authService, JwtProvider jwtProvider, EmailService emailService){
+    public UserController(UserService userService, AuthService authService, JwtProvider jwtProvider, EmailService emailService, ImageService imageService){
         this.userService = userService;
         this.authService = authService;
         this.jwtProvider = jwtProvider;
         this.emailService = emailService;
+        this.imageService = imageService;
     }
 
     @Value("${naver.client.id}")
@@ -226,5 +231,18 @@ public class UserController {
                 .build();
 
         return ResponseEntity.ok().body(responseDto);
+    }
+
+    // 프로필 이미지 업로드
+    @PostMapping("/{userId}/profile/image")
+    public ResponseEntity<?> uploadProfileImage(@AuthenticationPrincipal Long userId,
+              @RequestPart("image") MultipartFile imageFile ) {
+        String newImageUrl = imageService.updateProfileImage(userId, imageFile);
+
+        UserImageDto response = UserImageDto.builder()
+                .imageUrl(newImageUrl)
+                .build();
+
+        return ResponseEntity.ok(response);
     }
 }
