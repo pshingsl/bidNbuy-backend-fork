@@ -31,20 +31,30 @@ public class EmailService {
         MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8"); // MimeMessageHelper 사용
 
         helper.setTo(to);
-        helper.setSubject("BidNBuy 회원가입 인증 코드: "); // 메일 제목
+        helper.setSubject("[BID-n-BUY] 회원가입 인증 코드: "); // 메일 제목
 
-        String msg = "";
-        msg += "<h1 style=\"font-size: 30px; padding-right: 30px; padding-left: 30px;\">이메일 주소 확인</h1>";
-        msg += "<p style=\"font-size: 17px; padding-right: 30px; padding-left: 30px;\">아래 인증 코드를 회원가입 화면에서 입력해주세요.</p>";
-        msg += "<div style=\"padding-right: 30px; padding-left: 30px; margin: 32px 0 40px;\"><table style=\"border-collapse: collapse; border: 0; background-color: #ecdef5; height: 70px; table-layout: fixed; word-wrap: break-word; border-radius: 6px;\"><tbody><tr><td style=\"text-align: center; vertical-align: middle; font-size: 30px;\">";
-        msg += ePw; // 인증 코드 삽입
-        msg += "</td></tr></tbody></table></div>";
+        String msg = String.format(
+                "<div style=\" width: 540px; height: 600px; border-top: 4px solid #8322BF; margin: 100px auto; padding: 30px 0; box-sizing: border-box;\">" +
+                        "<h1 style=\"margin: 0; padding: 0 5px; font-size: 28px; font-weight: 400;\">" +
+                        "<span style=\"font-size: 30px; margin: 0 0 10px 3px; font-weight: 800;\">Bid<span style=\"color: #8322BF;\">&</span>Buy</span><br />" +
+                        "<span style=\"color: #8322BF;\">이메일 인증번호</span> 안내입니다." +
+                        "</h1>" +
+                        "<p style=\"font-size: 16px; line-height: 26px; margin-top: 50px; padding: 0 5px;\">" +
+                        "안녕하세요.<br />" +
+                        "회원가입을 위한 이메일 인증 코드가 발급되었습니다.<br />" +
+                        "</p>" +
+                        "<p style=\"font-size: 16px; margin: 40px 5px 20px; line-height: 28px;\">" +
+                        "인증 번호: <br />" +
+                        "<span style=\"font-size: 24px;\">%s</span>" + // 인증 번호 (ePw) 삽입 위치
+                        "</p>" +
+                        "</div>", ePw // String.format을 사용하여 ePw(인증 번호) 삽입
+        );
 
         // HTML 내용 설정 (true 설정으로 HTML 활성화)
         helper.setText(msg, true);
 
         // 보내는 사람 설정
-        helper.setFrom(new InternetAddress(fromEmail, "prac_Admin"));
+        helper.setFrom(new InternetAddress(fromEmail, "BID-n-BUY 관리자"));
 
         return message;
     }
@@ -109,9 +119,20 @@ public class EmailService {
 
             // HTML 내용으로 변경
             String htmlContent = String.format(
-                    "<p style=\"font-size: 17px;\">요청하신 임시 비밀번호는 아래와 같습니다.</p>" +
-                            "<h2 style=\"color: #d9534f; font-weight: bold;\">**%s**</h2>" + // 임시 비밀번호 강조
-                            "<p style=\"font-size: 14px; color: gray;\">임시 비밀번호는 10분간 유효합니다.</p>", tempPassword
+                    "<div style=\" width: 540px; height: 600px; border-top: 4px solid #8322BF; margin: 100px auto; padding: 30px 0; box-sizing: border-box;\">" +
+                            "<h1 style=\"margin: 0; padding: 0 5px; font-size: 28px; font-weight: 400;\">" +
+                            "<span style=\"font-size: 30px; margin: 0 0 10px 3px; font-weight: 800;\">Bid<span style=\"color: #8322BF;\">&</span>Buy</span><br />" +
+                            "<span style=\"color: #8322BF;\">임시 비밀번호</span> 안내입니다." +
+                            "</h1>" +
+                            "<p style=\"font-size: 16px; line-height: 26px; margin-top: 50px; padding: 0 5px;\">" +
+                            "안녕하세요.<br />" +
+                            "요청하신 임시 비밀번호가 생성되었습니다.<br />" +
+                            "</p>" +
+                            "<p style=\"font-size: 16px; margin: 40px 5px 20px; line-height: 28px;\">" +
+                            "임시 비밀번호: <br />" +
+                            "<span style=\"font-size: 24px;\">%s</span>" + // 임시 비밀번호(tempPassword) 삽입 위치
+                            "</p>" +
+                            "</div>", tempPassword
             );
 
             helper.setText(htmlContent, true); // true로 HTML 활성화
