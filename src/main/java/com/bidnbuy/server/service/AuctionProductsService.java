@@ -209,7 +209,6 @@ public class AuctionProductsService {
                 .startTime(products.getStartTime())
                 .createdAt(products.getCreatedAt())
                 .endTime(products.getEndTime())
-                .updatedAt(products.getUpdatedAt())
                 .categoryId(products.getCategory().getCategoryId().longValue())
                 .categoryName(products.getCategory().getCategoryName())
                 .sellerId(products.getUser().getUserId())
