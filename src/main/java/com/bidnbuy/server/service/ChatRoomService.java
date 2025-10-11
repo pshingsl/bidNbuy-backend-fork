@@ -45,10 +45,10 @@ public class ChatRoomService {
             chatRoom = chatRoomRepository.save(chatRoom);
         }
         return ChatRoomDto.builder()
-                .chatroomId(chatRoom.getChatroomId())
-                .buyerId(chatRoom.getBuyerId().getUserId())
-                .sellerId(chatRoom.getSellerId().getUserId())
-                .auctionId(chatRoom.getAuctionId().getAuctionId())
+                .chatroomId(String.valueOf(chatRoom.getChatroomId()))
+                .buyerId(String.valueOf(chatRoom.getBuyerId().getUserId()))
+                .sellerId(String.valueOf(chatRoom.getSellerId().getUserId()))
+                .auctionId(String.valueOf(chatRoom.getAuctionId().getAuctionId()))
                 .createdAt(chatRoom.getCreatedAt())
                 .build();
     }

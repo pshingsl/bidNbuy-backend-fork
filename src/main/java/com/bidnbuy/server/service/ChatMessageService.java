@@ -46,9 +46,9 @@ public class ChatMessageService {
 
 
         return ChatMessageDto.builder()
-                .chatmessageId(savedEntity.getChatmessageId())
-                .chatroomId(savedEntity.getChatroomId().getChatroomId())
-                .senderId(savedEntity.getSenderId().getUserId())
+                .chatmessageId(String.valueOf(savedEntity.getChatmessageId()))
+                .chatroomId(String.valueOf(savedEntity.getChatroomId().getChatroomId()))
+                .senderId(String.valueOf(savedEntity.getSenderId().getUserId()))
                 .message(savedEntity.getMessage())
                 .imageUrl(savedEntity.getImageUrl())
                 .messageType(savedEntity.getMessageType())
