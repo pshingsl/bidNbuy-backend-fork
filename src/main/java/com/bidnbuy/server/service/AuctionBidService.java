@@ -61,7 +61,7 @@ public class AuctionBidService {
 
         // Lock걸리 경매 물품의 최고가와 입찰 횟수 갱신
         auctionProduct.setCurrentPrice(bidPrice);
-        auctionProduct.setBidCount(auctionProduct.getMinBidPrice() + 1);
+        auctionProduct.setBidCount(auctionProduct.getBidCount() + 1);
 
         auctionProductsRepository.save(auctionProduct);
 
