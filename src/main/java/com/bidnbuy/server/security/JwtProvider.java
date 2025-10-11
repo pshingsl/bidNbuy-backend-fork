@@ -77,7 +77,7 @@ public class JwtProvider {
     //refresh token 생성
     public String createRefreshToken(long userId){
         Date now = new Date();
-        long expirationTimeMs = now.getTime() + EXPIRATION_TIME;
+        long expirationTimeMs = now.getTime() + REFRESH_EXPIRATION_TIME;
         Date expiration = new Date(expirationTimeMs);
 
         try{
