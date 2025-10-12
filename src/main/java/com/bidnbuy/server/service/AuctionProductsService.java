@@ -9,11 +9,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort; // 💡 Sort import 유지
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Arrays; // 💡 Arrays import 유지
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,6 +27,7 @@ public class AuctionProductsService {
     private final CategoryRepository categoryRepository;
     private final ImageRepository imageRepository;
     private final WishlistRepository wishlistRepository;
+    private final AuctionHistoryService auctionHistoryService;
 
     // create -> 인증된 사용자만 등록 유저 검증 필요,
     @Transactional
@@ -55,7 +56,11 @@ public class AuctionProductsService {
                 .bidCount(0)
                 .build();
         // 저장
-        auctionProductsRepository.save(auctionProducts);
+        AuctionProductsEntity savedProduct = auctionProductsRepository.save(auctionProducts);
+        auctionHistoryService.recordStatusChange(
+                savedProduct.getAuctionId(),
+                com.bidnbuy.server.enums.AuctionStatus.PROGRESS // AuctionStatus Enum 사용
+        );
 
         // 이미지 저장
         if (images != null) {
@@ -130,7 +135,7 @@ public class AuctionProductsService {
         List<AuctionListResponseDto> dtoList = auctionPage.getContent().stream()
                 .map(product -> {
                     // 찜 개수 조회
-                    Integer wishCount= wishlistRepository.countByAuction(product);
+                    Integer wishCount = wishlistRepository.countByAuction(product);
                     // 메인 이미지
                     String mainImageUrl = imageRepository.findMainImageUrl(product.getAuctionId())
                             .orElse("default_product.png");
@@ -220,16 +225,9 @@ public class AuctionProductsService {
                 .images(imageDtos)
                 .sellingStatus(sellingStatus)
                 .wishCount(wishCount)
-                .sellerTemperature(DEFAULT_TEMP)
+                .sellerTemperature(DEFAULT_TEMP) //
                 .build();
     }
-
-    //상품아이디로 상품엔티티조회하기
-//    @Transactional(readOnly = true)
-//    public AuctionProductsEntity findById(Long auctionId) {
-//        return auctionProductsRepository.findByAuctionIdAndSellingStatus(auctionId, SellingStatus.PROGRESS)
-//                .orElseThrow(() -> new RuntimeException("Auction product not found"));
-//    }
 
     @Transactional(readOnly = true)
     public AuctionProductsEntity findById(Long auctionId) {
