@@ -11,6 +11,7 @@ import com.bidnbuy.server.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.aop.target.LazyInitTargetSource;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -61,9 +62,19 @@ public class ChatMessageService {
     }
 
     @Transactional(readOnly = true)
-    public List<ChatMessageDto> getMessageByChatRoomId(Long chatroomId){
+    public List<ChatMessageDto> getMessageByChatRoomId(Long chatroomId, Long currentUserId){
         ChatRoomEntity chatRoom = chatRoomRepository.findById(chatroomId)
                 .orElseThrow(()-> new EntityNotFoundException("채팅방을 찾을 수 없습니다."));
+
+        Long buyerId = chatRoom.getBuyerId().getUserId();
+        Long sellerId = chatRoom.getSellerId().getUserId();
+
+        if(currentUserId.equals(buyerId)||currentUserId.equals(sellerId)){
+            //메세지 조회
+        }else{
+            throw new AccessDeniedException("접근 권한이 없습니다.");
+        }
+
         List<ChatMessageEntity> messages = chatMessageRepository.findByChatroomIdOrderByCreateAt(chatRoom);
 
         return messages.stream()

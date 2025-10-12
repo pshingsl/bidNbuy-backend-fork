@@ -72,11 +72,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     );
                     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 //                    authentication.setAuthenticated(true);
-//                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
 
-                    SecurityContext securityContext =  SecurityContextHolder.createEmptyContext();
-                    securityContext.setAuthentication(authentication);
-                    SecurityContextHolder.setContext(securityContext);
+//                    SecurityContext securityContext =  SecurityContextHolder.createEmptyContext();
+//                    securityContext.setAuthentication(authentication);
+//                    SecurityContextHolder.setContext(securityContext);
                 }
             }
         }catch (Exception e){
