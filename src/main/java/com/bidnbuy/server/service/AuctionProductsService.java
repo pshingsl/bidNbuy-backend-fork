@@ -2,6 +2,7 @@ package com.bidnbuy.server.service;
 
 import com.bidnbuy.server.dto.*;
 import com.bidnbuy.server.entity.*;
+import com.bidnbuy.server.enums.AuctionStatus;
 import com.bidnbuy.server.enums.SellingStatus;
 import com.bidnbuy.server.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.awt.*;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -31,50 +33,45 @@ public class AuctionProductsService {
 
     // create -> 인증된 사용자만 등록 유저 검증 필요,
     @Transactional
-    public AuctionProductsEntity create(CreateAuctionDto dto, List<ImageDto> images, Long userId) {
-
-        // 유저 아이디 유효성 검증
+    public AuctionProductsEntity create(Long userId, CreateAuctionDto dto) {
+        // 상품 등록은 로그인한 사용자가 한다.
         UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("해당 유저 ID가 없습니다"));
+                .orElseThrow(() -> new IllegalArgumentException("해당 사용자 존재하지 않습니다!"));
 
-        // 카테고리 조회 및 유효성 검증
-        CategoryEntity category = categoryRepository.findById(dto.getCategoryId())
-                .orElseThrow(() -> new RuntimeException("해당 카테고리 ID가 없습니다"));
+        // 카테고리 불러오기 -> 다시 짜지만 왜 이게 필요할까? 내가 그냥 외우는 식으로 해서 그런가>
+        CategoryEntity category = categoryRepository.findById(dto.getCategoryId()) // 아이디에 이유는 데이터베이스에 아이디로 넣어서이다
+                .orElseThrow(() -> new IllegalArgumentException("해당 카테고리가 존재하지 않습니다!"));
 
-        // AuctionProductsEntity 생성
-        AuctionProductsEntity auctionProducts = AuctionProductsEntity.builder()
-                .title(dto.getTitle())
-                .user(user)         // 연관 관계 설정
-                .category(category) // 연관 관계 설정
-                .description(dto.getDescription())
-                .startPrice(dto.getStartPrice())
-                .currentPrice(dto.getStartPrice())
-                .minBidPrice(dto.getMinBidPrice())
-                .sellingStatus(SellingStatus.PROGRESS)
-                .startTime(dto.getStartTime())
-                .endTime(dto.getEndTime())
-                .bidCount(0)
-                .build();
-        // 저장
-        AuctionProductsEntity savedProduct = auctionProductsRepository.save(auctionProducts);
-        auctionHistoryService.recordStatusChange(
-                savedProduct.getAuctionId(),
-                com.bidnbuy.server.enums.AuctionStatus.PROGRESS // AuctionStatus Enum 사용
-        );
+        // 물품 등록 생성 -> 엔티티(테이블)에서 필요한 데이터를 꺼낸다.
+        AuctionProductsEntity auctionProducts =  CreateAuctionDto.toEntity(dto);
+        auctionProducts.setUser(user);
+        auctionProducts.setCategory(category);
+        auctionProducts.setCurrentPrice(dto.getStartPrice());
+        auctionProducts.setSellingStatus(SellingStatus.PROGRESS);
+        auctionProducts.setBidCount(0);
 
-        // 이미지 저장
-        if (images != null) {
-            for (ImageDto imageDto : images) {
-                ImageEntity image = ImageEntity.builder()
-                        .auctionProduct(auctionProducts)
-                        .imageUrl(imageDto.getImageUrl())
-                        .imageType(imageDto.getImageType())
-                        .build();
-                imageRepository.save(image);
-            }
+        // 꺼낸 데이터 저장
+        AuctionProductsEntity savedProducts = auctionProductsRepository.save(auctionProducts);
+
+        if(dto.getImages()!=null) {
+            List<ImageEntity> imageEntities = dto.getImages().stream()
+                    .map(ImageDto -> ImageDto.toEntity(savedProducts))
+                    .collect(Collectors.toList());
+
+            imageRepository.saveAll(imageEntities); // 이미지가 여러개 오려고 하기 위해서
+
+            savedProducts.setImages(imageEntities);
+
+            imageRepository.saveAll(imageEntities);
+            savedProducts.setImages(imageEntities);
+
+            auctionHistoryService.recordStatusChange(
+                    savedProducts.getAuctionId(),
+                    AuctionStatus.PROGRESS
+            );
         }
+        return  savedProducts;
 
-        return auctionProducts;
     }
 
     @Transactional

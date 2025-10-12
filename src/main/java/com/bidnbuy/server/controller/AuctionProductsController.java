@@ -27,8 +27,8 @@ public class AuctionProductsController {
             @AuthenticationPrincipal Long userId,
             @RequestBody @Valid CreateAuctionDto dto
     ) {
-        List<ImageDto> images = dto.getImages();
-        AuctionProductsEntity newProduct = auctionProductsService.create(dto,images,userId);
+
+        AuctionProductsEntity newProduct = auctionProductsService.create(userId, dto);
 
         // 2. 응답 DTO 생성 및 HTTP 201 Created 반환
         AuctionCreationResponseDto response = AuctionCreationResponseDto.builder()
@@ -70,7 +70,7 @@ public class AuctionProductsController {
     public ResponseEntity<?> getAuctionFind(
             @AuthenticationPrincipal Long userId,
             @PathVariable Long auctionId
-    ){
+    ) {
         AuctionFindDto find = auctionProductsService.getAuctionFind(auctionId, userId);
         return ResponseEntity.ok(find);
     }
