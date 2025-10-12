@@ -38,7 +38,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         log.info("###################3shouldNotFilter path: {}", path);
 //        if(path.startsWith("/auth")){
         if(path.equals("/auth/signup") || path.equals("/auth/login") || path.equals("/favicon.ico") || path.startsWith("/auth/kakao")
-                || path.startsWith("/auth/naver")|| path.startsWith("/auth/email")|| path.startsWith("/auth/password")
+                || path.startsWith("/auth/naver")|| path.equals("/auth/reissue")|| path.startsWith("/auth/email")|| path.startsWith("/auth/password")
                 || path.startsWith("/chat_test")|| path.startsWith("/ws/bid")){
             return true;
         }//인증 필터링 건너뛰기
@@ -72,11 +72,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     );
                     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 //                    authentication.setAuthenticated(true);
-//                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
 
-                    SecurityContext securityContext =  SecurityContextHolder.createEmptyContext();
-                    securityContext.setAuthentication(authentication);
-                    SecurityContextHolder.setContext(securityContext);
+//                    SecurityContext securityContext =  SecurityContextHolder.createEmptyContext();
+//                    securityContext.setAuthentication(authentication);
+//                    SecurityContextHolder.setContext(securityContext);
                 }
             }
         }catch (Exception e){

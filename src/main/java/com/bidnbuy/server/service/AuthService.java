@@ -208,7 +208,7 @@ public class AuthService {
         String subject = "[Bid-n-BUY] 이메일 인증 코드";
         String content = "인증 코드는 [" + verificationCode + "]입니다. 5분 안에 입력해주세요.";
 
-        emailService.sendVerificationEmail(email, subject, content);
+        emailService.sendVerificationEmail(email, verificationCode);
     }
 
     //이메일 인증 코드 최종 검증 auth_status업데이트

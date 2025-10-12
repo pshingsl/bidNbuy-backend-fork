@@ -10,10 +10,14 @@ import com.bidnbuy.server.repository.ChatRoomRepository;
 import com.bidnbuy.server.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.aop.target.LazyInitTargetSource;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -46,9 +50,9 @@ public class ChatMessageService {
 
 
         return ChatMessageDto.builder()
-                .chatmessageId(savedEntity.getChatmessageId())
-                .chatroomId(savedEntity.getChatroomId().getChatroomId())
-                .senderId(savedEntity.getSenderId().getUserId())
+                .chatmessageId(String.valueOf(savedEntity.getChatmessageId()))
+                .chatroomId(String.valueOf(savedEntity.getChatroomId().getChatroomId()))
+                .senderId(String.valueOf(savedEntity.getSenderId().getUserId()))
                 .message(savedEntity.getMessage())
                 .imageUrl(savedEntity.getImageUrl())
                 .messageType(savedEntity.getMessageType())
@@ -56,4 +60,39 @@ public class ChatMessageService {
                 .isRead(savedEntity.isRead())
                 .build();
     }
+
+    @Transactional(readOnly = true)
+    public List<ChatMessageDto> getMessageByChatRoomId(Long chatroomId, Long currentUserId){
+        ChatRoomEntity chatRoom = chatRoomRepository.findById(chatroomId)
+                .orElseThrow(()-> new EntityNotFoundException("채팅방을 찾을 수 없습니다."));
+
+        Long buyerId = chatRoom.getBuyerId().getUserId();
+        Long sellerId = chatRoom.getSellerId().getUserId();
+
+        if(currentUserId.equals(buyerId)||currentUserId.equals(sellerId)){
+            //메세지 조회
+        }else{
+            throw new AccessDeniedException("접근 권한이 없습니다.");
+        }
+
+        List<ChatMessageEntity> messages = chatMessageRepository.findByChatroomIdOrderByCreateAt(chatRoom);
+
+        return messages.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    private ChatMessageDto convertToDto(ChatMessageEntity entity){
+        return ChatMessageDto.builder()
+                .chatmessageId(String.valueOf(entity.getChatmessageId()))
+                .chatroomId(String.valueOf(entity.getChatroomId().getChatroomId()))
+                .senderId(String.valueOf(entity.getSenderId().getUserId()))
+                .message(entity.getMessage())
+                .imageUrl(entity.getImageUrl())
+                .messageType(entity.getMessageType())
+                .createdAt(entity.getCreateAt())
+                .isRead(entity.isRead())
+                .build();
+    }
+
 }

@@ -27,8 +27,8 @@ public class AuctionProductsController {
             @AuthenticationPrincipal Long userId,
             @RequestBody @Valid CreateAuctionDto dto
     ) {
-        List<ImageDto> images = dto.getImages();
-        AuctionProductsEntity newProduct = auctionProductsService.create(dto,images,userId);
+
+        AuctionProductsEntity newProduct = auctionProductsService.create(userId, dto);
 
         // 2. 응답 DTO 생성 및 HTTP 201 Created 반환
         AuctionCreationResponseDto response = AuctionCreationResponseDto.builder()
@@ -70,9 +70,26 @@ public class AuctionProductsController {
     public ResponseEntity<?> getAuctionFind(
             @AuthenticationPrincipal Long userId,
             @PathVariable Long auctionId
-    ){
+    ) {
         AuctionFindDto find = auctionProductsService.getAuctionFind(auctionId, userId);
         return ResponseEntity.ok(find);
     }
 
+    @DeleteMapping("/{auctionId}")
+    public ResponseEntity<?> deleteAuction(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long auctionId
+    ) {
+        try {
+            auctionProductsService.deleteAuction(auctionId, userId);
+
+            return ResponseEntity.noContent().build();
+
+        } catch (IllegalStateException e) {
+            // 포스트맨에서 삭제 메세지 확인하려고함
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
 }

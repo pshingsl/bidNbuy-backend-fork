@@ -2,6 +2,7 @@ package com.bidnbuy.server.service;
 
 import com.bidnbuy.server.dto.*;
 import com.bidnbuy.server.entity.*;
+import com.bidnbuy.server.enums.AuctionStatus;
 import com.bidnbuy.server.enums.SellingStatus;
 import com.bidnbuy.server.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -9,11 +10,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort; // 💡 Sort import 유지
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.awt.*;
 import java.time.LocalDateTime;
-import java.util.Arrays; // 💡 Arrays import 유지
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,49 +29,63 @@ public class AuctionProductsService {
     private final CategoryRepository categoryRepository;
     private final ImageRepository imageRepository;
     private final WishlistRepository wishlistRepository;
+    private final AuctionHistoryService auctionHistoryService;
 
     // create -> 인증된 사용자만 등록 유저 검증 필요,
     @Transactional
-    public AuctionProductsEntity create(CreateAuctionDto dto, List<ImageDto> images, Long userId) {
-
-        // 유저 아이디 유효성 검증
+    public AuctionProductsEntity create(Long userId, CreateAuctionDto dto) {
+        // 상품 등록은 로그인한 사용자가 한다.
         UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("해당 유저 ID가 없습니다"));
+                .orElseThrow(() -> new IllegalArgumentException("해당 사용자 존재하지 않습니다!"));
 
-        // 카테고리 조회 및 유효성 검증
-        CategoryEntity category = categoryRepository.findById(dto.getCategoryId())
-                .orElseThrow(() -> new RuntimeException("해당 카테고리 ID가 없습니다"));
+        // 카테고리 불러오기 -> 다시 짜지만 왜 이게 필요할까? 내가 그냥 외우는 식으로 해서 그런가>
+        CategoryEntity category = categoryRepository.findById(dto.getCategoryId()) // 아이디에 이유는 데이터베이스에 아이디로 넣어서이다
+                .orElseThrow(() -> new IllegalArgumentException("해당 카테고리가 존재하지 않습니다!"));
 
-        // AuctionProductsEntity 생성
-        AuctionProductsEntity auctionProducts = AuctionProductsEntity.builder()
-                .title(dto.getTitle())
-                .user(user)         // 연관 관계 설정
-                .category(category) // 연관 관계 설정
-                .description(dto.getDescription())
-                .startPrice(dto.getStartPrice())
-                .currentPrice(dto.getStartPrice())
-                .minBidPrice(dto.getMinBidPrice())
-                .sellingStatus(SellingStatus.PROGRESS)
-                .startTime(dto.getStartTime())
-                .endTime(dto.getEndTime())
-                .bidCount(0)
-                .build();
-        // 저장
-        auctionProductsRepository.save(auctionProducts);
+        // 물품 등록 생성 -> 엔티티(테이블)에서 필요한 데이터를 꺼낸다.
+        AuctionProductsEntity auctionProducts =  CreateAuctionDto.toEntity(dto);
+        auctionProducts.setUser(user);
+        auctionProducts.setCategory(category);
+        auctionProducts.setCurrentPrice(dto.getStartPrice());
+        auctionProducts.setSellingStatus(SellingStatus.PROGRESS);
+        auctionProducts.setBidCount(0);
 
-        // 이미지 저장
-        if (images != null) {
-            for (ImageDto imageDto : images) {
-                ImageEntity image = ImageEntity.builder()
-                        .auctionProduct(auctionProducts)
-                        .imageUrl(imageDto.getImageUrl())
-                        .imageType(imageDto.getImageType())
-                        .build();
-                imageRepository.save(image);
-            }
+        // 꺼낸 데이터 저장
+        AuctionProductsEntity savedProducts = auctionProductsRepository.save(auctionProducts);
+
+        if(dto.getImages()!=null) {
+            List<ImageEntity> imageEntities = dto.getImages().stream()
+                    .map(ImageDto -> ImageDto.toEntity(savedProducts))
+                    .collect(Collectors.toList());
+
+            imageRepository.saveAll(imageEntities); // 이미지가 여러개 오려고 하기 위해서
+
+            savedProducts.setImages(imageEntities);
+
+            imageRepository.saveAll(imageEntities);
+            savedProducts.setImages(imageEntities);
+
+            auctionHistoryService.recordStatusChange(
+                    savedProducts.getAuctionId(),
+                    AuctionStatus.PROGRESS
+            );
+        }
+        return  savedProducts;
+
+    }
+
+    @Transactional
+    public void deleteAuction(Long auctionId, Long userId) {
+        AuctionProductsEntity products = auctionProductsRepository.findByAuctionIdAndDeletedAtIsNull(auctionId)
+                .orElseThrow(() -> new IllegalArgumentException("Auction Not Found or already deleted with ID: " + auctionId));
+
+        Long productUserId = products.getUser().getUserId();
+
+        if (productUserId == null || productUserId.longValue() != userId.longValue()) {
+            throw new SecurityException("상품을 삭제할 권한이 없습니다. (판매자만 삭제 가능)");
         }
 
-        return auctionProducts;
+        products.setDeletedAt(LocalDateTime.now());
     }
 
     //  목록 조회 메서드
@@ -116,7 +132,7 @@ public class AuctionProductsService {
         List<AuctionListResponseDto> dtoList = auctionPage.getContent().stream()
                 .map(product -> {
                     // 찜 개수 조회
-                    Integer wishCount= wishlistRepository.countByAuction(product);
+                    Integer wishCount = wishlistRepository.countByAuction(product);
                     // 메인 이미지
                     String mainImageUrl = imageRepository.findMainImageUrl(product.getAuctionId())
                             .orElse("default_product.png");
@@ -185,6 +201,9 @@ public class AuctionProductsService {
         // 찜 개수
         Integer wishCount = wishlistRepository.countByAuction(products);
 
+        // TODO: 임시온도 설정
+        final Double DEFAULT_TEMP = 36.5;
+
         return AuctionFindDto.builder()
                 .auctionId(products.getAuctionId())
                 .title(products.getTitle())
@@ -195,24 +214,17 @@ public class AuctionProductsService {
                 .startTime(products.getStartTime())
                 .createdAt(products.getCreatedAt())
                 .endTime(products.getEndTime())
-                .updatedAt(products.getUpdatedAt())
                 .categoryId(products.getCategory().getCategoryId().longValue())
                 .categoryName(products.getCategory().getCategoryName())
                 .sellerId(products.getUser().getUserId())
                 .sellerNickname(products.getUser().getNickname())
-                //.sellerProfileImageUrl(products.getUser().getProfileImageUrl())
+                .sellerProfileImageUrl(products.getUser().getProfileImageUrl())
                 .images(imageDtos)
                 .sellingStatus(sellingStatus)
                 .wishCount(wishCount)
+                .sellerTemperature(DEFAULT_TEMP) //
                 .build();
     }
-
-    //상품아이디로 상품엔티티조회하기
-//    @Transactional(readOnly = true)
-//    public AuctionProductsEntity findById(Long auctionId) {
-//        return auctionProductsRepository.findByAuctionIdAndSellingStatus(auctionId, SellingStatus.PROGRESS)
-//                .orElseThrow(() -> new RuntimeException("Auction product not found"));
-//    }
 
     @Transactional(readOnly = true)
     public AuctionProductsEntity findById(Long auctionId) {

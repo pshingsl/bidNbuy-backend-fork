@@ -8,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -23,7 +22,7 @@ public class AuctionResultController {
     // 마이페이지 - 구매 내역 (낙찰 내역) 조회
     @GetMapping("/purchase")
     public ResponseEntity<?> getPurchaseHistory(
-            @AuthenticationPrincipal Long userId) { // ⭐️ 임시 userId 처리
+            @AuthenticationPrincipal Long userId) { 
 
         List<AuctionPurchaseHistoryDto> history = auctionResultService.getPurchaseHistory(userId);
 
@@ -38,7 +37,7 @@ public class AuctionResultController {
     // 마이페이지 - 판매 내역 (판매 결과)
     @GetMapping("/sales")
     public ResponseEntity<?> getSalesHistory(
-            @AuthenticationPrincipal Long userId) { // ⭐️ 임시 userId 처리
+            @AuthenticationPrincipal Long userId) {
 
         List<AuctionSalesHistoryDto> history = auctionResultService.getSalesHistory(userId);
 

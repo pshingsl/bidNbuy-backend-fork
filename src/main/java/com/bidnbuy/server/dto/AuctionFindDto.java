@@ -8,7 +8,6 @@ import java.util.List;
 
 @Getter
 @Builder
-// 💡 클라이언트에게 상세 정보를 제공하기 위한 응답 DTO입니다.
 public class AuctionFindDto {
     // 1. 상품 기본 정보
     private List<ImageDto> images; // 이미지
@@ -18,10 +17,10 @@ public class AuctionFindDto {
 
     // 2. 카테고리 정보
     private Long categoryId;
-    private String categoryName; // 💡 Category Entity에서 이름도 가져와 표시
+    private String categoryName; // 카테고리 이름
 
     // 3. 가격 및 입찰 정보
-    private Integer currentPrice; // 💡 입찰이 있을 경우 업데이트된 최고가
+    private Integer currentPrice; // 현재가
     private Integer minBidPrice;
     private Integer bidCount; // 입찰 횟수
 
@@ -33,7 +32,7 @@ public class AuctionFindDto {
 
     // 5. 판매자 정보 (다른 Entity에서 가져와야 함)
     private Long sellerId;
-    private String sellerNickname; // 💡 User Entity에서 닉네임 등을 가져와 표시
+    private String sellerNickname; // 판매자
     private String sellerProfileImageUrl;
     private Double sellerTemperature;
 
