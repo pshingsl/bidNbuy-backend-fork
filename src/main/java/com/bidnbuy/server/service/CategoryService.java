@@ -17,7 +17,7 @@ public class CategoryService {
     @Autowired
     private CategoryRepository categoryRepository;
 
-    // 단일 카테고리 조회
+    // 단일 카테고리 조회 상세 정보를 볼때 사용
     @Transactional(readOnly = true)
     public CategoryDto findById(Integer categoryId) {
         Optional<CategoryEntity> optionalCategory = categoryRepository.findById(categoryId);
@@ -38,7 +38,7 @@ public class CategoryService {
                 .collect(Collectors.toList());
     }
 
-    // 중분류
+    // 중분류 (등록/조회 프론트 화면에서 사용)
     @Transactional(readOnly = true)
     public List<CategoryDto> findChildrenByParentId(Integer parentId){
 
