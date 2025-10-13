@@ -1,8 +1,12 @@
 package com.bidnbuy.server.service;
 
 import com.bidnbuy.server.dto.*;
-import com.bidnbuy.server.entity.*;
+import com.bidnbuy.server.entity.AuctionProductsEntity;
+import com.bidnbuy.server.entity.CategoryEntity;
+import com.bidnbuy.server.entity.ImageEntity;
+import com.bidnbuy.server.entity.UserEntity;
 import com.bidnbuy.server.enums.AuctionStatus;
+import com.bidnbuy.server.enums.ImageType;
 import com.bidnbuy.server.enums.SellingStatus;
 import com.bidnbuy.server.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -12,15 +16,16 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.awt.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor // 생성자 자동화 주입 역할
+@RequiredArgsConstructor
 public class AuctionProductsService {
 
     // 불변성을 보장하기 위해 final로 사용
@@ -30,19 +35,20 @@ public class AuctionProductsService {
     private final ImageRepository imageRepository;
     private final WishlistRepository wishlistRepository;
     private final AuctionHistoryService auctionHistoryService;
+    // 💡 이미지 처리를 위해 ImageService 주입
+    private final ImageService imageService;
 
-    // create -> 인증된 사용자만 등록 유저 검증 필요,
     @Transactional
-    public AuctionProductsEntity create(Long userId, CreateAuctionDto dto) {
-        // 상품 등록은 로그인한 사용자가 한다.
+    public AuctionProductsEntity create(Long userId, CreateAuctionDto dto, List<MultipartFile> imageFiles) {
+
+        // 1. 기본 데이터 유효성 검증
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 사용자 존재하지 않습니다!"));
 
-        // 카테고리 불러오기 -> 다시 짜지만 왜 이게 필요할까? 내가 그냥 외우는 식으로 해서 그런가>
-        CategoryEntity category = categoryRepository.findById(dto.getCategoryId()) // 아이디에 이유는 데이터베이스에 아이디로 넣어서이다
+        CategoryEntity category = categoryRepository.findById(dto.getCategoryId())
                 .orElseThrow(() -> new IllegalArgumentException("해당 카테고리가 존재하지 않습니다!"));
 
-        // 물품 등록 생성 -> 엔티티(테이블)에서 필요한 데이터를 꺼낸다.
+        // 2. 물품 등록 생성 및 기본 정보 설정
         AuctionProductsEntity auctionProducts =  CreateAuctionDto.toEntity(dto);
         auctionProducts.setUser(user);
         auctionProducts.setCategory(category);
@@ -50,28 +56,45 @@ public class AuctionProductsService {
         auctionProducts.setSellingStatus(SellingStatus.PROGRESS);
         auctionProducts.setBidCount(0);
 
-        // 꺼낸 데이터 저장
+        // 3. 물품 저장 (ID를 획득하여 이미지 경로에 사용하기 위해 먼저 저장)
         AuctionProductsEntity savedProducts = auctionProductsRepository.save(auctionProducts);
 
-        if(dto.getImages()!=null) {
-            List<ImageEntity> imageEntities = dto.getImages().stream()
-                    .map(ImageDto -> ImageDto.toEntity(savedProducts))
-                    .collect(Collectors.toList());
+        // 4. 이미지 파일 처리
+        if (imageFiles != null && !imageFiles.isEmpty()) {
+            List<ImageEntity> imageEntities = new ArrayList<>();
 
-            imageRepository.saveAll(imageEntities); // 이미지가 여러개 오려고 하기 위해서
+            for (int i = 0; i < imageFiles.size(); i++) {
+                MultipartFile file = imageFiles.get(i);
 
-            savedProducts.setImages(imageEntities);
+                // 💡 ImageService 호출: 파일을 로컬에 저장하고 영구 URL을 반환받음
+                String permanentUrl = imageService.uploadAuctionImage(savedProducts.getAuctionId(), file);
 
+                // 💡 첫 번째 이미지를 MAIN 타입으로 지정, 나머지는 PRODUCT
+                ImageType imageType = (i == 0) ? ImageType.MAIN : ImageType.PRODUCT;
+
+                // 💡 ImageEntity 생성 및 영구 URL 저장
+                ImageEntity imageEntity = ImageEntity.builder()
+                        .auctionProduct(savedProducts)
+                        .user(null)
+                        .imageUrl(permanentUrl) // 영구 URL 저장
+                        .imageType(imageType)
+                        .build();
+
+                imageEntities.add(imageEntity);
+            }
+
+            // Image Entity들을 DB에 일괄 저장
             imageRepository.saveAll(imageEntities);
             savedProducts.setImages(imageEntities);
 
+            // 경매 상태 기록
             auctionHistoryService.recordStatusChange(
                     savedProducts.getAuctionId(),
                     AuctionStatus.PROGRESS
             );
         }
-        return  savedProducts;
 
+        return  savedProducts;
     }
 
     @Transactional
@@ -86,6 +109,7 @@ public class AuctionProductsService {
         }
 
         products.setDeletedAt(LocalDateTime.now());
+        // 💡 추가 개선 사항: 파일 저장소가 로컬/S3인 경우, 여기서 ImageService를 통해 실제 파일 삭제 로직을 호출해야 함.
     }
 
     //  목록 조회 메서드
@@ -151,7 +175,7 @@ public class AuctionProductsService {
                 })
                 .toList();
 
-        // 5. 페이징 응답 DTO 생성 (기존 로직 유지)
+        // 5. 페이징 응답 DTO 생성
         return PagingResponseDto.<AuctionListResponseDto>builder()
                 .data(dtoList)
                 .totalPages(auctionPage.getTotalPages())
@@ -163,7 +187,7 @@ public class AuctionProductsService {
                 .build();
     }
 
-    //  경매 상태
+    //  경매 상태 계산 메서드
     public String calculateSellingStatus(AuctionProductsEntity product) {
         return switch (product.getSellingStatus()) {
             case PROGRESS -> {
@@ -188,6 +212,7 @@ public class AuctionProductsService {
         AuctionProductsEntity products = auctionProductsRepository.findByIdWithDetails(auctionId)
                 .orElseThrow(() -> new IllegalArgumentException("Auction Not Found with ID: " + auctionId));
 
+        // 이미지 DTO 변환 시 DB에 저장된 영구 URL 사용
         List<ImageDto> imageDtos = products.getImages()
                 .stream()
                 .map(imageEntity -> ImageDto.builder()
@@ -201,7 +226,6 @@ public class AuctionProductsService {
         // 찜 개수
         Integer wishCount = wishlistRepository.countByAuction(products);
 
-        // TODO: 임시온도 설정
         final Double DEFAULT_TEMP = 36.5;
 
         return AuctionFindDto.builder()
@@ -222,7 +246,7 @@ public class AuctionProductsService {
                 .images(imageDtos)
                 .sellingStatus(sellingStatus)
                 .wishCount(wishCount)
-                .sellerTemperature(DEFAULT_TEMP) //
+                .sellerTemperature(DEFAULT_TEMP)
                 .build();
     }
 
@@ -234,5 +258,4 @@ public class AuctionProductsService {
         return auctionProductsRepository.findByAuctionIdAndSellingStatusIn(auctionId, allowedStatuses)
                 .orElseThrow(() -> new RuntimeException("Auction product not found"));
     }
-
 }

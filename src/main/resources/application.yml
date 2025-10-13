@@ -1,0 +1,3 @@
+# application.yml
+file:
+  upload-dir: C:/temp/bidnbuy_uploads/auction-products

@@ -6,13 +6,12 @@ import com.bidnbuy.server.service.AuctionProductsService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.HashMap;
+import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/auctions")
@@ -22,13 +21,18 @@ public class AuctionProductsController {
     private AuctionProductsService auctionProductsService;
 
 
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> createAuction(
             @AuthenticationPrincipal Long userId,
-            @RequestBody @Valid CreateAuctionDto dto
+            @ModelAttribute  @Valid CreateAuctionDto dto,
+            @RequestPart(value = "images") List<MultipartFile> imageFiles
     ) {
 
-        AuctionProductsEntity newProduct = auctionProductsService.create(userId, dto);
+        if (imageFiles == null || imageFiles.isEmpty()) {
+            throw new IllegalArgumentException("경매 상품 이미지는 최소 1개 이상 필요합니다.");
+        }
+
+        AuctionProductsEntity newProduct = auctionProductsService.create(userId, dto, imageFiles);
 
         // 2. 응답 DTO 생성 및 HTTP 201 Created 반환
         AuctionCreationResponseDto response = AuctionCreationResponseDto.builder()

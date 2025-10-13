@@ -50,6 +50,10 @@ dependencies {
 //    implementation 'io.jsonwebtoken:jjwt:0.9.1' //자바 jwt라이브러리
 //    implementation 'javax.xml.bind:jaxb-api:2.3.1'//xml문서와 java객체 간 매핑 자동화
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
+
+    implementation 'software.amazon.awssdk:s3:2.20.108' // 💡 예시 버전
+    implementation 'software.amazon.awssdk:s3-transfer-manager:2.20.108'
 }
 
 tasks.named('test') {

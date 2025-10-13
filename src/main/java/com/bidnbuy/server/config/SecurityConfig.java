@@ -76,7 +76,7 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                     .requestMatchers(HttpMethod.GET, "/auctions/**").permitAll() // 비로그인자도 다 볼 수있다.
                     .requestMatchers("/auth/signup", "/auth/login", "/auth/kakao","/favicon.ico", "/auth/naver", "/auth/reissue"
-                            , "/auth/naver/loginstart", "/auth/email/**", "/auth/password/**", "/chat_test.html**", "/ws/bid/**").permitAll()
+                            , "/auth/naver/loginstart", "/auth/email/**", "/auth/password/**", "/chat_test.html**", "/ws/bid/**", "/images/**").permitAll()
                     .anyRequest().authenticated()
             ).csrf(csrf -> csrf.disable());
 

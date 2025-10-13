@@ -6,6 +6,7 @@ import com.bidnbuy.server.entity.AuctionProductsEntity;
 import com.bidnbuy.server.entity.ImageEntity;
 import com.bidnbuy.server.entity.UserEntity;
 import com.bidnbuy.server.entity.WishlistEntity;
+import com.bidnbuy.server.enums.ImageType;
 import com.bidnbuy.server.enums.IsDeletedStatus;
 import com.bidnbuy.server.repository.AuctionProductsRepository;
 import com.bidnbuy.server.repository.UserRepository;
@@ -36,6 +37,11 @@ public class WishlistService {
         // 2. 해당 경매 물품이 있는지 확인
         AuctionProductsEntity auction = auctionProductsRepository.findById(auctionId)
                 .orElseThrow(() -> new RuntimeException("해당 경매 물품 ID가 없습니다"));
+
+        // 자기 자신이 등록한 물 찜하기 금지
+        if(auction.getUser().getUserId() == userId.longValue()) {
+            throw new RuntimeException("자신이 등록한 경매 물품은 찜 할 수 없습니다.");
+        }
 
         // 3. 찜 상태 확인 -> 로그인한 사용자가 경매 물품을 찜했는지 찾는다.
         return wishlistRepository.findByUserAndAuction(user, auction)
@@ -86,7 +92,7 @@ public class WishlistService {
                     AuctionProductsEntity product = wish.getAuction();
 
                     String mainImageUrl = product.getImages().stream()
-                            .filter(image -> "MAIN".equals(image.getImageType())) // ImageEntity에 getImageType()이 있다고 가정
+                            .filter(image -> ImageType.PRODUCT.equals(image.getImageType())) // ImageEntity에 getImageType()이 있다고 가정
                             .findFirst()
                             .map(ImageEntity::getImageUrl) // ImageEntity에 getImageUrl()이 있다고 가정
                             .orElse(null);
