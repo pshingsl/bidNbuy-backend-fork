@@ -2,6 +2,7 @@ package com.bidnbuy.server.dto;
 
 import com.bidnbuy.server.entity.AuctionProductsEntity;
 import com.bidnbuy.server.entity.ImageEntity;
+import com.bidnbuy.server.enums.ImageType;
 import lombok.*;
 
 // 이미지 디티오
@@ -12,7 +13,7 @@ import lombok.*;
 @NoArgsConstructor
 public class ImageDto {
     private String imageUrl;
-    private String imageType;
+    private ImageType imageType;
 
     public ImageDto(ImageEntity entity) {
         this.imageUrl = entity.getImageUrl();

@@ -234,7 +234,7 @@ public class UserController {
     }
 
     // 프로필 이미지 업로드
-    @PostMapping("/{userId}/profile/image")
+    @PutMapping("/{userId}/profile")
     public ResponseEntity<?> uploadProfileImage(@AuthenticationPrincipal Long userId,
               @RequestPart("image") MultipartFile imageFile ) {
         String newImageUrl = imageService.updateProfileImage(userId, imageFile);

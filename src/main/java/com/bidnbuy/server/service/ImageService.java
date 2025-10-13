@@ -4,6 +4,7 @@ import com.bidnbuy.server.dto.ImageDto;
 import com.bidnbuy.server.entity.AuctionProductsEntity;
 import com.bidnbuy.server.entity.ImageEntity;
 import com.bidnbuy.server.entity.UserEntity;
+import com.bidnbuy.server.enums.ImageType;
 import com.bidnbuy.server.repository.AuctionProductsRepository;
 import com.bidnbuy.server.repository.ImageRepository;
 import com.bidnbuy.server.repository.UserRepository;
@@ -111,7 +112,7 @@ public class ImageService {
                     .user(user)
                     .auctionProduct(null) // 유저 프로필이므로 NULL
                     .imageUrl(newWebAccessUrl)
-                    .imageType(PROFILE_TYPE) // NOT NULL 제약 때문에 값을 넣어줍니다.
+                    .imageType(ImageType.USER) // NOT NULL 제약 때문에 값을 넣어줍니다.
                     .build();
             imageRepository.save(newImage);
         }
