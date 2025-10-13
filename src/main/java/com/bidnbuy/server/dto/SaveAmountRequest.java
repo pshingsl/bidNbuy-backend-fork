@@ -4,6 +4,6 @@ import lombok.Data;
 
 @Data
 public class SaveAmountRequest {
-    private String orderId;
+    private String merchantOrderId;
     private int amount;
 }

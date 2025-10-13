@@ -19,8 +19,9 @@ public class PaymentEntity {
     @JoinColumn(name = "order_id", nullable = false)
     private OrderEntity order;
 
+    // 토스에 넘긴 '머천트 주문번호' (토스 API의 orderId)
     @Column(nullable = false, length = 225)
-    private String tossOrderId;
+    private String merchantOrderId;
 
     @Column(nullable = false, length = 225)
     private String tossPaymentKey;
