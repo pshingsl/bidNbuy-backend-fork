@@ -74,7 +74,7 @@ public class SecurityConfig {
                 //인증 경로 설정
             .authorizeHttpRequests(authorize -> authorize
                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                    .requestMatchers("/auth/signup", "/auth/login", "/auth/kakao","/favicon.ico", "/auth/naver", "/auth/reissue"
+                    .requestMatchers("/auth/signup/**", "/auth/login", "/auth/kakao","/favicon.ico", "/auth/naver", "/auth/reissue"
                             , "/auth/naver/loginstart", "/auth/email/**", "/auth/password/**", "/chat_test.html**", "/ws/bid/**").permitAll()
                     .anyRequest().authenticated()
             ).csrf(csrf -> csrf.disable());

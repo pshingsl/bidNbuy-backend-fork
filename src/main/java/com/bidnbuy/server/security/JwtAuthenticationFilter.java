@@ -37,7 +37,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String path = request.getRequestURI().substring(contextPath.length());
         log.info("###################3shouldNotFilter path: {}", path);
 //        if(path.startsWith("/auth")){
-        if(path.equals("/auth/signup") || path.equals("/auth/login") || path.equals("/favicon.ico") || path.startsWith("/auth/kakao")
+        if(path.startsWith("/auth/signup") || path.equals("/auth/login") || path.equals("/favicon.ico") || path.startsWith("/auth/kakao")
                 || path.startsWith("/auth/naver")|| path.equals("/auth/reissue")|| path.startsWith("/auth/email")|| path.startsWith("/auth/password")
                 || path.startsWith("/chat_test")|| path.startsWith("/ws/bid")){
             return true;
