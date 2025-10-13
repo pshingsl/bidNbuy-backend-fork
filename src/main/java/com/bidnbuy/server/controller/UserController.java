@@ -49,23 +49,17 @@ public class UserController {
     private String redirectUri;
 
     @PostMapping("/signup")
-    public ResponseEntity<?> registerUser(@RequestBody UserDto userDto){
+    public ResponseEntity<?> signup(@RequestBody UserSignupRequestDto requestDto){
+        log.info("회원가입 요청 DTO: {}", requestDto);
+//        if(requestDto.getEmail() == null || requestDto.getValidCode() == null){
+//            return ResponseEntity.badRequest().build();
+//        }
         try{
-            UserEntity user  = UserEntity.builder()
-                    .email(userDto.getEmail())
-                    .nickname(userDto.getNickname())
-                    .password(userDto.getPassword())
-                    .build();
-            UserEntity registeredUser = userService.create(user);
-
-            UserDto responseUserDto = UserDto.builder()
-                    .email(registeredUser.getEmail())
-                    .nickname(registeredUser.getNickname())
-                    .build();
-            return ResponseEntity.ok().body(responseUserDto);
-        }catch(Exception e){
-            ResponseDto responseDto = ResponseDto.builder().error(e.getMessage()).build();
-            return ResponseEntity.badRequest().body(responseDto);
+            UserEntity savedUser = userService.signup(requestDto);
+            return ResponseEntity.status(HttpStatus.CREATED).body(savedUser);
+        }catch (RuntimeException e){
+            log.error("회원가입 실패:{}", e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 

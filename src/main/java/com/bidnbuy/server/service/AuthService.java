@@ -217,9 +217,9 @@ public class AuthService {
         //EmailVerificationService 유효성 검증 위임하고 메서드 내부에서 상태 업데이트 진행
         emailVerificationService.verifyCode(email, inputCode);
         //authstatus찐 업데이트
-        UserEntity user = userRepository.findByEmail(email)
-                .orElseThrow(()->new RuntimeException("인증된 이메일을 가진 사용자를 찾을 수 없습니다."));
-        user.setAuthStatus(AuthStatus.Y);
-        userRepository.save(user);
+//        UserEntity user = userRepository.findByEmail(email)
+//                .orElseThrow(()->new RuntimeException("인증된 이메일을 가진 사용자를 찾을 수 없습니다."));
+//        user.setAuthStatus(AuthStatus.Y);
+//        userRepository.save(user);
     }
 }

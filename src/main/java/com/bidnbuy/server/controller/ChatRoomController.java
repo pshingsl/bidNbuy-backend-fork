@@ -3,6 +3,7 @@ package com.bidnbuy.server.controller;
 import com.bidnbuy.server.dto.ChatMessageDto;
 import com.bidnbuy.server.dto.ChatRoomCreateRequestDto;
 import com.bidnbuy.server.dto.ChatRoomDto;
+import com.bidnbuy.server.dto.ChatRoomListDto;
 import com.bidnbuy.server.security.CustomUserDetailsService;
 import com.bidnbuy.server.service.ChatMessageService;
 import com.bidnbuy.server.service.ChatRoomService;
@@ -65,4 +66,11 @@ public class ChatRoomController {
 
         return ResponseEntity.ok(messages);
     }
+
+    @GetMapping("/list")
+    public ResponseEntity<List<ChatRoomListDto>> getChatList(@AuthenticationPrincipal Long userId){
+        List<ChatRoomListDto> chatList = chatRoomService.getChatRoomList(userId);
+        return ResponseEntity.ok(chatList);
+    }
+
 }

@@ -30,7 +30,7 @@ public class ChatMessageService {
     //db저장 후 dto반환
     @Transactional
     public ChatMessageDto saveAndProcessMessage(ChatMessageRequestDto requestDto, Long senderId){
-        Long generatedMessageId = 100L;
+//        Long generatedMessageId = 100L;
 
         //엔티티 조회해서 객체 찾아오기
         ChatRoomEntity chatRoom = chatRoomRepository.findById(requestDto.getChatroomId())
@@ -48,6 +48,8 @@ public class ChatMessageService {
 
         ChatMessageEntity savedEntity =chatMessageRepository.save(chatMessageEntity);//db저장
 
+        chatRoom.setLastMessagePreview(savedEntity.getMessage());
+        chatRoom.setLastMessageTime(savedEntity.getCreateAt());
 
         return ChatMessageDto.builder()
                 .chatmessageId(String.valueOf(savedEntity.getChatmessageId()))

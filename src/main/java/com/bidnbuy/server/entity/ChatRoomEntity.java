@@ -34,4 +34,15 @@ public class ChatRoomEntity {
     @CreationTimestamp
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+
+
+    //추가
+    @Column(name = "last_message_preview", nullable = true)
+    private String lastMessagePreview;
+
+    @Column(name = "last_message_time", nullable = true)
+    private LocalDateTime lastMessageTime;
+
+    @Column(name = "unread_count", nullable = false)
+    private int unreadCount = 0;
 }

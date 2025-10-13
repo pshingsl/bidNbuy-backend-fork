@@ -17,4 +17,8 @@ public class ChatRoomDto {
     private String sellerId;
     private String auctionId;
     private LocalDateTime createdAt;
+
+    private String lastMessagePreview;
+    private LocalDateTime lastMessageTime;
+    private int unreadCount;
 }
