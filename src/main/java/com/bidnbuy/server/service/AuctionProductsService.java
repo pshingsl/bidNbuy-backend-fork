@@ -134,7 +134,7 @@ public class AuctionProductsService {
                     // 찜 개수 조회
                     Integer wishCount = wishlistRepository.countByAuction(product);
                     // 메인 이미지
-                    String mainImageUrl = imageRepository.findMainImageUrl(product.getAuctionId())
+                    String mainImageUrl = imageRepository.findFirstImageUrlByAuctionId(product.getAuctionId())
                             .orElse("default_product.png");
 
                     return AuctionListResponseDto.builder()
@@ -214,7 +214,7 @@ public class AuctionProductsService {
                 .startTime(products.getStartTime())
                 .createdAt(products.getCreatedAt())
                 .endTime(products.getEndTime())
-                .categoryId(products.getCategory().getCategoryId().longValue())
+                .categoryId(products.getCategory().getCategoryId())
                 .categoryName(products.getCategory().getCategoryName())
                 .sellerId(products.getUser().getUserId())
                 .sellerNickname(products.getUser().getNickname())

@@ -96,7 +96,6 @@ public class ImageService {
         }
 
         // 2. 기존 프로필 이미지 엔티티 조회 및 갱신/생성
-        final String PROFILE_TYPE = "PROFILE";
         Optional<ImageEntity> existingImage = imageRepository.findByUser_UserId(userId);
 
         if (existingImage.isPresent()) {
