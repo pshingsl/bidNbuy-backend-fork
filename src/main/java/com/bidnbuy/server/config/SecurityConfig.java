@@ -74,6 +74,7 @@ public class SecurityConfig {
                 //인증 경로 설정
             .authorizeHttpRequests(authorize -> authorize
                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/auctions/**").permitAll() // 비로그인자도 다 볼 수있다.
                     .requestMatchers("/auth/signup", "/auth/login", "/auth/kakao","/favicon.ico", "/auth/naver", "/auth/reissue"
                             , "/auth/naver/loginstart", "/auth/email/**", "/auth/password/**", "/chat_test.html**", "/ws/bid/**").permitAll()
                     .anyRequest().authenticated()
