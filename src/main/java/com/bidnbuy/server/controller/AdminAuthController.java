@@ -2,9 +2,12 @@ package com.bidnbuy.server.controller;
 
 import com.bidnbuy.server.dto.AdminLoginRequestDto;
 import com.bidnbuy.server.dto.AdminSignupRequestDto;
+import com.bidnbuy.server.dto.ResponseDto;
+import com.bidnbuy.server.dto.TokenReissueRequestDto;
 import com.bidnbuy.server.dto.TokenResponseDto;
 import com.bidnbuy.server.dto.UpdateIpRequestDto;
 import com.bidnbuy.server.entity.AdminEntity;
+import com.bidnbuy.server.exception.CustomAuthenticationException;
 import com.bidnbuy.server.service.AdminAuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -58,6 +61,25 @@ public class AdminAuthController {
         } catch (Exception e) {
             log.error("관리자 IP 업데이트 실패: {}", e.getMessage());
             return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // 관리자 토큰 재발급
+    @PostMapping("/reissue")
+    public ResponseEntity<?> reissueToken(@Valid @RequestBody TokenReissueRequestDto requestDto) {
+        log.info("관리자 토큰 재발급 요청");
+        
+        try {
+            TokenResponseDto reissueResponse = adminAuthService.reissueAdminToken(requestDto.getRefreshToken());
+            return ResponseEntity.ok().body(reissueResponse);
+        } catch (CustomAuthenticationException e) {
+            log.error("관리자 토큰 재발급 실패: {}", e.getMessage());
+            ResponseDto<String> responseDto = ResponseDto.<String>builder().error(e.getMessage()).build();
+            return ResponseEntity.status(401).body(responseDto);
+        } catch (Exception e) {
+            log.error("관리자 토큰 재발급 실패: {}", e.getMessage());
+            ResponseDto<String> responseDto = ResponseDto.<String>builder().error("Internal Server Error during token reissue.").build();
+            return ResponseEntity.status(500).body(responseDto);
         }
     }
 }

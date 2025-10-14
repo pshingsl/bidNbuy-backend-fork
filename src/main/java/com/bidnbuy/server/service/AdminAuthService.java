@@ -5,6 +5,7 @@ import com.bidnbuy.server.dto.AdminSignupRequestDto;
 import com.bidnbuy.server.dto.TokenResponseDto;
 import com.bidnbuy.server.dto.UpdateIpRequestDto;
 import com.bidnbuy.server.entity.AdminEntity;
+import com.bidnbuy.server.entity.RefreshTokenEntity;
 import com.bidnbuy.server.exception.CustomAuthenticationException;
 import com.bidnbuy.server.repository.AdminRepository;
 import com.bidnbuy.server.security.JwtProvider;
@@ -238,5 +239,36 @@ public class AdminAuthService {
                ip.startsWith("172.29.") ||
                ip.startsWith("172.30.") ||
                ip.startsWith("172.31.");
+    }
+
+    // 토큰 재발급
+    @Transactional
+    public TokenResponseDto reissueAdminToken(String oldRefreshToken) {
+        // 유효성
+        if (!jwtProvider.validateToken(oldRefreshToken)) {
+            throw new CustomAuthenticationException("유효하지 않은 토큰");
+        }
+
+        // 조회
+        RefreshTokenEntity storedToken = refreshTokenService.findByTokenValue(oldRefreshToken)
+                .orElseThrow(() -> new CustomAuthenticationException("유효하지 않은 토큰"));
+
+        AdminEntity admin = storedToken.getAdmin();
+
+        // 새 토큰 생성 (role 포함)
+        Long adminId = admin.getAdminId();
+        String newAccessToken = jwtProvider.createAccessToken(adminId, "ADMIN");
+        String newRefreshToken = jwtProvider.createRefreshToken(adminId, "ADMIN");
+        Instant newExpiryDate = jwtProvider.getRefreshTokenExpiryDate();
+
+        // db에 새 토큰 갱신
+        refreshTokenService.saveOrUpdateForAdmin(admin, newRefreshToken, newExpiryDate);
+
+        return TokenResponseDto.builder()
+                .grantType(jwtProvider.getGrantType())
+                .accessToken(newAccessToken)
+                .refreshToken(newRefreshToken)
+                .accessTokenExpiresIn(jwtProvider.getAccessTokenExpirationTime())
+                .build();
     }
 }
