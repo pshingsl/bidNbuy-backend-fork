@@ -74,6 +74,22 @@ public class JwtProvider {
                 .compact();//생성, 직렬화
     }
 
+    // role 포함 access token 생성 (오버로드 메서드)
+    public String createAccessToken(long userId, String role){
+        Date now = new Date();
+        long expirationTimeMs = now.getTime() + EXPIRATION_TIME;
+        Date expiration = new Date(expirationTimeMs);
+
+        return Jwts.builder()
+                .signWith(getSigningKey(), Jwts.SIG.HS512)
+                .setSubject(String.valueOf(userId))
+                .setIssuer("bidnbuy-api")
+                .setIssuedAt(now)
+                .setExpiration(expiration)
+                .claim("role", role) // 추가
+                .compact();
+    }
+
     //refresh token 생성
     public String createRefreshToken(long userId){
         Date now = new Date();
@@ -92,6 +108,29 @@ public class JwtProvider {
             return token;
         }catch (Exception e){
             log.error("Refresh Token Creation Failed for user {}! Cause: {}", userId, e.getMessage(), e);
+        }
+        return null;
+    }
+
+    // role 포함 refresh token 생성 (오버로드 메서드)
+    public String createRefreshToken(long userId, String role){
+        Date now = new Date();
+        long expirationTimeMs = now.getTime() + REFRESH_EXPIRATION_TIME;
+        Date expiration = new Date(expirationTimeMs);
+
+        try{
+            String token = Jwts.builder()
+                .signWith(getSigningKey(), Jwts.SIG.HS512)
+                .setSubject(String.valueOf(userId))
+                .setIssuer("bidnbuy-api")
+                .setIssuedAt(now)
+                .setExpiration(expiration)
+                .claim("role", role) // 추가
+                .compact();
+            log.info("refresh token created success for user :{} with role: {}", userId, role);
+            return token;
+        }catch (Exception e){
+            log.error("Refresh Token Creation Failed for user {} with role {}! Cause: {}", userId, role, e.getMessage(), e);
         }
         return null;
     }
@@ -192,5 +231,16 @@ public class JwtProvider {
     // 토큰에서 (userId) 추출
     public String getUsername(String token) {
         return getClaims(token).getSubject();
+    }
+
+    // 토큰에서 role 추출
+    public String getRoleFromToken(String token) {
+        try {
+            Claims claims = getClaims(token);
+            return claims.get("role", String.class);
+        } catch (Exception e) {
+            log.error("Failed to extract role from token: {}", e.getMessage());
+            return null;
+        }
     }
 }
