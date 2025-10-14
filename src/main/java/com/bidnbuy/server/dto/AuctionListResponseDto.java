@@ -14,7 +14,7 @@ public class AuctionListResponseDto {
     private LocalDateTime endTime;
     private String mainImageUrl;  // 목록에서는 대표 이미지 URL 1개만 필요
     private String sellingStatus; // 진행 중, 종료 등
-    private String categoryName;  // 필터링이나 표시를 위해 포함
+    //private String categoryName;  // 필터링이나 표시를 위해 포함
     private String sellerNickname;
     private Integer wishCount;
 }

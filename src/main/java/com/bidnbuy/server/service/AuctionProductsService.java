@@ -49,7 +49,7 @@ public class AuctionProductsService {
                 .orElseThrow(() -> new IllegalArgumentException("해당 카테고리가 존재하지 않습니다!"));
 
         // 2. 물품 등록 생성 및 기본 정보 설정
-        AuctionProductsEntity auctionProducts =  CreateAuctionDto.toEntity(dto);
+        AuctionProductsEntity auctionProducts = CreateAuctionDto.toEntity(dto);
         auctionProducts.setUser(user);
         auctionProducts.setCategory(category);
         auctionProducts.setCurrentPrice(dto.getStartPrice());
@@ -66,13 +66,12 @@ public class AuctionProductsService {
             for (int i = 0; i < imageFiles.size(); i++) {
                 MultipartFile file = imageFiles.get(i);
 
-                // 💡 ImageService 호출: 파일을 로컬에 저장하고 영구 URL을 반환받음
                 String permanentUrl = imageService.uploadAuctionImage(savedProducts.getAuctionId(), file);
 
-                // 💡 첫 번째 이미지를 MAIN 타입으로 지정, 나머지는 PRODUCT
+                //  첫 번째 이미지를 MAIN 타입으로 지정, 나머지는 PRODUCT
                 ImageType imageType = (i == 0) ? ImageType.MAIN : ImageType.PRODUCT;
 
-                // 💡 ImageEntity 생성 및 영구 URL 저장
+                // ImageEntity 생성 및 영구 URL 저장
                 ImageEntity imageEntity = ImageEntity.builder()
                         .auctionProduct(savedProducts)
                         .user(null)
@@ -94,7 +93,132 @@ public class AuctionProductsService {
             );
         }
 
-        return  savedProducts;
+        return savedProducts;
+    }
+
+    // 전체 리스트 출력
+    @Transactional(readOnly = true)
+    public PagingResponseDto<AuctionListResponseDto> getAllAuctions(
+            int page,
+            int size,
+            Integer minPrice,
+            Integer maxPrice,
+            String sortBy
+    ) {
+        // 1. 상태 및 정렬 설정
+        Sort sort = getSortCriteria(sortBy);
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        // 2. Repository 호출: 수정한 가격/상태 필터링 메서드 호출
+        Page<AuctionProductsEntity> auctionPage = auctionProductsRepository.findByPriceRangeAndStatusAndDeletedAtIsNull(
+                minPrice,
+                maxPrice,
+                pageable
+        );
+
+        // 3. DTO 변환 및 반환
+        return buildPagingResponse(auctionPage);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AuctionListResponseDto> getMyAuctionListSimple(Long userId) {
+
+        // 1. 사용자 엔티티 조회
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 사용자 존재하지 않습니다."));
+
+        // 2. Repository를 통해 해당 사용자가 작성한 모든 상품을 조회
+        //    (***AuctionProductsRepository에 findByUser(UserEntity user) 정의 필수***)
+        List<AuctionProductsEntity> myProducts = auctionProductsRepository.findByUser(user);
+
+        // 3. DTO로 변환
+        return myProducts.stream()
+                .map(product -> {
+                    String mainImageUrl = imageRepository.findFirstImageUrlByAuctionId(product.getAuctionId())
+                            .orElse("default_product.png");
+
+                    return AuctionListResponseDto.builder()
+                            .auctionId(product.getAuctionId())
+                            .title(product.getTitle())
+                            .currentPrice(product.getCurrentPrice())
+                            .endTime(product.getEndTime())
+                            .sellingStatus(calculateSellingStatus(product))
+                            //.categoryName(product.getCategory().getCategoryName())
+                            .sellerNickname(product.getUser().getNickname())
+                            .mainImageUrl(mainImageUrl)
+                            .wishCount(wishlistRepository.countByAuction(product))
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
+
+    // 상세조회
+    @Transactional(readOnly = true)
+    public AuctionFindDto getAuctionFind(Long auctionId, Long userId) {
+        // auctionId로 상품을 조회하며, 필요한 연관 엔티티(user, category, images)를 JOIN FETCH로 함께 가져옵니다.
+        AuctionProductsEntity products = auctionProductsRepository.findByIdWithDetails(auctionId)
+                .orElseThrow(() -> new IllegalArgumentException("Auction Not Found with ID: " + auctionId));
+
+        // 이미지 DTO 변환 시 DB에 저장된 영구 URL 사용
+        List<ImageDto> imageDtos = products.getImages()
+                .stream()
+                .map(imageEntity -> ImageDto.builder()
+                        .imageUrl(imageEntity.getImageUrl())
+                        .imageType(imageEntity.getImageType())
+                        .build())
+                .collect(Collectors.toList());
+
+        // 현재 시점을 기준으로 경매 상태 계산
+        String sellingStatus = calculateSellingStatus(products);
+
+        // 찜 개수 조회
+        Integer wishCount = wishlistRepository.countByAuction(products);
+
+        // 판매자 온도 (임의 값 또는 실제 로직을 통해 가져와야 함)
+        final Double DEFAULT_TEMP = 36.5;
+
+        // 카테고리 구조 처리: 대분류/소분류 분리 (CategoryEntity에 getParent()가 있다고 가정)
+        CategoryEntity subCategoryEntity = products.getCategory();
+        CategoryEntity mainCategoryEntity = subCategoryEntity.getParent(); // 부모 카테고리
+
+        String mainCategory = "";
+        String subCategory = subCategoryEntity.getCategoryName();
+
+        if (mainCategoryEntity != null) {
+            String fullMainName = mainCategoryEntity.getCategoryName();
+            String[] mainParts = fullMainName.split("/");
+
+            // DB에 "대분류/소분류" 형태로 저장되어 있다면 첫 번째 파트만 사용
+            mainCategory = mainParts[0].trim();
+
+        } else {
+            // 부모가 없다면 (스스로 대분류라면), 현재 이름을 mainCategory에 넣고 subCategory는 비움
+            mainCategory = subCategoryEntity.getCategoryName();
+            subCategory = null;
+        }
+
+        // 최종 DTO 빌드 및 반환
+        return AuctionFindDto.builder()
+                .auctionId(products.getAuctionId())
+                .title(products.getTitle())
+                .description(products.getDescription())
+                .currentPrice(products.getCurrentPrice())
+                .minBidPrice(products.getMinBidPrice())
+                .bidCount(products.getBidCount())
+                .startTime(products.getStartTime())
+                .createdAt(products.getCreatedAt())
+                .endTime(products.getEndTime())
+                .categoryId(products.getCategory().getCategoryId())
+                .categoryMain(mainCategory)
+                .categorySub(subCategory)
+                .sellerId(products.getUser().getUserId())
+                .sellerNickname(products.getUser().getNickname())
+                .sellerProfileImageUrl(products.getUser().getProfileImageUrl())
+                .images(imageDtos)
+                .sellingStatus(sellingStatus)
+                .wishCount(wishCount)
+                .sellerTemperature(DEFAULT_TEMP)
+                .build();
     }
 
     @Transactional
@@ -109,39 +233,21 @@ public class AuctionProductsService {
         }
 
         products.setDeletedAt(LocalDateTime.now());
-        // 💡 추가 개선 사항: 파일 저장소가 로컬/S3인 경우, 여기서 ImageService를 통해 실제 파일 삭제 로직을 호출해야 함.
+        // 추가 개선 사항: 파일 저장소가 로컬/S3인 경우, 여기서 ImageService를 통해 실제 파일 삭제 로직을 호출해야 함.
     }
 
-    //  목록 조회 메서드
+    // 검색
     @Transactional(readOnly = true)
-    public PagingResponseDto<AuctionListResponseDto> getAuctionList(
+    public PagingResponseDto<AuctionListResponseDto> searchAuctions(
             int page,
             int size,
-            Integer categoryId,
-            String searchKeyword,
-            Boolean includeEnded,
-            String sortBy,
-            Integer minPrice,
-            Integer maxPrice
+            String searchKeyword, // 검색 키워드만 사용
+            String sortBy
     ) {
+        // 1. 경매 상태 리스트 결정 (기본값: 진행 중 또는 시작 전)
+        List<SellingStatus> statuses = Arrays.asList(SellingStatus.PROGRESS, SellingStatus.SALE, SellingStatus.BEFORE);
 
-        // 1. 경매 상태 리스트 결정
-        List<SellingStatus> statuses;
-        if (Boolean.TRUE.equals(includeEnded)) {
-            // includeEnded=true: 모든 상태를 조회 대상에 포함 (BEFORE, SALE 포함)
-            statuses = Arrays.asList(
-                    SellingStatus.BEFORE,    // 새로 추가된 상태
-                    SellingStatus.SALE,
-                    SellingStatus.PROGRESS,
-                    SellingStatus.FINISH,
-                    SellingStatus.COMPLETED
-            );
-        } else {
-            // includeEnded=false: 진행 중이거나 판매 예정인 상품만 포함 (종료된 상태 제외)
-            statuses = Arrays.asList(SellingStatus.PROGRESS, SellingStatus.SALE, SellingStatus.BEFORE);
-        }
-
-        // 2. 정렬 기준(Sort)
+        // 2. 정렬 기준(Sort) 설정
         Sort sort = switch (sortBy != null ? sortBy.toLowerCase() : "latest") {
             case "price_desc" -> Sort.by("currentPrice").descending();
             case "price_asc" -> Sort.by("currentPrice").ascending();
@@ -150,22 +256,18 @@ public class AuctionProductsService {
         };
         Pageable pageable = PageRequest.of(page, size, sort);
 
-        // 3. Repository의 새로운 쿼리 메서드 호출
-        Page<AuctionProductsEntity> auctionPage = auctionProductsRepository.findFilteredAuctionsByStatus(
-                categoryId,
+        // 3. Repository의 검색 쿼리 호출 (제목만 검색하는 쿼리를 사용해야 함)
+        // 🚨 주의: Repository에 findByKeywordOrFilter 쿼리가 정의되어 있어야 합니다.
+        Page<AuctionProductsEntity> auctionPage = auctionProductsRepository.findByKeywordOrFilter(
                 searchKeyword,
                 statuses,
-                minPrice,
-                maxPrice,
                 pageable
         );
 
-        // 4. DTO
+        // 4. DTO 변환 및 반환 (기존 로직 재사용)
         List<AuctionListResponseDto> dtoList = auctionPage.getContent().stream()
                 .map(product -> {
-                    // 찜 개수 조회
                     Integer wishCount = wishlistRepository.countByAuction(product);
-                    // 메인 이미지
                     String mainImageUrl = imageRepository.findFirstImageUrlByAuctionId(product.getAuctionId())
                             .orElse("default_product.png");
 
@@ -175,7 +277,7 @@ public class AuctionProductsService {
                             .currentPrice(product.getCurrentPrice())
                             .endTime(product.getEndTime())
                             .sellingStatus(calculateSellingStatus(product))
-                            .categoryName(product.getCategory().getCategoryName())
+                            //.categoryName(product.getCategory().getCategoryName())
                             .sellerNickname(product.getUser().getNickname())
                             .mainImageUrl(mainImageUrl)
                             .wishCount(wishCount)
@@ -184,6 +286,122 @@ public class AuctionProductsService {
                 .toList();
 
         // 5. 페이징 응답 DTO 생성
+        return PagingResponseDto.<AuctionListResponseDto>builder()
+                .data(dtoList)
+                .totalPages(auctionPage.getTotalPages())
+                .totalElements(auctionPage.getTotalElements())
+                .currentPage(auctionPage.getNumber())
+                .pageSize(auctionPage.getSize())
+                .isFirst(auctionPage.isFirst())
+                .isLast(auctionPage.isLast())
+                .build();
+    }
+
+    // 대분류
+    @Transactional(readOnly = true)
+    public PagingResponseDto<AuctionListResponseDto> filterByMainCategory(
+            int page,
+            int size,
+            Integer mainCategoryId, // 대분류 ID
+            Integer minPrice,
+            Integer maxPrice,
+            String sortBy,
+            Boolean includeEnded
+    ) {
+        // 1. 상태 및 정렬 설정
+        List<SellingStatus> statuses = getFilterStatuses(includeEnded);
+        Sort sort = getSortCriteria(sortBy);
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        // 2. Repository 호출: 대분류 + 하위 소분류 포함 쿼리 사용 (findByMainCategoryWithChildren)
+        Page<AuctionProductsEntity> auctionPage = auctionProductsRepository.findByMainCategoryWithChildren(
+                mainCategoryId,
+                statuses,
+                minPrice,
+                maxPrice,
+                pageable
+        );
+
+        // 3. DTO 변환 및 반환
+        return buildPagingResponse(auctionPage);
+    }
+
+    // 소분류
+    @Transactional(readOnly = true)
+    public PagingResponseDto<AuctionListResponseDto> filterBySubCategory(
+            int page,
+            int size,
+            Integer subCategoryId, // 소분류 ID
+            Integer minPrice,
+            Integer maxPrice,
+            String sortBy,
+            Boolean includeEnded
+    ) {
+        // 1. 상태 및 정렬 설정
+        List<SellingStatus> statuses = getFilterStatuses(includeEnded);
+        Sort sort = getSortCriteria(sortBy);
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        // 2. Repository 호출: 정확히 해당 소분류만 조회하는 쿼리 사용 (findBySubCategoryOnly)
+        Page<AuctionProductsEntity> auctionPage = auctionProductsRepository.findBySubCategoryOnly(
+                subCategoryId,
+                statuses,
+                minPrice,
+                maxPrice,
+                pageable
+        );
+
+        // 3. DTO 변환 및 반환
+        return buildPagingResponse(auctionPage);
+    }
+
+    // 경매 상태 리스트 결정 메서드
+    private List<SellingStatus> getFilterStatuses(Boolean includeEnded) {
+        if (Boolean.TRUE.equals(includeEnded)) {
+            // 종료, 완료된 상품까지 모두 포함
+            return Arrays.asList(SellingStatus.BEFORE, SellingStatus.SALE, SellingStatus.PROGRESS, SellingStatus.FINISH, SellingStatus.COMPLETED);
+        } else {
+            // 진행 중이거나 예정인 상품만
+            return Arrays.asList(SellingStatus.PROGRESS, SellingStatus.SALE, SellingStatus.BEFORE);
+        }
+    }
+
+    // 정렬 기준 설정 메서드
+    private Sort getSortCriteria(String sortBy) {
+        return switch (sortBy != null ? sortBy.toLowerCase() : "latest") {
+            case "price_desc" -> Sort.by("currentPrice").descending();
+            case "price_asc" -> Sort.by("currentPrice").ascending();
+            case "end_time" -> Sort.by("endTime").ascending();
+            default -> Sort.by("createdAt").descending(); // 기본: 최신순
+        };
+    }
+
+    // DTO 매핑 유틸리티 (목록용) - 이 메서드는 실제 엔티티를 DTO로 변환하는 상세 로직이 필요합니다.
+    private AuctionListResponseDto mapToAuctionListResponseDto(AuctionProductsEntity product) {
+        // 이 부분은 기존에 구현했던 AuctionListResponseDto 매핑 로직을 사용해야 합니다.
+        Integer wishCount = wishlistRepository.countByAuction(product);
+        String mainImageUrl = imageRepository.findFirstImageUrlByAuctionId(product.getAuctionId())
+                .orElse("default_product.png");
+
+        return AuctionListResponseDto.builder()
+                .auctionId(product.getAuctionId())
+                .title(product.getTitle())
+                .currentPrice(product.getCurrentPrice())
+                .endTime(product.getEndTime())
+                .sellingStatus(calculateSellingStatus(product)) // calculateSellingStatus도 클래스에 있어야 합니다.
+              //  .categoryName(product.getCategory().getCategoryName())
+                .sellerNickname(product.getUser().getNickname())
+                .mainImageUrl(mainImageUrl)
+                .wishCount(wishCount)
+                .build();
+    }
+
+    // 페이징 응답 DTO 빌더 유틸리티
+    private PagingResponseDto<AuctionListResponseDto> buildPagingResponse(Page<AuctionProductsEntity> auctionPage) {
+        List<AuctionListResponseDto> dtoList = auctionPage.getContent().stream()
+                .map(this::mapToAuctionListResponseDto)
+                .toList();
+
         return PagingResponseDto.<AuctionListResponseDto>builder()
                 .data(dtoList)
                 .totalPages(auctionPage.getTotalPages())
@@ -213,71 +431,6 @@ public class AuctionProductsService {
             case COMPLETED -> "거래 완료";
             case FINISH -> "종료";
         };
-    }
-
-    //  경매물품 상세 조회
-    @Transactional(readOnly = true)
-    public AuctionFindDto getAuctionFind(Long auctionId, Long userId) {
-        AuctionProductsEntity products = auctionProductsRepository.findByIdWithDetails(auctionId)
-                .orElseThrow(() -> new IllegalArgumentException("Auction Not Found with ID: " + auctionId));
-
-        // 이미지 DTO 변환 시 DB에 저장된 영구 URL 사용
-        List<ImageDto> imageDtos = products.getImages()
-                .stream()
-                .map(imageEntity -> ImageDto.builder()
-                        .imageUrl(imageEntity.getImageUrl())
-                        .imageType(imageEntity.getImageType())
-                        .build())
-                .collect(Collectors.toList());
-
-        String sellingStatus = calculateSellingStatus(products);
-
-        // 찜 개수
-        Integer wishCount = wishlistRepository.countByAuction(products);
-
-        final Double DEFAULT_TEMP = 36.5;
-
-        CategoryEntity subCategoryEntity = products.getCategory();
-        CategoryEntity mainCategoryEntity = subCategoryEntity.getParent();
-
-        String mainCategory = "";
-        String subCategory = subCategoryEntity.getCategoryName();
-
-        if (mainCategoryEntity != null) {
-            String fullMainName = mainCategoryEntity.getCategoryName(); // 예: "생활/가전"
-            String[] mainParts = fullMainName.split("/");
-
-            // 대분류 이름의 첫 번째 파트만 사용 (혹은 DB 이름에 슬래시가 없다면 그냥 fullMainName 사용)
-            mainCategory = mainParts[0].trim(); // mainCategory = "생활"
-
-        } else {
-            // 부모가 없다면 (스스로 대분류라면), 현재 이름을 mainCategory에 넣고 subCategory는 비움
-            mainCategory = subCategoryEntity.getCategoryName(); // "가전제품" (이 경우 부모가 없으므로)
-            subCategory = null;
-        }
-
-        return AuctionFindDto.builder()
-                .auctionId(products.getAuctionId())
-                .title(products.getTitle())
-                .description(products.getDescription())
-                .currentPrice(products.getCurrentPrice())
-                .minBidPrice(products.getMinBidPrice())
-                .bidCount(products.getBidCount())
-                .startTime(products.getStartTime())
-                .createdAt(products.getCreatedAt())
-                .endTime(products.getEndTime())
-                .categoryId(products.getCategory().getCategoryId())
-                //.categoryName(products.getCategory().getCategoryName())
-                .categoryMain(mainCategory)
-                .categorySub(subCategory)
-                .sellerId(products.getUser().getUserId())
-                .sellerNickname(products.getUser().getNickname())
-                .sellerProfileImageUrl(products.getUser().getProfileImageUrl())
-                .images(imageDtos)
-                .sellingStatus(sellingStatus)
-                .wishCount(wishCount)
-                .sellerTemperature(DEFAULT_TEMP)
-                .build();
     }
 
     @Transactional(readOnly = true)
