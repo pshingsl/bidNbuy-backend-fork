@@ -239,4 +239,21 @@ public class UserController {
 
         return ResponseEntity.ok(response);
     }
+
+    //로그아웃
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(Authentication authentication){
+        Object principal = authentication.getPrincipal();
+        Long currentUserId;
+
+        if(principal instanceof Long){
+            currentUserId = (Long) principal;
+        }else{
+            return  ResponseEntity.status(401).build();
+        }
+
+        userService.logout(currentUserId);
+
+        return ResponseEntity.ok().build();
+    }
 }

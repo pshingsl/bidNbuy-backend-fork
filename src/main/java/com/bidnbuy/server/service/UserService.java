@@ -4,6 +4,7 @@ import com.bidnbuy.server.dto.UserSignupRequestDto;
 import com.bidnbuy.server.entity.UserEntity;
 import com.bidnbuy.server.enums.AuthStatus;
 import com.bidnbuy.server.exception.CustomAuthenticationException;
+import com.bidnbuy.server.repository.RefreshTokenRepository;
 import com.bidnbuy.server.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.Data;
@@ -17,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -29,13 +31,16 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
     private final EmailVerificationService emailVerificationService; //회원가입 시에 이메일 인증으로 수정
+    private final RefreshTokenRepository refreshTokenRepository;
 
     public UserService(UserRepository repository, PasswordEncoder passwordEncoder,
-                       UserRepository userRepository, EmailVerificationService emailVerificationService){
+                       UserRepository userRepository, EmailVerificationService emailVerificationService,
+                       RefreshTokenRepository refreshTokenRepository){
         this.repository = repository;
         this.passwordEncoder = passwordEncoder;
         this.userRepository = userRepository;
         this.emailVerificationService = emailVerificationService;
+        this.refreshTokenRepository = refreshTokenRepository;
     }
 
     private static final String PASSWORD_REGEX =
@@ -208,5 +213,26 @@ public class UserService {
     public UserEntity findById(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("user not found:{} " + userId));
+    }
+
+    //로그아웃
+    @Transactional
+    public void logout(Long userId){
+        log.info("사용자 로그아웃{}", userId);
+
+        UserEntity userEntity = userRepository.findById(userId)
+                        .orElseThrow(()->new NoSuchElementException(userId+"해당 사용자를 찾을 수 없음"));
+
+        //리프레시 토큰 연결
+        refreshTokenRepository.findByUser(userEntity)
+            .ifPresentOrElse(
+                refreshToken->{
+                    refreshTokenRepository.delete(refreshToken);
+                    log.info("성공적으로 토큰 삭제");
+                },
+                ()->{
+                    log.warn("유효한 토큰이 없음");
+                }
+            );
     }
 }
