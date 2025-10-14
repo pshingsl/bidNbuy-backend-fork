@@ -9,7 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -18,6 +20,8 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @Component
@@ -63,12 +67,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 if(userIdStr !=null){
                     Long userId = Long.valueOf(userIdStr);
                     log.info("Authenticated user Id : {}", userId);
+                    
+                    // 역할 기반 권한 설정
+                    List<GrantedAuthority> authorities = new ArrayList<>();
+                    String role = jwtProvider.getRoleFromToken(token);
+                    
+                    if ("ADMIN".equals(role)) {
+                        authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+                        log.info("Admin role assigned to user: {}", userId);
+                    }
+                    // 모든 사용자 기본으로 ROLE_USER 권한
+                    authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+                    
                     //Security Context에 저장할 인증 토큰 생성
                     AbstractAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                             userId,
                             null,//비번 비밀
                             //임시 기본  권한 설정, 디비에 없더라고 시큐리티 인증을 위해 일반 사용자임을 알림
-                            AuthorityUtils.createAuthorityList("ROLE_USER")
+                            // AuthorityUtils.createAuthorityList("ROLE_USER")
+                            authorities
                     );
                     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 //                    authentication.setAuthenticated(true);

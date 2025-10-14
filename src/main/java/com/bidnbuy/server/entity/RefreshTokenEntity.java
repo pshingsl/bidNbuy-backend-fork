@@ -20,8 +20,12 @@ public class RefreshTokenEntity {
     private Long tokenId;
 
     @OneToOne
-    @JoinColumn(name = "user_id", referencedColumnName = "user_id", nullable = false, unique = true)
+    @JoinColumn(name = "user_id", referencedColumnName = "user_id", nullable = true, unique = true)
     private UserEntity user;
+
+    @OneToOne
+    @JoinColumn(name = "admin_id", referencedColumnName = "admin_id", nullable = true, unique = true)
+    private AdminEntity admin;
 
     @Column(name = "token_value", nullable = false, length = 500)
     private String tokenValue;
