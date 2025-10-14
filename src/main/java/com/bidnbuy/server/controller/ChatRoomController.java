@@ -83,4 +83,15 @@ public class ChatRoomController {
         Long count = chatMessageService.getUnreadMessageCount(chatroomId, currentUserId);
         return ResponseEntity.ok(count);
     }
+
+    @DeleteMapping("/{chatroomId}")
+    public ResponseEntity<Void> deleteChatRoom(
+            @PathVariable Long chatroomId,
+            @AuthenticationPrincipal Long currnetUserId){
+        log.info("채팅방 삭제: chatroomId={}, userId={}", chatroomId, currnetUserId);
+
+        chatRoomService.deeltedChatRoom(chatroomId, currnetUserId);
+
+        return ResponseEntity.noContent().build();
+    }
 }

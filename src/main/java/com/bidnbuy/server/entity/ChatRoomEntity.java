@@ -45,4 +45,7 @@ public class ChatRoomEntity {
 
     @Column(name = "unread_count", nullable = false)
     private int unreadCount = 0;
+
+    @Column(name="deleted_at")
+    private LocalDateTime deletedAt;
 }
