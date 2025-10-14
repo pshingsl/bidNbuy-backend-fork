@@ -128,9 +128,17 @@ public class AuctionProductsService {
         // 1. 경매 상태 리스트 결정
         List<SellingStatus> statuses;
         if (Boolean.TRUE.equals(includeEnded)) {
-            statuses = Arrays.asList(SellingStatus.COMPLETED, SellingStatus.PROGRESS, SellingStatus.FINISH);
+            // includeEnded=true: 모든 상태를 조회 대상에 포함 (BEFORE, SALE 포함)
+            statuses = Arrays.asList(
+                    SellingStatus.BEFORE,    // 새로 추가된 상태
+                    SellingStatus.SALE,
+                    SellingStatus.PROGRESS,
+                    SellingStatus.FINISH,
+                    SellingStatus.COMPLETED
+            );
         } else {
-            statuses = List.of(SellingStatus.PROGRESS);
+            // includeEnded=false: 진행 중이거나 판매 예정인 상품만 포함 (종료된 상태 제외)
+            statuses = Arrays.asList(SellingStatus.PROGRESS, SellingStatus.SALE, SellingStatus.BEFORE);
         }
 
         // 2. 정렬 기준(Sort)
@@ -193,14 +201,15 @@ public class AuctionProductsService {
             case PROGRESS -> {
                 LocalDateTime now = LocalDateTime.now();
                 if (now.isBefore(product.getStartTime())) {
-                    yield "시작"; // 시작 전
+                    yield "시작 전"; // 시작 전
                 } else if (now.isAfter(product.getEndTime())) {
                     yield "종료";
                 } else {
                     yield "진행 중"; // 판매 중
                 }
             }
-            case SALE -> "시작";
+            case SALE -> "진행 중";
+            case BEFORE -> "시작전";
             case COMPLETED -> "거래 완료";
             case FINISH -> "종료";
         };
@@ -228,17 +237,23 @@ public class AuctionProductsService {
 
         final Double DEFAULT_TEMP = 36.5;
 
-        String fullCategoryName = products.getCategory().getCategoryName(); // 예: "생활/가전"
-        String mainCategory = fullCategoryName; // 기본값은 전체 이름
-        String subCategory = null;
+        CategoryEntity subCategoryEntity = products.getCategory();
+        CategoryEntity mainCategoryEntity = subCategoryEntity.getParent();
 
-        String[] parts = fullCategoryName.split("/");
+        String mainCategory = "";
+        String subCategory = subCategoryEntity.getCategoryName();
 
-        if (parts.length >= 1) {
-            mainCategory = parts[0].trim();
-        }
-        if (parts.length >= 2) {
-            subCategory = parts[1].trim();
+        if (mainCategoryEntity != null) {
+            String fullMainName = mainCategoryEntity.getCategoryName(); // 예: "생활/가전"
+            String[] mainParts = fullMainName.split("/");
+
+            // 대분류 이름의 첫 번째 파트만 사용 (혹은 DB 이름에 슬래시가 없다면 그냥 fullMainName 사용)
+            mainCategory = mainParts[0].trim(); // mainCategory = "생활"
+
+        } else {
+            // 부모가 없다면 (스스로 대분류라면), 현재 이름을 mainCategory에 넣고 subCategory는 비움
+            mainCategory = subCategoryEntity.getCategoryName(); // "가전제품" (이 경우 부모가 없으므로)
+            subCategory = null;
         }
 
         return AuctionFindDto.builder()
