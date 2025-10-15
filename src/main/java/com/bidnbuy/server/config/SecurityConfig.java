@@ -78,12 +78,13 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.GET, "/auctions/**").permitAll() // 비로그인자도 다 볼 수있다.
                     .requestMatchers("/auth/signup", "/auth/login", "/auth/kakao","/favicon.ico", "/auth/naver", "/auth/reissue"
                             , "/auth/naver/loginstart", "/auth/email/**", "/auth/password/**", "/chat_test.html**", "/ws/bid/**", "/images/**").permitAll()
+                    .requestMatchers("/chatrooms/**").authenticated()
                     .requestMatchers("/admin/auth/signup", "/admin/auth/login", "/admin/auth/reissue").permitAll() // 관리자 회원가입, 로그인, 토큰재발급 일단 허용
                     .requestMatchers("/admin/**").hasRole("ADMIN") // 나머지 관리자
                     .anyRequest().authenticated()
             ).csrf(csrf -> csrf.disable());
 
-        http.addFilterAfter(
+        http.addFilterBefore(
                 jwtAuthenticationFilter,
                 UsernamePasswordAuthenticationFilter.class
         );

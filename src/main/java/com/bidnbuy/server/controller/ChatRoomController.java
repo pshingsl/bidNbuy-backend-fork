@@ -70,6 +70,9 @@ public class ChatRoomController {
     //채팅방 리스트 가져오기
     @GetMapping("/list")
     public ResponseEntity<List<ChatRoomListDto>> getChatList(@AuthenticationPrincipal Long userId){
+        if (userId == null) {
+            throw new AccessDeniedException("인증 정보 없음");
+        }
         List<ChatRoomListDto> chatList = chatRoomService.getChatRoomList(userId);
         return ResponseEntity.ok(chatList);
     }
@@ -90,7 +93,7 @@ public class ChatRoomController {
             @AuthenticationPrincipal Long currnetUserId){
         log.info("채팅방 삭제: chatroomId={}, userId={}", chatroomId, currnetUserId);
 
-        chatRoomService.deeltedChatRoom(chatroomId, currnetUserId);
+        chatRoomService.deltedChatRoom(chatroomId, currnetUserId);
 
         return ResponseEntity.noContent().build();
     }

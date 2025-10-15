@@ -22,6 +22,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -447,5 +448,11 @@ public class AuctionProductsService {
 
         return auctionProductsRepository.findByAuctionIdAndSellingStatusIn(auctionId, allowedStatuses)
                 .orElseThrow(() -> new RuntimeException("Auction product not found"));
+    }
+
+    //채팅연결
+    @Transactional(readOnly = true)
+    public Optional<AuctionProductsEntity> findByIdAnyway(Long auctionId){
+        return auctionProductsRepository.findById(auctionId);
     }
 }

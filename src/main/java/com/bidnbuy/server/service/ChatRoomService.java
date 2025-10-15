@@ -10,6 +10,7 @@ import com.bidnbuy.server.repository.ChatRoomRepository;
 import com.sun.tools.jconsole.JConsoleContext;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ChatRoomService {
@@ -67,9 +69,10 @@ public class ChatRoomService {
     }
 
     //채팅방 목록 조회
+    @Transactional(readOnly = true)
     public List<ChatRoomListDto> getChatRoomList (Long currentUserId){
         UserEntity currentUser = userService.findById(currentUserId);
-        List<ChatRoomEntity> chatRooms = chatRoomRepository.findByBuyerIdOrSellerIdOrderByLastMessageTimeDesc(currentUser, currentUser);
+        List<ChatRoomEntity> chatRooms = chatRoomRepository.findByBuyerIdOrSellerIdAndDeletedAtIsNullOrderByLastMessageTime(currentUser, currentUser);
 
         return chatRooms.stream()
                 .map(entity -> convertToChatRoomListDto(entity, currentUserId))
@@ -97,21 +100,35 @@ public class ChatRoomService {
                 .build();
     }
 
-    private ChatRoomListDto processAuctionImage(ChatRoomListDto dto){
-        try{
-            Long auctionId = (dto.getAuctionId());
-            AuctionProductsEntity products = auctionProductsService.findById(auctionId);
-            if(products.getImages() !=null && !products.getImages().isEmpty()){
-                dto.setAuctionImageUrl(products.getImages().get(0).getImageUrl());
-            }
-        }catch (Exception e){
 
+    private ChatRoomListDto processAuctionImage(ChatRoomListDto dto){
+        Long auctionId = dto.getAuctionId();
+
+        try {
+            Optional<AuctionProductsEntity> optionalProduct = auctionProductsService.findByIdAnyway(auctionId);
+
+            if (optionalProduct.isPresent()) {
+                AuctionProductsEntity product = optionalProduct.get();
+
+                dto.setAuctionImageUrl(product.getMainImageUrl());
+                dto.setAuctionTitle(product.getTitle());
+
+            } else {
+                log.warn("경매 상품 정보 조회 중 상품을 찾을 수 없습니다. Auction ID: {}", auctionId);
+                dto.setAuctionTitle("[삭제된 상품]");
+                dto.setAuctionImageUrl(null);
+            }
+
+        } catch (Exception e) {
+            log.error("Auction ID {} 처리 중 치명적인 예외 발생: {}", auctionId, e.getMessage(), e);
+            dto.setAuctionTitle("[오류 발생 상품]");
+            dto.setAuctionImageUrl(null);
         }
         return dto;
     }
 
     @Transactional
-    public void deeltedChatRoom(Long chatroomId, Long currentUserId){
+    public void deltedChatRoom(Long chatroomId, Long currentUserId){
         ChatRoomEntity chatRoom = chatRoomRepository.findById(chatroomId)
                 .orElseThrow(()-> new EntityNotFoundException("채팅방을 찾을 수 없습니다."));
 

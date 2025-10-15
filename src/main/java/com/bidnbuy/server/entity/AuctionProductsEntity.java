@@ -1,5 +1,6 @@
 package com.bidnbuy.server.entity;
 
+import com.bidnbuy.server.enums.ImageType;
 import com.bidnbuy.server.enums.SellingStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -94,4 +95,16 @@ public class AuctionProductsEntity {
             user.getAuctionProducts().add(this);
         }
     }
+
+    public String getMainImageUrl() {
+        if (this.images == null || this.images.isEmpty()) {
+            return null;
+        }
+        return this.images.stream()
+                .filter(img -> ImageType.MAIN.equals(img.getImageType()))
+                .findFirst()
+                .map(ImageEntity::getImageUrl)
+                .orElse(null);
+    }
+
 }
