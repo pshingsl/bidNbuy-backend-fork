@@ -72,7 +72,7 @@ public class ChatRoomService {
     @Transactional(readOnly = true)
     public List<ChatRoomListDto> getChatRoomList (Long currentUserId){
         UserEntity currentUser = userService.findById(currentUserId);
-        List<ChatRoomEntity> chatRooms = chatRoomRepository.findByBuyerIdOrSellerIdAndDeletedAtIsNullOrderByLastMessageTime(currentUser, currentUser);
+        List<ChatRoomEntity> chatRooms = chatRoomRepository.findActiveRoomsByUserId(currentUser);
 
         return chatRooms.stream()
                 .map(entity -> convertToChatRoomListDto(entity, currentUserId))
