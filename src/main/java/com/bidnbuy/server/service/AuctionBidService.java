@@ -39,6 +39,11 @@ public class AuctionBidService {
         AuctionProductsEntity auctionProduct = auctionProductsRepository.findByIdWithLock(auctionId)
                 .orElseThrow(() -> new RuntimeException("AUCTION_NOT_FOUND, 존재하지 않는 경매 물품입니다."));
 
+        Long sellerId = auctionProduct.getUser().getUserId();
+        if(userId == sellerId) {
+            throw new RuntimeException("SELF_BIDDING_FORBIDDEN, 자신이 등록한 경매 물품에는 입찰할 수 없습니다.");
+        }
+
         // 경매가 진행 중인지 확인
         if (auctionProduct.getSellingStatus() != SellingStatus.PROGRESS) {
             throw new RuntimeException("AUCTION_NOT_IN_PROGRESS, 현재 입찰이 불가능합니다. 경매가 진행 중이 아닙니다.");

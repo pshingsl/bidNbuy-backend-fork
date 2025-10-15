@@ -1,5 +1,6 @@
 package com.bidnbuy.server.service;
 
+import com.bidnbuy.server.entity.AdminEntity;
 import com.bidnbuy.server.entity.RefreshTokenEntity;
 import com.bidnbuy.server.entity.UserEntity;
 import com.bidnbuy.server.repository.RefreshTokenRepository;
@@ -41,5 +42,23 @@ public class RefreshTokenService {
     @Transactional
     public void deleteByTokenValue(String tokenValue){
         refreshTokenRepository.findByTokenValue(tokenValue).ifPresent(refreshTokenRepository::delete);
+    }
+
+    // 관리자용 refresh token 저장/업데이트
+    @Transactional
+    public void saveOrUpdateForAdmin(AdminEntity admin, String tokenValue, Instant expiryDate){
+        Optional<RefreshTokenEntity> existingToken = refreshTokenRepository.findByAdmin(admin);
+        if(existingToken.isPresent()){
+            RefreshTokenEntity token = existingToken.get();
+            token.updateToken(tokenValue, expiryDate);
+            refreshTokenRepository.saveAndFlush(token);
+        }else{
+            RefreshTokenEntity newToken = RefreshTokenEntity.builder()
+                    .admin(admin)
+                    .tokenValue(tokenValue)
+                    .expiryDate(expiryDate)
+                    .build();
+            refreshTokenRepository.save(newToken);
+        }
     }
 }

@@ -51,13 +51,15 @@ public class EmailVerificationService {
         }
         //검증 성공시 auth_status값 업데이트
         verificationEntity.setIsVerified(IsVerified.Y); //Transactional으로 자동 저장됨!
-        updateUserAuthStatus(email);
+//        updateUserAuthStatus(email);
     }
-    @Transactional
-    private void updateUserAuthStatus(String email){
-        UserEntity user = userRepository.findByEmail(email)
-                .orElseThrow(()->new RuntimeException("인증된 이메일을 가진 사용자를 찾을 수 없을 때"));
-        user.setAuthStatus(AuthStatus.Y);
-        userRepository.save(user);
+
+    public boolean isEmailVerified(String email){
+        return emailVerificationRepository.findByEmail(email)
+                .map(entity->entity.getIsVerified() == IsVerified.Y)
+                .orElse(false);
     }
+
+
+
 }

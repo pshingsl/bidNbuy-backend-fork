@@ -55,15 +55,20 @@ public class NaverApiService {
                 NaverTokenResponseDto.class
         );
         if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+//            System.out.println("@@@@@@@DEBUG: 획득된 Access Token: " + response.getBody().getAccessToken());
+
             return response.getBody();
         }
         throw new RuntimeException("네이버 Access Token 획득 실패");
     }
 
     public NaverUserInfoResponseDto getNaverUserInfo(String NaverAccessToken) {
+//        System.out.println("########DEBUG: 사용자 정보 요청에 사용되는 토큰: " + NaverAccessToken);
 
         //헤더 설정 (Authorization 헤더에 Bearer 토큰 추가)
         HttpHeaders headers = new HttpHeaders();
+//        System.out.println("%%%%%%%%%%DEBUG: Authorization 헤더 값: Bearer " + NaverAccessToken);
+
         headers.set("Authorization", "Bearer " + NaverAccessToken);
 
         //HTTP 엔터티 생성 (헤더만)

@@ -50,4 +50,20 @@ public class CategoryController {
             return ResponseEntity.internalServerError().build();
         }
     }
+
+    @GetMapping("/{categoryId}")
+    public ResponseEntity<CategoryDto> getCategoryDetails(@PathVariable Integer categoryId) {
+        try {
+            CategoryDto category = categoryService.findById(categoryId);
+
+            if (category == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            return ResponseEntity.ok(category);
+        } catch (Exception e) {
+            log.error("단일 카테고리 조회 중 오류 발생. ID: {}", categoryId, e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
 }

@@ -6,12 +6,14 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -19,9 +21,6 @@ public class CreateAuctionDto {
     @NotNull(message = "카테고리는 필수 선택 항목입니다.")
     private Integer categoryId;
 
-    @NotNull(message = "상품 이미지는 필수입니다.")
-    @Size(min = 1, max = 10, message = "이미지는 1장 이상 10장 이하로 등록해야 합니다.")
-    private List<ImageDto> images;
 
     @NotBlank(message = "상품명은 필수 입력 항목입니다.")
     private String title;
@@ -33,6 +32,7 @@ public class CreateAuctionDto {
     @Min(value = 1, message = "시작 가격은 1원 이상이어야 합니다.")
     private Integer startPrice;
 
+    @NotNull(message = "경매 입찰금액 필수 입력 항목입니다.")
     private Integer minBidPrice;
 
     @NotNull(message = "경매 시작 일시는 필수 입력 항목입니다.")
@@ -41,6 +41,7 @@ public class CreateAuctionDto {
     @NotNull(message = "경매 마감 일시는 필수 입력 항목입니다.")
     private LocalDateTime endTime;
 
+    private List<MultipartFile> images;
 
     public CreateAuctionDto(final AuctionProductsEntity entity) {
         this.title = entity.getTitle();
@@ -49,9 +50,9 @@ public class CreateAuctionDto {
         this.minBidPrice = entity.getMinBidPrice();
         this.startTime = entity.getStartTime();
         this.endTime = entity.getEndTime();
-        this.images = entity.getImages().stream()
-                .map(ImageDto::new)
-                .collect(Collectors.toList());
+//        this.images = entity.getImages().stream()
+//                .map(ImageDto::new)
+//                .collect(Collectors.toList());
         this.categoryId = entity.getCategory().getCategoryId();
     }
 

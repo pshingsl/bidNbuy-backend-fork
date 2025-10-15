@@ -1,5 +1,6 @@
 package com.bidnbuy.server.entity;
 
+import com.bidnbuy.server.enums.ImageType;
 import com.bidnbuy.server.enums.IsVerified;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -35,6 +36,7 @@ public class ImageEntity {
     @Column(name = "image_url", nullable = false)
     private String imageUrl;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "image_type", nullable = false)
-    private String imageType;
+    private ImageType imageType;
 }

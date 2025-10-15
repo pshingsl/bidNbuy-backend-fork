@@ -19,5 +19,8 @@ public interface ImageRepository extends JpaRepository<ImageEntity, Long> {
     // 상품 상세 조회
     List<ImageEntity> findAllByAuctionProduct_AuctionId(Long auctionId);
 
+    @Query("SELECT i.imageUrl FROM ImageEntity i WHERE i.auctionProduct.auctionId = :auctionId ORDER BY i.id ASC LIMIT 1")
+    Optional<String> findFirstImageUrlByAuctionId(Long auctionId);
+
     Optional<ImageEntity> findByUser_UserId(Long userId);
 }

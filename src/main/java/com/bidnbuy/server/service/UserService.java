@@ -1,7 +1,10 @@
 package com.bidnbuy.server.service;
 
+import com.bidnbuy.server.dto.UserSignupRequestDto;
 import com.bidnbuy.server.entity.UserEntity;
+import com.bidnbuy.server.enums.AuthStatus;
 import com.bidnbuy.server.exception.CustomAuthenticationException;
+import com.bidnbuy.server.repository.RefreshTokenRepository;
 import com.bidnbuy.server.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.Data;
@@ -15,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -26,42 +30,53 @@ public class UserService {
     private final UserRepository repository; //불변성, 초기화 문제 해결을 위해 @Autowired 대신 final이랑 생성자 주입으로 바꿈
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
+    private final EmailVerificationService emailVerificationService; //회원가입 시에 이메일 인증으로 수정
+    private final RefreshTokenRepository refreshTokenRepository;
 
-    public UserService(UserRepository repository, PasswordEncoder passwordEncoder, UserRepository userRepository){
+    public UserService(UserRepository repository, PasswordEncoder passwordEncoder,
+                       UserRepository userRepository, EmailVerificationService emailVerificationService,
+                       RefreshTokenRepository refreshTokenRepository){
         this.repository = repository;
         this.passwordEncoder = passwordEncoder;
         this.userRepository = userRepository;
+        this.emailVerificationService = emailVerificationService;
+        this.refreshTokenRepository = refreshTokenRepository;
     }
 
     private static final String PASSWORD_REGEX =
             "^(?=.*[a-zA-Z])(?=.*[0-9]).{8,}$";
 
-    //회원가입
-    public UserEntity create(final UserEntity userEntity){
-        //유효성 검사 - 이메일, 비밀번호  >>누락<<
-        if(userEntity == null || userEntity.getEmail() == null || userEntity.getPassword() == null){
-            throw new RuntimeException("Invalid argument");
-        }
+    //회원가입 메서드 (수정)
+    @Transactional
+    public UserEntity signup(final UserSignupRequestDto signupRequestDto){
+        final String email = signupRequestDto.getEmail();
+        final String password = signupRequestDto.getPassword();
+        final String nickname = signupRequestDto.getNickname();
 
-        //비밀번호 유효성 검사
-        final String password = userEntity.getPassword();
         if(!password.matches(PASSWORD_REGEX)){
             log.warn("password does not meet conditions:{}", password);
             throw new RuntimeException("비밀번호는 영문과 숫자를 포함해서 8자리 이상이어야 합니다.");
         }
 
         //중복 이메일 검사
-        final String email = userEntity.getEmail();
         if(repository.existsByEmail(email)){
             log.warn("email already exists{}", email);
             throw new RuntimeException("email already exists");
         }
-        //비밀번호 암호화
-        final String ogPw = userEntity.getPassword();
-        final String encodedPw = passwordEncoder.encode(ogPw);
-        userEntity.setPassword(encodedPw);
 
-        return repository.save(userEntity);
+        if(!emailVerificationService.isEmailVerified(email)){
+            log.warn("email not verified for signup:{}:", email );
+            throw new CustomAuthenticationException("이메일 인증부터 해야 함");
+        }
+
+        UserEntity newUser = UserEntity.builder()
+                .email(email)
+                .nickname(nickname)
+                .authStatus(AuthStatus.Y)
+                .role("ROLE_USER")
+                .password(passwordEncoder.encode(password))
+                .build();
+        return repository.save(newUser);
     }
 
     //로그인 검증
@@ -198,5 +213,26 @@ public class UserService {
     public UserEntity findById(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("user not found:{} " + userId));
+    }
+
+    //로그아웃
+    @Transactional
+    public void logout(Long userId){
+        log.info("사용자 로그아웃{}", userId);
+
+        UserEntity userEntity = userRepository.findById(userId)
+                        .orElseThrow(()->new NoSuchElementException(userId+"해당 사용자를 찾을 수 없음"));
+
+        //리프레시 토큰 연결
+        refreshTokenRepository.findByUser(userEntity)
+            .ifPresentOrElse(
+                refreshToken->{
+                    refreshTokenRepository.delete(refreshToken);
+                    log.info("성공적으로 토큰 삭제");
+                },
+                ()->{
+                    log.warn("유효한 토큰이 없음");
+                }
+            );
     }
 }
