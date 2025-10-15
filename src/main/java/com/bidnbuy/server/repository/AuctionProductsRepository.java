@@ -53,6 +53,7 @@ public interface AuctionProductsRepository extends JpaRepository<AuctionProducts
     @Query("SELECT p FROM AuctionProductsEntity p " +
             "JOIN FETCH p.user u " +
             "JOIN FETCH p.category c " +
+            "LEFT JOIN FETCH p.images i " +
             "WHERE p.auctionId = :auctionId")
     Optional<AuctionProductsEntity> findByIdWithDetails(Long auctionId);
 
