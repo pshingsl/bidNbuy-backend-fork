@@ -183,19 +183,19 @@ public class AuctionProductsService {
         // 판매자 온도 (임의 값 또는 실제 로직을 통해 가져와야 함)
         final Double DEFAULT_TEMP = 36.5;
 
-        // 카테고리 구조 처리: 대분류/소분류 분리 (CategoryEntity에 getParent()가 있다고 가정)
+        // 대소분류 분리
         CategoryEntity subCategoryEntity = products.getCategory();
-        CategoryEntity mainCategoryEntity = subCategoryEntity.getParent(); // 부모 카테고리
+        CategoryEntity mainCategoryEntity = subCategoryEntity.getParent();
 
+        // 배열로 처리해ㅓ 문제
         String mainCategory = "";
         String subCategory = subCategoryEntity.getCategoryName();
 
         if (mainCategoryEntity != null) {
             String fullMainName = mainCategoryEntity.getCategoryName();
-            String[] mainParts = fullMainName.split("/");
 
             // DB에 "대분류/소분류" 형태로 저장되어 있다면 첫 번째 파트만 사용
-            mainCategory = mainParts[0].trim();
+            mainCategory = fullMainName;
 
         } else {
             // 부모가 없다면 (스스로 대분류라면), 현재 이름을 mainCategory에 넣고 subCategory는 비움
@@ -397,7 +397,7 @@ public class AuctionProductsService {
                 .currentPrice(product.getCurrentPrice())
                 .endTime(product.getEndTime())
                 .sellingStatus(calculateSellingStatus(product)) // calculateSellingStatus도 클래스에 있어야 합니다.
-              //  .categoryName(product.getCategory().getCategoryName())
+                //  .categoryName(product.getCategory().getCategoryName())
                 .sellerNickname(product.getUser().getNickname())
                 .mainImageUrl(mainImageUrl)
                 .wishCount(wishCount)
