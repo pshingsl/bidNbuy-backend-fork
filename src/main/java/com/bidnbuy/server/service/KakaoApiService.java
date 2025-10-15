@@ -16,10 +16,10 @@ import org.springframework.web.client.RestTemplate;
 public class KakaoApiService {
     private final RestTemplate restTemplate;
 
-    @Value("${kakao.client-id}")
+    @Value("${kakao.client.id}")
     private String clientId;
 
-    @Value("${kakao.redirect-uri}")
+    @Value("${kakao.redirect.uri}")
     private String redirectUri;
 
     public KakaoTokenResponseDto getKakaoAccessToken(String code){
