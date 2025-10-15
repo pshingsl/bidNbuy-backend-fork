@@ -66,10 +66,6 @@ public class PaymentController {
 
             // 1) Toss 승인 요청 : paymentKey, orderId(mercharId), amount만
             HttpResponse<String> response = tossPaymentClient.requestConfirm(request);
-            log.info("📡 Toss Confirm Response status={} body={}", response.statusCode(), response.body());
-
-
-
 
             if (response.statusCode() != 200) {
                 return ResponseEntity.status(response.statusCode()).body(response.body());
@@ -78,12 +74,13 @@ public class PaymentController {
             // 2) 응답 파싱
             PaymentResponseDto dto = tossPaymentClient.parseConfirmResponse(response.body());
 
-            log.info("✅ Toss confirm orderId={}", dto.getOrderId());
+            log.info("✅ 승인 성공: {}",
+                    dto);
 
             // 3) DB 갱신
             PaymentEntity payment = paymentService.saveConfirmedPayment(dto);
 
-            return ResponseEntity.ok(response.body());
+            return ResponseEntity.ok(dto);
 
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(

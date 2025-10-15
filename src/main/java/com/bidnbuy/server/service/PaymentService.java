@@ -8,6 +8,7 @@ import com.bidnbuy.server.enums.paymentStatus;
 import com.bidnbuy.server.repository.OrderRepository;
 import com.bidnbuy.server.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +18,7 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PaymentService {
 
     private final PaymentRepository paymentRepository;
@@ -58,8 +60,13 @@ public class PaymentService {
                 .orElseThrow(() -> new IllegalArgumentException(
                         "Payment not found by merchantOrderId: " + dto.getOrderId()));
 
+        // ✅ 이미 성공 상태라면 그대로 리턴
+        if (payment.getTossPaymentStatus() == paymentStatus.PaymentStatus.SUCCESS) {
+            log.info("이미 승인된 결제: {}", dto.getOrderId());
+            return payment;
+        }
+
         payment.setTossPaymentKey(dto.getPaymentKey());
-        payment.setTossPaymentStatus(paymentStatus.PaymentStatus.SUCCESS);
         payment.setTossPaymentStatus(mapToPaymentStatus(dto.getStatus()));
         payment.setTossPaymentMethod(mapToPaymentMethod(dto.getMethod()));
 
@@ -102,25 +109,35 @@ public class PaymentService {
 
         switch (tossMethod) {
             case "CARD":
+            case "카드":
                 return paymentStatus.PaymentMethod.CARD;
             case "VIRTUAL_ACCOUNT":
+            case "가상계좌":
                 return paymentStatus.PaymentMethod.VIRTUAL_ACCOUNT;
             case "TRANSFER":
+            case "계좌이체":
                 return paymentStatus.PaymentMethod.TRANSFER;
             case "MOBILE_PHONE":
+            case "휴대폰":
                 return paymentStatus.PaymentMethod.MOBILE;
             case "CULTURE_GIFT_CERTIFICATE":
+            case "문화상품권":
                 return paymentStatus.PaymentMethod.CULTURE_GIFT;
             case "BOOK_GIFT_CERTIFICATE":
+            case "도서문화상품권":
                 return paymentStatus.PaymentMethod.BOOK_GIFT;
             case "GAME_GIFT_CERTIFICATE":
+            case "게임문화상품권":
                 return paymentStatus.PaymentMethod.GAME_GIFT;
             case "SIMPLE_PAY":
+            case "EASY_PAY":
+            case "간편결제":
             case "TOSSPAY":
             case "PAYCO":
                 return paymentStatus.PaymentMethod.SIMPLE_PAY;
             default:
-                throw new IllegalArgumentException("지원하지 않는 결제수단: " + tossMethod);
+                log.warn("⚠️ 매핑되지 않은 Toss method 들어옴: {}", tossMethod);
+                return null; // 예외 던지지 말고 fallback
         }
     }
 }
