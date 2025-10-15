@@ -2,6 +2,7 @@ package com.bidnbuy.server.service;
 
 import com.bidnbuy.server.dto.AuctionPurchaseHistoryDto;
 import com.bidnbuy.server.dto.AuctionSalesHistoryDto;
+import com.bidnbuy.server.dto.MyPageSummaryDto;
 import com.bidnbuy.server.entity.AuctionResultEntity;
 import com.bidnbuy.server.enums.ResultStatus;
 import com.bidnbuy.server.repository.AuctionResultRepository;
@@ -17,6 +18,26 @@ import java.util.stream.Collectors;
 public class AuctionResultService {
     private final AuctionResultRepository auctionResultRepository;
 
+    // 구매 내역 요약 (최근 3개)
+    @Transactional(readOnly = true)
+    public List<AuctionPurchaseHistoryDto> getRecentPurchaseHistory(Long userId) {
+        List<AuctionPurchaseHistoryDto> history = getPurchaseHistory(userId);
+
+        if(history.size() > 3){
+            return history.subList(0, 3);
+        }
+        return history;
+    }
+
+    @Transactional(readOnly = true)
+    public List<AuctionSalesHistoryDto> getRecentSalesHistory(Long userId) {
+        List<AuctionSalesHistoryDto> history = getSalesHistory(userId);
+
+        if (history.size() > 3) {
+            return history.subList(0, 3);
+        }
+        return history;
+    }
 
     // 마이페이지 - 구매내역  (낙찰 내역) 조회
     @Transactional(readOnly = true)

@@ -1,7 +1,9 @@
 package com.bidnbuy.server.controller;
 
 import com.bidnbuy.server.dto.AuctionPurchaseHistoryDto;
+import com.bidnbuy.server.dto.AuctionResultDto;
 import com.bidnbuy.server.dto.AuctionSalesHistoryDto;
+import com.bidnbuy.server.dto.MyPageSummaryDto;
 import com.bidnbuy.server.service.AuctionResultService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +20,21 @@ import java.util.List;
 public class AuctionResultController {
 
     private final AuctionResultService auctionResultService;
+
+    @GetMapping
+    public ResponseEntity<?>getList(@AuthenticationPrincipal Long userId) {
+        // 구매 내역 3개
+        List<AuctionPurchaseHistoryDto> recentPurchases = auctionResultService.getRecentPurchaseHistory(userId);
+        // 판매 내역 3개
+        List<AuctionSalesHistoryDto> recentSales  = auctionResultService.getRecentSalesHistory(userId);
+
+        MyPageSummaryDto response = MyPageSummaryDto.builder()
+                .recentPurchase(recentPurchases)
+                .recentSales(recentSales)
+                .build();
+
+        return ResponseEntity.ok().body(response);
+    }
 
     // 마이페이지 - 구매 내역 (낙찰 내역) 조회
     @GetMapping("/purchase")
