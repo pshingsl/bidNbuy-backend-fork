@@ -33,6 +33,10 @@ public class AuctionProductsController {
             throw new IllegalArgumentException("경매 상품 이미지는 최소 1개 이상 필요합니다.");
         }
 
+        if (imageFiles.size() > 10) {
+            throw new IllegalArgumentException("경매 상품 이미지는 최대 10개까지 입니다.");
+        }
+
         AuctionProductsEntity newProduct = auctionProductsService.create(userId, dto, imageFiles);
 
         // 2. 응답 DTO 생성 및 HTTP 201 Created 반환
