@@ -58,10 +58,10 @@ public class ChatRoomService {
             chatRoom = chatRoomRepository.save(chatRoom);
         }
         return ChatRoomDto.builder()
-                .chatroomId(String.valueOf(chatRoom.getChatroomId()))
-                .buyerId(String.valueOf(chatRoom.getBuyerId().getUserId()))
-                .sellerId(String.valueOf(chatRoom.getSellerId().getUserId()))
-                .auctionId(String.valueOf(chatRoom.getAuctionId().getAuctionId()))
+                .chatroomId(chatRoom.getChatroomId())
+                .buyerId(chatRoom.getBuyerId().getUserId())
+                .sellerId(chatRoom.getSellerId().getUserId())
+                .auctionId(chatRoom.getAuctionId().getAuctionId())
                 .createdAt(chatRoom.getCreatedAt())
                 .build();
     }
@@ -84,9 +84,9 @@ public class ChatRoomService {
         AuctionProductsEntity auctionProducts = chatRoom.getAuctionId();
 
         return ChatRoomListDto.builder()
-                .chatroomId(String.valueOf(chatRoom.getChatroomId()))
-                .auctionId(String.valueOf(auctionProducts.getAuctionId()))
-                .counterpartId(String.valueOf(counterpartUser.getUserId()))
+                .chatroomId(chatRoom.getChatroomId())
+                .auctionId(auctionProducts.getAuctionId())
+                .counterpartId(counterpartUser.getUserId())
                 .counterpartNickname(counterpartUser.getNickname())
                 .counterpartProfileImageUrl(counterpartUser.getProfileImageUrl())
                 .auctionTitle(auctionProducts.getTitle())
@@ -99,7 +99,7 @@ public class ChatRoomService {
 
     private ChatRoomListDto processAuctionImage(ChatRoomListDto dto){
         try{
-            Long auctionId = Long.parseLong(dto.getAuctionId());
+            Long auctionId = (dto.getAuctionId());
             AuctionProductsEntity products = auctionProductsService.findById(auctionId);
             if(products.getImages() !=null && !products.getImages().isEmpty()){
                 dto.setAuctionImageUrl(products.getImages().get(0).getImageUrl());

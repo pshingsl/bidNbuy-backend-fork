@@ -12,10 +12,10 @@ import java.time.LocalDateTime;
 @Builder
 @AllArgsConstructor
 public class ChatRoomListDto {
-    private String chatroomId;
-    private String auctionId;
+    private long chatroomId;
+    private long auctionId;
 
-    private String counterpartId;
+    private long counterpartId;
     private String counterpartNickname;
     private String counterpartProfileImageUrl;
 
@@ -32,9 +32,9 @@ public class ChatRoomListDto {
             String auctionTitle, String auctionImageUrl,
             LocalDateTime lastMessageTime, String lastMessagePreview, int unreadCount){
 
-        this.chatroomId = String.valueOf(chatroomId);
-        this.auctionId = String.valueOf(auctionId);
-        this.counterpartId = String.valueOf(counterpartId);
+        this.chatroomId = chatroomId;
+        this.auctionId = auctionId;
+        this.counterpartId = counterpartId;
 
         this.counterpartNickname = counterpartNickname;
         this.counterpartProfileImageUrl = counterpartProfileImageUrl;

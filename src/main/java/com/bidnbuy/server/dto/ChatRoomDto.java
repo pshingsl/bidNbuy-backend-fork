@@ -12,10 +12,10 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class ChatRoomDto {
-    private String chatroomId;
-    private String buyerId;
-    private String sellerId;
-    private String auctionId;
+    private long chatroomId;
+    private long buyerId;
+    private long sellerId;
+    private long auctionId;
     private LocalDateTime createdAt;
 
     private String lastMessagePreview;

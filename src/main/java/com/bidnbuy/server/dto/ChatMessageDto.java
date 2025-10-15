@@ -13,9 +13,9 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class ChatMessageDto {
-    private String chatmessageId;
-    private String chatroomId;
-    private String senderId;
+    private long chatmessageId;
+    private long chatroomId;
+    private long senderId;
     private String message;
 //    private long buyerId;
 //    private long sellerId;

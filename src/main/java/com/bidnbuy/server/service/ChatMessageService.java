@@ -55,9 +55,9 @@ public class ChatMessageService {
         chatRoom.setLastMessageTime(savedEntity.getCreateAt());
 
         return ChatMessageDto.builder()
-                .chatmessageId(String.valueOf(savedEntity.getChatmessageId()))
-                .chatroomId(String.valueOf(savedEntity.getChatroomId().getChatroomId()))
-                .senderId(String.valueOf(savedEntity.getSenderId().getUserId()))
+                .chatmessageId(savedEntity.getChatmessageId())
+                .chatroomId(savedEntity.getChatroomId().getChatroomId())
+                .senderId(savedEntity.getSenderId().getUserId())
                 .message(savedEntity.getMessage())
                 .imageUrl(savedEntity.getImageUrl())
                 .messageType(savedEntity.getMessageType())
@@ -92,9 +92,9 @@ public class ChatMessageService {
 
     private ChatMessageDto convertToDto(ChatMessageEntity entity){
         return ChatMessageDto.builder()
-                .chatmessageId(String.valueOf(entity.getChatmessageId()))
-                .chatroomId(String.valueOf(entity.getChatroomId().getChatroomId()))
-                .senderId(String.valueOf(entity.getSenderId().getUserId()))
+                .chatmessageId(entity.getChatmessageId())
+                .chatroomId(entity.getChatroomId().getChatroomId())
+                .senderId(entity.getSenderId().getUserId())
                 .message(entity.getMessage())
                 .imageUrl(entity.getImageUrl())
                 .messageType(entity.getMessageType())
