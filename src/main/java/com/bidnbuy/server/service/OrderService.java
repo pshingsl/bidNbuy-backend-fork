@@ -1,8 +1,6 @@
 package com.bidnbuy.server.service;
 
-import com.bidnbuy.server.dto.OrderRequestDto;
-import com.bidnbuy.server.dto.OrderResponseDto;
-import com.bidnbuy.server.dto.PaymentCancelRequestDto;
+import com.bidnbuy.server.dto.*;
 import com.bidnbuy.server.entity.OrderEntity;
 import com.bidnbuy.server.entity.UserEntity;
 import com.bidnbuy.server.repository.OrderRepository;
@@ -13,6 +11,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +21,83 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
     private final PaymentService paymentService;
+
+    //주문 상태 업데이트
+    @Transactional
+    public OrderUpdateResponseDto updateOrderStatus(Long orderId, Long userId, OrderUpdateRequestDto dto) {
+        OrderEntity order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다. id=" + orderId));
+
+        // 권한 체크 (해당 주문의 판매자 또는 구매자만 수정 가능)
+        if (!Objects.equals(order.getBuyer().getUserId(), userId) &&
+                !Objects.equals(order.getSeller().getUserId(), userId)) {
+            throw new SecurityException("해당 주문을 변경할 권한이 없습니다.");
+        }
+
+        // 상태 업데이트
+        order.setOrderStatus(dto.getStatus());
+        order.setUpdatedAt(LocalDateTime.now());
+        orderRepository.save(order);
+
+        // (reason은 로그용으로만 사용하거나, 별도 테이블에 기록 가능)
+        return new OrderUpdateResponseDto(order.getOrderId(), "주문 상태가 변경되었습니다.");
+    }
+
+
+
+
+
+    //상세 조회
+    @Transactional
+    public OrderResponseDto getOrderDetail(Long orderId, Long userId) {
+        OrderEntity order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("Order not found: " + orderId));
+
+        // 📝 권한 체크: 내가 구매자 or 판매자일 때만 조회 가능
+        if (!Objects.equals(order.getBuyer().getUserId(), userId) &&
+                !Objects.equals(order.getSeller().getUserId(), userId)) {
+            throw new SecurityException("해당 주문을 조회할 권한이 없습니다.");
+        }
+
+        return OrderResponseDto.builder()
+                .orderId(order.getOrderId())
+                .sellerId(order.getSeller().getUserId())
+                .buyerId(order.getBuyer().getUserId())
+                .type(order.getType())
+                .orderStatus(order.getOrderStatus())
+                .createdAt(order.getCreatedAt())
+                .updatedAt(order.getUpdatedAt())
+                .build();
+    }
+
+
+
+    // 조회
+    public List<OrderResponseDto> getMyOrders(Long userId, String type, String status) {
+        List<OrderEntity> orders;
+
+        if ("PURCHASE".equalsIgnoreCase(type)) {
+            orders = orderRepository.findPurchaseOrders(userId, status);
+        } else if ("SALE".equalsIgnoreCase(type)) {
+            orders = orderRepository.findSaleOrders(userId, status);
+        } else {
+            throw new IllegalArgumentException("Invalid type: " + type);
+        }
+
+        return orders.stream()
+                .map(o -> OrderResponseDto.builder()
+                        .orderId(o.getOrderId())
+                        .sellerId(o.getSeller().getUserId())
+                        .buyerId(o.getBuyer().getUserId())
+                        .type(o.getType())
+                        .orderStatus(o.getOrderStatus())
+                        .createdAt(o.getCreatedAt())
+                        .updatedAt(o.getUpdatedAt())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+
 
 
     /**
@@ -91,7 +168,17 @@ public class OrderService {
         order.setUpdatedAt(LocalDateTime.now());
 
         OrderEntity saved = orderRepository.save(order);
-        return new OrderResponseDto(saved.getOrderId(), saved.getOrderStatus());
+
+        return OrderResponseDto.builder()
+                .orderId(saved.getOrderId())
+                .sellerId(saved.getSeller().getUserId())
+                .buyerId(saved.getBuyer().getUserId())
+                .type(saved.getType())
+                .orderStatus(saved.getOrderStatus())
+                .createdAt(saved.getCreatedAt())
+                .updatedAt(saved.getUpdatedAt())
+                .build();
+
     }
 
     public OrderEntity findById(Long orderId) {
