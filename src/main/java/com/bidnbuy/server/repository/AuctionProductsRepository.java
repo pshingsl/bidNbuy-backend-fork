@@ -22,8 +22,6 @@ public interface AuctionProductsRepository extends JpaRepository<AuctionProducts
     // 💡 [추가] 1. 특정 사용자가 등록한 경매 물품 목록 조회
     List<AuctionProductsEntity> findByUser(UserEntity user);
 
-    // 전체 목록 조회 시 사용 (논리적 삭제 제외)
-    Page<AuctionProductsEntity> findByDeletedAtIsNull(Pageable pageable);
 
     /**
      * 전체 상품을 가격 범위, 판매 상태, 삭제되지 않음 기준으로 필터링하여 조회합니다.
@@ -36,6 +34,41 @@ public interface AuctionProductsRepository extends JpaRepository<AuctionProducts
             "AND (:minPrice IS NULL OR p.currentPrice >= :minPrice) " + // 가격 하한 필터
             "AND (:maxPrice IS NULL OR p.currentPrice <= :maxPrice)") // 가격 상한 필터
     Page<AuctionProductsEntity> findByPriceRangeAndStatusAndDeletedAtIsNull(
+            @Param("minPrice") Integer minPrice,
+            @Param("maxPrice") Integer maxPrice,
+            @Param("statuses") List<SellingStatus> statuses,
+            Pageable pageable
+    );
+
+    @Query("SELECT p FROM AuctionProductsEntity p " +
+            "LEFT JOIN FETCH p.user u " +
+            "LEFT JOIN FETCH p.category c " +
+            "WHERE p.deletedAt IS NULL " + // 기본 조건: 삭제되지 않은 상품
+            "AND p.sellingStatus IN :statuses " + // 경매 상태 필터 (필수)
+
+            // 1. 검색 키워드 필터 (선택적)
+            "AND (:#{#searchKeyword} IS NULL OR p.title LIKE %:#{#searchKeyword}%) " +
+
+            // 2. 가격 범위 필터 (선택적)
+            "AND (:#{#minPrice} IS NULL OR p.currentPrice >= :#{#minPrice}) " +
+            "AND (:#{#maxPrice} IS NULL OR p.currentPrice <= :#{#maxPrice}) " +
+
+            // 3. 카테고리 필터 (선택적)
+            // mainCategoryId가 있다면 해당 카테고리 또는 그 자식 카테고리를 포함
+            // subCategoryId가 있다면 정확히 그 카테고리를 필터
+            "AND (" +
+            "( :#{#mainCategoryId} IS NULL AND :#{#subCategoryId} IS NULL ) OR " + // 필터링 조건이 없을 때 통과
+
+            // Sub Category 필터링 (Sub Category가 우선순위가 높다고 가정)
+            "( :#{#subCategoryId} IS NOT NULL AND c.categoryId = :#{#subCategoryId} ) OR " +
+
+            // Main Category 필터링 (Sub Category가 null일 때만 적용)
+            "( :#{#mainCategoryId} IS NOT NULL AND :#{#subCategoryId} IS NULL AND (c.parent.categoryId = :#{#mainCategoryId} OR c.categoryId = :#{#mainCategoryId}) )" +
+            ")")
+    Page<AuctionProductsEntity> findDynamicFilteredAuctions(
+            @Param("searchKeyword") String searchKeyword,
+            @Param("mainCategoryId") Integer mainCategoryId,
+            @Param("subCategoryId") Integer subCategoryId,
             @Param("minPrice") Integer minPrice,
             @Param("maxPrice") Integer maxPrice,
             @Param("statuses") List<SellingStatus> statuses,
@@ -59,54 +92,6 @@ public interface AuctionProductsRepository extends JpaRepository<AuctionProducts
 
     // 삭제
     Optional<AuctionProductsEntity> findByAuctionIdAndDeletedAtIsNull(Long auctionId);
-
-    // 검색(제목)
-    @Query("SELECT p FROM AuctionProductsEntity p " +
-            "JOIN FETCH p.user u " +
-            "JOIN FETCH p.category c " +
-            "WHERE p.deletedAt IS NULL "  +
-            "AND p.sellingStatus IN :statuses " +
-            "AND (:searchKeyword IS NULL OR p.title LIKE %:searchKeyword%)"
-    )
-
-    Page<AuctionProductsEntity> findByKeywordOrFilter(
-            @Param("searchKeyword") String searchKeyword,
-            @Param("statuses") List<SellingStatus> statuses,
-            Pageable pageable
-    );
-
-    // 대분류 필터링
-    @Query("SELECT p FROM AuctionProductsEntity p " +
-            "JOIN FETCH p.user u " +
-            "JOIN FETCH p.category c " +
-            "WHERE p.sellingStatus IN :statuses " +
-            "AND (:mainCategoryId IS NULL OR c.parent.categoryId = :mainCategoryId OR c.categoryId = :mainCategoryId) " +
-            "AND (:minPrice IS NULL OR p.currentPrice >= :minPrice) " +
-            "AND (:maxPrice IS NULL OR p.currentPrice <= :maxPrice)")
-    Page<AuctionProductsEntity> findByMainCategoryWithChildren(
-            @Param("mainCategoryId") Integer mainCategoryId,
-            @Param("statuses") List<SellingStatus> statuses,
-            @Param("minPrice") Integer minPrice,
-            @Param("maxPrice") Integer maxPrice,
-            Pageable pageable
-    );
-
-    // 소분류/중분류 (의류/자켓)
-    @Query("SELECT p FROM AuctionProductsEntity p " +
-            "JOIN FETCH p.user u " +
-            "JOIN FETCH p.category c " +
-            "WHERE p.sellingStatus IN :statuses " +
-            "AND c.categoryId = :subCategoryId " + // 🚨 정확히 해당 카테고리 ID와 매칭
-            "AND (:minPrice IS NULL OR p.currentPrice >= :minPrice) " +
-            "AND (:maxPrice IS NULL OR p.currentPrice <= :maxPrice)")
-    Page<AuctionProductsEntity> findBySubCategoryOnly(
-            @Param("subCategoryId") Integer subCategoryId,
-            @Param("statuses") List<SellingStatus> statuses,
-            @Param("minPrice") Integer minPrice,
-            @Param("maxPrice") Integer maxPrice,
-            Pageable pageable
-    );
-
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT a FROM AuctionProductsEntity a WHERE a.auctionId = :auctionId")

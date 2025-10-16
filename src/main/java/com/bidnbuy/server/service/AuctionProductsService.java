@@ -104,18 +104,23 @@ public class AuctionProductsService {
             Integer minPrice,
             Integer maxPrice,
             String sortBy,
-            Boolean includeEnded
+            Boolean includeEnded,
+            String searchKeyword,
+            Integer mainCategoryId,
+            Integer subCategoryId
+
     ) {
 
-        // 상태 리스트 결정
+        // 상태 리스트 결정, 정렬, 페이지
         List<SellingStatus> statuses = getFilterStatuses(includeEnded);
-
-        // 1. 상태 및 정렬 설정
         Sort sort = getSortCriteria(sortBy);
         Pageable pageable = PageRequest.of(page, size, sort);
 
         // 2. Repository 호출: 수정한 가격/상태 필터링 메서드 호출
-        Page<AuctionProductsEntity> auctionPage = auctionProductsRepository.findByPriceRangeAndStatusAndDeletedAtIsNull(
+        Page<AuctionProductsEntity> auctionPage = auctionProductsRepository.findDynamicFilteredAuctions(
+                searchKeyword,
+                mainCategoryId,
+                subCategoryId,
                 minPrice,
                 maxPrice,
                 statuses,
@@ -243,125 +248,6 @@ public class AuctionProductsService {
         // 추가 개선 사항: 파일 저장소가 로컬/S3인 경우, 여기서 ImageService를 통해 실제 파일 삭제 로직을 호출해야 함.
     }
 
-    // 검색
-    @Transactional(readOnly = true)
-    public PagingResponseDto<AuctionListResponseDto> searchAuctions(
-            int page,
-            int size,
-            String searchKeyword, // 검색 키워드만 사용
-            String sortBy,
-            Boolean includeEnded
-    ) {
-        // 1. 경매 상태 리스트 결정 (기본값: 진행 중 또는 시작 전)
-        List<SellingStatus> statuses = getFilterStatuses(includeEnded);
-
-        // 2. 정렬 기준(Sort) 설정
-        Sort sort = switch (sortBy != null ? sortBy.toLowerCase() : "latest") {
-            case "price_desc" -> Sort.by("currentPrice").descending();
-            case "price_asc" -> Sort.by("currentPrice").ascending();
-            case "end_time" -> Sort.by("endTime").ascending();
-            default -> Sort.by("createdAt").descending();
-        };
-        Pageable pageable = PageRequest.of(page, size, sort);
-
-        // 3. Repository의 검색 쿼리 호출 (제목만 검색하는 쿼리를 사용해야 함)
-        // 🚨 주의: Repository에 findByKeywordOrFilter 쿼리가 정의되어 있어야 합니다.
-        Page<AuctionProductsEntity> auctionPage = auctionProductsRepository.findByKeywordOrFilter(
-                searchKeyword,
-                statuses,
-                pageable
-        );
-
-        // 4. DTO 변환 및 반환 (기존 로직 재사용)
-        List<AuctionListResponseDto> dtoList = auctionPage.getContent().stream()
-                .map(product -> {
-                    Integer wishCount = wishlistRepository.countByAuction(product);
-                    String mainImageUrl = imageRepository.findFirstImageUrlByAuctionId(product.getAuctionId())
-                            .orElse("default_product.png");
-
-                    return AuctionListResponseDto.builder()
-                            .auctionId(product.getAuctionId())
-                            .title(product.getTitle())
-                            .currentPrice(product.getCurrentPrice())
-                            .endTime(product.getEndTime())
-                            .sellingStatus(calculateSellingStatus(product))
-                            //.categoryName(product.getCategory().getCategoryName())
-                            .sellerNickname(product.getUser().getNickname())
-                            .mainImageUrl(mainImageUrl)
-                            .wishCount(wishCount)
-                            .build();
-                })
-                .toList();
-
-        // 5. 페이징 응답 DTO 생성
-        return PagingResponseDto.<AuctionListResponseDto>builder()
-                .data(dtoList)
-                .totalPages(auctionPage.getTotalPages())
-                .totalElements(auctionPage.getTotalElements())
-                .currentPage(auctionPage.getNumber())
-                .pageSize(auctionPage.getSize())
-                .isFirst(auctionPage.isFirst())
-                .isLast(auctionPage.isLast())
-                .build();
-    }
-
-    // 대분류
-    @Transactional(readOnly = true)
-    public PagingResponseDto<AuctionListResponseDto> filterByMainCategory(
-            int page,
-            int size,
-            Integer mainCategoryId, // 대분류 ID
-            Integer minPrice,
-            Integer maxPrice,
-            String sortBy,
-            Boolean includeEnded
-    ) {
-        // 1. 상태 및 정렬 설정
-        List<SellingStatus> statuses = getFilterStatuses(includeEnded);
-        Sort sort = getSortCriteria(sortBy);
-        Pageable pageable = PageRequest.of(page, size, sort);
-
-        // 2. Repository 호출: 대분류 + 하위 소분류 포함 쿼리 사용 (findByMainCategoryWithChildren)
-        Page<AuctionProductsEntity> auctionPage = auctionProductsRepository.findByMainCategoryWithChildren(
-                mainCategoryId,
-                statuses,
-                minPrice,
-                maxPrice,
-                pageable
-        );
-
-        // 3. DTO 변환 및 반환
-        return buildPagingResponse(auctionPage);
-    }
-
-    // 소분류
-    @Transactional(readOnly = true)
-    public PagingResponseDto<AuctionListResponseDto> filterBySubCategory(
-            int page,
-            int size,
-            Integer subCategoryId, // 소분류 ID
-            Integer minPrice,
-            Integer maxPrice,
-            String sortBy,
-            Boolean includeEnded
-    ) {
-        // 1. 상태 및 정렬 설정
-        List<SellingStatus> statuses = getFilterStatuses(includeEnded);
-        Sort sort = getSortCriteria(sortBy);
-        Pageable pageable = PageRequest.of(page, size, sort);
-
-        // 2. Repository 호출: 정확히 해당 소분류만 조회하는 쿼리 사용 (findBySubCategoryOnly)
-        Page<AuctionProductsEntity> auctionPage = auctionProductsRepository.findBySubCategoryOnly(
-                subCategoryId,
-                statuses,
-                minPrice,
-                maxPrice,
-                pageable
-        );
-
-        // 3. DTO 변환 및 반환
-        return buildPagingResponse(auctionPage);
-    }
 
     // 경매 상태 리스트 결정 메서드
     private List<SellingStatus> getFilterStatuses(Boolean includeEnded) {
@@ -452,7 +338,7 @@ public class AuctionProductsService {
 
     //채팅연결
     @Transactional(readOnly = true)
-    public Optional<AuctionProductsEntity> findByIdAnyway(Long auctionId){
+    public Optional<AuctionProductsEntity> findByIdAnyway(Long auctionId) {
         return auctionProductsRepository.findById(auctionId);
     }
 }
