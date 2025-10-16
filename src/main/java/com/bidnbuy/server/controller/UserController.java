@@ -8,6 +8,7 @@ import com.bidnbuy.server.service.AuthService;
 import com.bidnbuy.server.service.EmailService;
 import com.bidnbuy.server.service.ImageService;
 import com.bidnbuy.server.service.UserService;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,10 +23,17 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.view.RedirectView;
 
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+
 @Slf4j
 @RestController
 @RequestMapping("/auth")
 public class   UserController {
+
+    @Value("${front.redirect.uri}")
+    private String frontUri;
 
     private final UserService userService;
     private final AuthService authService;
@@ -97,15 +105,20 @@ public class   UserController {
     }
 
     @GetMapping("/kakao")
-    public ResponseEntity<?> kakaoLogin (@RequestParam("code") String code) {
+    public void kakaoLogin (@RequestParam("code") String code, HttpServletResponse response) throws IOException {
         try {
-            AuthResponseDto responseDto = authService.kakaoLogin(code);
-            return ResponseEntity.ok(responseDto);
+            AuthResponseDto auth = authService.kakaoLogin(code);
+
+            String accessToken = auth.getAccessToken();
+            String refreshToken = auth.getRefreshToken();
+
+            String redirectUrl = frontUri + "/oauth/callback" +
+                    "?accessToken=" + URLEncoder.encode(accessToken, StandardCharsets.UTF_8) +
+                    "&refreshToken=" + URLEncoder.encode(refreshToken, StandardCharsets.UTF_8);
+            response.sendRedirect(redirectUrl);
         } catch (Exception e) {
-//            log.error("&&&&&&&&&&&&&&&&&&&&&&&&&&카카오 로그인 처리 중 에러 발생: {}", e.getMessage(), e);
-            // 에러 발생 시 문자열(String)을 반환하려고 시도 (예상)
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(e.getMessage());
+            String errorRedirectUrl = frontUri + "/login?error=" + URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8);
+            response.sendRedirect(errorRedirectUrl);
         }
     }
 
@@ -124,20 +137,32 @@ public class   UserController {
 
 
     @GetMapping("/naver")
-    public ResponseEntity<?> naverLogin (@RequestParam("code") String code, @RequestParam("state") String state, HttpSession session) {
+    public void naverLogin (@RequestParam("code") String code, @RequestParam("state") String state,
+                            HttpSession session, HttpServletResponse response) throws IOException{
         String savedState = (String) session.getAttribute("naver_oauth_state");
+
         if (savedState == null || !savedState.equals(state)){
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("State token mismatch.");
+            log.warn("Naver login failed: State token mismatch.");
+            String errorRedirectUrl = frontUri + "/login?error=" + URLEncoder.encode("State token mismatch.", StandardCharsets.UTF_8);
+            response.sendRedirect(errorRedirectUrl);
+            return;
         }
-        session.removeAttribute("naver_oauth_state");
         try {
-            AuthResponseDto responseDto = authService.naverLogin(code, state);
-            return ResponseEntity.ok(responseDto);
+            AuthResponseDto authResponse = authService.naverLogin(code, state);
+
+            String accessToken = authResponse.getAccessToken();
+            String refreshToken = authResponse.getRefreshToken();
+
+            String redirectUrl = frontUri + "/oauth/callback" +
+                    "?accessToken=" + URLEncoder.encode(accessToken, StandardCharsets.UTF_8) +
+                    "&refreshToken=" + URLEncoder.encode(refreshToken, StandardCharsets.UTF_8);
+
+            response.sendRedirect(redirectUrl);
+
         } catch (Exception e) {
-//            log.error("&&&&&&&&&&&&&&&&&&&&&&&&&&네이버 로그인 처리 중 에러 발생: {}", e.getMessage(), e);
-            // 에러 발생 시 문자열(String)을 반환하려고 시도 (예상)
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(e.getMessage());
+            log.error("네이버 로그인 처리 중 에러 발생: {}", e.getMessage(), e);
+            String errorRedirectUrl = frontUri + "/login?error=" + URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8);
+            response.sendRedirect(errorRedirectUrl);
         }
     }
 
