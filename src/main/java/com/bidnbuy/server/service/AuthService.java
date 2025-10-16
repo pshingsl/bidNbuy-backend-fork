@@ -73,7 +73,10 @@ public class AuthService {
         return AuthResponseDto.builder()
                 .email(loginUser.getEmail())
                 .nickname(loginUser.getNickname())
-                .tokenInfo(tokenInfo)
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .grantType(jwtProvider.getGrantType())
+                .accessTokenExpiresIn(jwtProvider.getAccessTokenExpirationTime())
                 .build();
     }
 
@@ -112,9 +115,12 @@ public class AuthService {
                 .build();
 
         return AuthResponseDto.builder()
-                .tokenInfo(tokenInfo)
                 .email(user.getEmail())
                 .nickname(user.getNickname())
+                .accessToken(newAccessToken)
+                .refreshToken(newRefreshToken)
+                .grantType(jwtProvider.getGrantType())
+                .accessTokenExpiresIn(accessTokenExpiresIn)
                 .build();
     }
 
@@ -154,7 +160,10 @@ public class AuthService {
         return AuthResponseDto.builder()
                 .email(userEmail)
                 .nickname(userNickname)
-                .tokenInfo(tokenInfo)
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .grantType(jwtProvider.getGrantType())
+                .accessTokenExpiresIn(jwtProvider.getAccessTokenExpirationTime())
                 .build();
     }
 
@@ -193,7 +202,10 @@ public class AuthService {
         return AuthResponseDto.builder()
                 .email(userEmail)
                 .nickname(userNickname)
-                .tokenInfo(tokenInfo)
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .grantType(jwtProvider.getGrantType())
+                .accessTokenExpiresIn(jwtProvider.getAccessTokenExpirationTime())
                 .build();
     }
 

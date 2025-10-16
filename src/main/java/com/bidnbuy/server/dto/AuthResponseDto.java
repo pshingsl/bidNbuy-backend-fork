@@ -9,6 +9,11 @@ public class AuthResponseDto {
     private String email;
     private String nickname;
 
-    private TokenResponseDto tokenInfo;
+//    private TokenResponseDto tokenInfo;
+
+    private String accessToken;
+    private String refreshToken;
+    private String grantType;
+    private Long accessTokenExpiresIn;
 
 }
