@@ -35,11 +35,10 @@ public class ChatRoomService {
         //상품 조회
         AuctionProductsEntity products = auctionProductsService.findById(requestDto.getAuctionId());
         UserEntity seller = products.getUser();
-
         UserEntity buyer = userService.findById(requestDto.getBuyerId());
 
         //기존 채팅방 조회
-        Optional<ChatRoomEntity> existingRoom = chatRoomRepository.findByBuyerIdAndSellerIdAndAuctionId(
+        Optional<ChatRoomEntity> existingRoom = chatRoomRepository.findByBuyerIdAndSellerIdAndAuctionIdAndDeletedAtIsNull(
                 buyer,
                 seller,
                 products

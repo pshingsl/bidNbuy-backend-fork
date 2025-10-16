@@ -21,6 +21,12 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoomEntity, Long> 
             AuctionProductsEntity auctionId
     );
 
+    Optional<ChatRoomEntity> findByBuyerIdAndSellerIdAndAuctionIdAndDeletedAtIsNull(
+            UserEntity buyerId,
+            UserEntity sellerId,
+            AuctionProductsEntity auctionId
+    );
+
     @Query("SELECT cr FROM ChatRoomEntity cr " +
             "WHERE (cr.buyerId = :user OR cr.sellerId = :user) " +
             "AND cr.deletedAt IS NULL " +
