@@ -19,7 +19,7 @@ import java.util.List;
 @Getter
 @Setter
 @Entity
-@Table(name="User")
+@Table(name = "User")
 @SQLDelete(sql = "UPDATE user SET deleted_at = CURRENT_TIMESTAMP WHERE user_id = ?")
 @SQLRestriction("deleted_at IS NULL")
 public class UserEntity {
@@ -29,21 +29,21 @@ public class UserEntity {
     private long userId;
 
     @ManyToOne
-    @JoinColumn(name="admin_id", nullable = true) //나중에 false로 바꾸기
+    @JoinColumn(name = "admin_id", nullable = true) //나중에 false로 바꾸기
     private AdminEntity adminId;
 
     @ManyToOne
-    @JoinColumn(name="address_id", nullable = true)
+    @JoinColumn(name = "address_id", nullable = true)
     private AddressEntity addressId;
 
     @Column(name = "email", nullable = false, unique = true, length = 255)
     private String email;
 
     @Column(name = "password", nullable = false, length = 100)
-    private  String password;
+    private String password;
 
     @Column(name = "nickname", nullable = false, length = 20)
-    private  String nickname;
+    private String nickname;
 
     @Enumerated(EnumType.STRING)
     @Builder.Default
@@ -54,7 +54,7 @@ public class UserEntity {
     private UserStatus userStatus = UserStatus.Y;
 
     @Column(name = "user_type", length = 20)
-    private  String userType;
+    private String userType;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false)
@@ -62,9 +62,9 @@ public class UserEntity {
 
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
-    private  LocalDateTime updatedAt;
+    private LocalDateTime updatedAt;
 
-    @Column(name="deleted_at")
+    @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -90,4 +90,13 @@ public class UserEntity {
     // 유저 온도 (별점 평균 × 10)
     @Column(name = "user_temperature", nullable = true)
     private Double userTemperature;
+
+    // 페널티 (누적 점수)
+    @Column(name = "penalty_points", nullable = false)
+    @Builder.Default
+    private int penaltyPoints = 0;
+
+    // 정지 해제 예정일
+    @Column(name = "suspended_until")
+    private LocalDateTime suspendedUntil;
 }
