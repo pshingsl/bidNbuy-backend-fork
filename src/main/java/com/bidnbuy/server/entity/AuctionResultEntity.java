@@ -26,13 +26,13 @@ public class AuctionResultEntity {
     @JoinColumn(name = "winner_id", nullable = true)
     private UserEntity winner;
 
-//    @OneToOne
-//    @JoinColumn(name = "order_id", nullable = true)
-//    private OrderEntity order;
-//
-//    @OneToOne
-//    @JoinColumn(name = "history_id", nullable = false)
-//    private  AuctionHistoryEntity history;
+    @OneToOne
+    @JoinColumn(name = "order_id", nullable = true)
+    private OrderEntity order;
+
+    @OneToOne
+    @JoinColumn(name = "history_id", nullable = false)
+    private  AuctionHistoryEntity history;
 
     @Column(name = "result_status", nullable = false)
     private ResultStatus resultStatus;
