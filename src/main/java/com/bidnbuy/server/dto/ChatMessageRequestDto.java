@@ -1,5 +1,6 @@
 package com.bidnbuy.server.dto;
 
+import com.bidnbuy.server.entity.ChatMessageEntity;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -8,6 +9,6 @@ import lombok.Setter;
 public class ChatMessageRequestDto {
     private Long chatroomId;
     private String message;
-    private String type;
+    private ChatMessageEntity.MessageType messageType;;
 
 }

@@ -46,7 +46,7 @@ public class ChatMessageService {
                 .chatroomId(chatRoom)
                 .senderId(sender)
                 .message(requestDto.getMessage())
-                .messageType(ChatMessageEntity.MessageType.CHAT)
+                .messageType(requestDto.getMessageType())
                 .build();
 
         ChatMessageEntity savedEntity =chatMessageRepository.save(chatMessageEntity);//db저장
