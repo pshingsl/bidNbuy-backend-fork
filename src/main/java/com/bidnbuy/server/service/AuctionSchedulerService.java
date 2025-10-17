@@ -1,13 +1,10 @@
 package com.bidnbuy.server.service;
 
-import com.bidnbuy.server.entity.AuctionBidsEntity;
-import com.bidnbuy.server.entity.AuctionProductsEntity;
-import com.bidnbuy.server.entity.AuctionResultEntity;
+import com.bidnbuy.server.entity.*;
+import com.bidnbuy.server.enums.AuctionStatus;
 import com.bidnbuy.server.enums.ResultStatus;
 import com.bidnbuy.server.enums.SellingStatus;
-import com.bidnbuy.server.repository.AuctionBidRepository;
-import com.bidnbuy.server.repository.AuctionProductsRepository;
-import com.bidnbuy.server.repository.AuctionResultRepository;
+import com.bidnbuy.server.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -25,6 +22,8 @@ public class AuctionSchedulerService {
     private final AuctionProductsRepository auctionProductsRepository;
     private final AuctionBidRepository auctionBidsRepository;
     private final AuctionResultRepository auctionResultRepository;
+    private final OrderRepository orderRepository;
+    private final AuctionHistoryService auctionHistoryService;
 
     @Scheduled(fixedRate = 10000)
     @Transactional
@@ -53,44 +52,62 @@ public class AuctionSchedulerService {
         ResultStatus resultStatus;
         Integer finalPrice;
         AuctionBidsEntity finalBid = null;
+        OrderEntity orderEntity = null;
 
         if (topBidOpt.isPresent()) {
             // ️ 낙찰 (SUCCESS)
             finalBid = topBidOpt.get();
-            resultStatus = ResultStatus.SUCCESS_PENDING_PAYMENT; // 낙찰 후 결제 대기 상태로 시작
+            resultStatus = ResultStatus.SUCCESS_PENDING_PAYMENT;
             finalPrice = finalBid.getBidPrice();
             log.info("경매 낙찰 성공: 상품 ID {}, 낙찰가 {}원", auction.getAuctionId(), finalPrice);
 
-            // 💡 실제 구현: 여기서 OrderEntity를 생성하고 result.order에 연결해야 합니다.
+            orderEntity = new OrderEntity();
+            orderEntity.setSeller(auction.getUser());
+            orderEntity.setBuyer(finalBid.getUser());
+            orderEntity.setType("AUCTION");
+            orderEntity.setOrderStatus("WAITING_PAYMENT");
+            orderEntity.setRating(0);
+            orderEntity.setCreatedAt(LocalDateTime.now());
+            orderEntity.setUpdatedAt(LocalDateTime.now());
 
+            orderEntity = orderRepository.save(orderEntity);
         } else {
             //  유찰 (FAILURE)
             resultStatus = ResultStatus.FAILURE;
-            finalPrice = auction.getCurrentPrice(); // 0 또는 시작가와 동일 (입찰이 없었으므로)
+            finalPrice = auction.getCurrentPrice();
             log.info("경매 유찰: 상품 ID {}", auction.getAuctionId());
         }
 
-        // 3. AuctionResultEntity 생성 및 저장
+        // 1. AuctionResultEntity 생성 및 저장
         AuctionResultEntity result = AuctionResultEntity.builder()
                 .auction(auction)
-                // 유찰 시 null, 낙찰 시 최고 입찰자 UserEntity
                 .winner(finalBid != null ? finalBid.getUser() : null)
                 .resultStatus(resultStatus)
                 .finalPrice(finalPrice)
-                // 최종 입찰 기록 (history FK)
-                //.history(finalBid != null ? finalBid.getHistory() : null)
-                // OrderEntity는 현재 생략 (null 처리)
-                // .order(orderEntity)
+                // history_id는 DB 스키마에서 nullable=true여야 합니다.
+                .history(finalBid != null ? finalBid.getHistory() : null)
+                .order(orderEntity)
                 .closedAt(LocalDateTime.now())
                 .build();
 
-        auctionResultRepository.save(result);
+        AuctionResultEntity savedResult = auctionResultRepository.save(result);
 
-        // 4. AuctionProductsEntity 상태 FINISH로 업데이트
+        if (orderEntity != null) {
+            orderEntity.setResult(savedResult);
+            orderRepository.save(orderEntity);
+        }
+
+        // 2. AuctionProductsEntity 상태 FINISH로 업데이트
         auction.setSellingStatus(SellingStatus.FINISH);
-        // JPA의 Dirty Checking에 의해 트랜잭션 종료 시 자동 업데이트됨 (save 호출 불필요)
+
+        // ✅ 3. History 기록 (AuctionHistoryService의 독립 트랜잭션을 통해 안전하게 저장)
+        auctionHistoryService.recordStatusChange(
+                auction.getAuctionId(),
+                AuctionStatus.FINISHED
+        );
+
+        // ❌ Builder를 이용한 중복 History 기록 로직과 헬퍼 메서드는 제거되었습니다.
 
         log.info("상품 ID {} 경매 마감 처리 완료.", auction.getAuctionId());
     }
 }
-

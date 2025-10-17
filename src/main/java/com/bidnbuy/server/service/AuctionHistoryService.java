@@ -3,12 +3,11 @@ package com.bidnbuy.server.service;
 import com.bidnbuy.server.dto.AuctionHistoryDto;
 import com.bidnbuy.server.entity.AuctionHistoryEntity;
 import com.bidnbuy.server.entity.AuctionProductsEntity;
-import com.bidnbuy.server.entity.UserEntity;
 import com.bidnbuy.server.enums.AuctionStatus;
+import com.bidnbuy.server.enums.SellingStatus;
 import com.bidnbuy.server.repository.AuctionHistoryRepository;
 import com.bidnbuy.server.repository.AuctionProductsRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,7 +29,7 @@ public class AuctionHistoryService {
                 .orElseThrow(() -> new IllegalArgumentException("해당 경매 상품을 찾을 수 없습니다."));
 
         AuctionStatus previousStatus = auctionProduct.getSellingStatus() != null
-                ? AuctionStatus.valueOf(auctionProduct.getSellingStatus().name())
+                ? mapToAuctionStatus(auctionProduct.getSellingStatus())
                 : null;
 
         AuctionHistoryEntity history = AuctionHistoryEntity.builder()
@@ -78,6 +77,15 @@ public class AuctionHistoryService {
             case TRADE_COMPLETED -> "최종 거래 완료";
             case CANCELLED_BY_SYSTEM -> "시스템에 의해 거래 취소";
             default -> status.name();
+        };
+    }
+
+    private AuctionStatus mapToAuctionStatus(SellingStatus sellingStatus) {
+        return switch (sellingStatus) {
+            case BEFORE, SALE, PROGRESS -> AuctionStatus.PROGRESS; // 진행 중
+            case FINISH -> AuctionStatus.FINISHED; // SellingStatus의 FINISH를 AuctionStatus의 FINISHED로 매핑
+            case COMPLETED -> AuctionStatus.TRADE_COMPLETED; // 거래 완료로 매핑
+            default -> AuctionStatus.PROGRESS;
         };
     }
 }

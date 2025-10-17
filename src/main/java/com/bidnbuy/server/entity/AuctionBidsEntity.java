@@ -34,6 +34,10 @@ public class AuctionBidsEntity {
     @Column(name = "bid_price")
     private Integer bidPrice;
 
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "history_id", nullable = true) // FK 컬럼 이름은 확인 필요
+    private AuctionHistoryEntity history;
+
     @CurrentTimestamp
     @Column(name = "bid_time")
     private LocalDateTime bidTime;

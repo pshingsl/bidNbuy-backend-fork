@@ -30,8 +30,8 @@ public class AuctionResultEntity {
     @JoinColumn(name = "order_id", nullable = true)
     private OrderEntity order;
 
-    @OneToOne
-    @JoinColumn(name = "history_id", nullable = false)
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "history_id", nullable = true)
     private  AuctionHistoryEntity history;
 
     @Column(name = "result_status", nullable = false)
