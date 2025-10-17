@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -20,7 +21,25 @@ public class InquiriesService {
 
     private final InquiriesRepository inquiriesRepository;
     private final UserRepository userRepository;
-    private final AdminRepository adminRepository;
+
+    // 문의 상세 조회
+    public InquiryResponse getInquiryDetail(Long userId, Long inquiryId) {
+        Inquiries inquiry = inquiriesRepository.findByInquiriesIdAndUserUserId(inquiryId, userId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 문의를 찾을 수 없습니다."));
+
+        return InquiryResponse.fromEntity(inquiry);
+    }
+
+    // 내 문의 조회하기
+    // 내 문의 조회
+    public List<InquiryResponse> getMyInquiries(Long userId) {
+        List<Inquiries> inquiries = inquiriesRepository.findByUserUserId(userId);
+
+        return inquiries.stream()
+                .map(InquiryResponse::fromEntity)
+                .toList();
+    }
+
 
     // 일반 문의 등록이므로 type = GENERAL
     public InquiryResponse createInquiry(Long userId, CreateInquiryRequest dto) {
