@@ -3,6 +3,7 @@ package com.bidnbuy.server.controller;
 import com.bidnbuy.server.dto.AuctionPurchaseHistoryDto;
 import com.bidnbuy.server.dto.AuctionSalesHistoryDto;
 import com.bidnbuy.server.dto.MyPageSummaryDto;
+import com.bidnbuy.server.enums.TradeFilterStatus;
 import com.bidnbuy.server.service.AuctionResultService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -29,9 +30,10 @@ public class AuctionResultController {
     // 마이페이지 - 구매 내역 (낙찰 내역) 조회
     @GetMapping("/purchase")
     public ResponseEntity<?> getPurchaseHistory(
-            @AuthenticationPrincipal Long userId) { 
+            @AuthenticationPrincipal Long userId) {
+        TradeFilterStatus defaultFilter = TradeFilterStatus.ALL;
 
-        List<AuctionPurchaseHistoryDto> history = auctionResultService.getPurchaseHistory(userId);
+        List<AuctionPurchaseHistoryDto> history = auctionResultService.getPurchaseHistory(userId, defaultFilter);
 
         return ResponseEntity.ok(history);
     }
@@ -42,7 +44,9 @@ public class AuctionResultController {
     public ResponseEntity<?> getSalesHistory(
             @AuthenticationPrincipal Long userId) {
 
-        List<AuctionSalesHistoryDto> history = auctionResultService.getSalesHistory(userId);
+        TradeFilterStatus defaultFilter = TradeFilterStatus.ALL;
+
+        List<AuctionSalesHistoryDto> history = auctionResultService.getSalesHistory(userId, defaultFilter);
 
         return ResponseEntity.ok(history);
     }

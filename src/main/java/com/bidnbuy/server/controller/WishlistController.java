@@ -2,6 +2,7 @@ package com.bidnbuy.server.controller;
 
 import com.bidnbuy.server.dto.WishlistDto;
 import com.bidnbuy.server.dto.WishlistResponseDto;
+import com.bidnbuy.server.enums.WishlistFilterStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import com.bidnbuy.server.service.WishlistService;
@@ -13,10 +14,10 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/wishs")
+@RequiredArgsConstructor
 public class WishlistController {
 
-    @Autowired
-    private  WishlistService wishlistService;
+    private final WishlistService wishlistService;
 
     // POST /auctions/{auctionId}/like : 찜(좋아요) 상태를 토글(등록 또는 취소)
     @PostMapping("/{auctionId}/like")
@@ -44,8 +45,8 @@ public class WishlistController {
             return ResponseEntity.status(401).build();
         }
 
-        // 결과
-        List<WishlistResponseDto> response = wishlistService.getWishlist(userId);
+        WishlistFilterStatus defaultFilter = WishlistFilterStatus.ALL;
+        List<WishlistResponseDto> response = wishlistService.getWishlist(userId, defaultFilter);
 
         return ResponseEntity.ok(response);
     }

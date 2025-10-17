@@ -8,6 +8,8 @@ import com.bidnbuy.server.entity.UserEntity;
 import com.bidnbuy.server.entity.WishlistEntity;
 import com.bidnbuy.server.enums.ImageType;
 import com.bidnbuy.server.enums.IsDeletedStatus;
+import com.bidnbuy.server.enums.SellingStatus;
+import com.bidnbuy.server.enums.WishlistFilterStatus;
 import com.bidnbuy.server.repository.AuctionProductsRepository;
 import com.bidnbuy.server.repository.UserRepository;
 import com.bidnbuy.server.repository.WishlistRepository;
@@ -78,7 +80,7 @@ public class WishlistService {
     }
 
     // 조회
-    public List<WishlistResponseDto> getWishlist(Long userId) {
+    public List<WishlistResponseDto> getWishlist(Long userId, WishlistFilterStatus filterStatus) {
 
         // 1. 유저 존재하는지 확인
         UserEntity user = userRepository.findById(userId)
@@ -88,6 +90,37 @@ public class WishlistService {
         List<WishlistEntity> list =  wishlistRepository.findByUser(user);
 
         return list.stream()
+                .filter(wish -> {
+                    AuctionProductsEntity product = wish.getAuction();
+
+                    String currentStatusString = auctionProductsService.calculateSellingStatus(product);
+
+                    if (filterStatus == WishlistFilterStatus.ALL){
+                        return true;
+                    }
+
+                    SellingStatus currentStatus;
+
+                    try{
+                        currentStatus = SellingStatus.valueOf(currentStatusString);
+                    }catch (IllegalArgumentException e) {
+                        return false;
+                    }
+
+                    boolean isFinished = currentStatus == SellingStatus.FINISH
+                            || currentStatus == SellingStatus.COMPLETED;
+
+                    if (filterStatus == WishlistFilterStatus.FINISHED) {
+                        return isFinished;
+                    }
+
+                    if (filterStatus == WishlistFilterStatus.PROGRESS) {
+                        // 진행 중 상태 그룹핑: 종료 상태가 아닌 모든 상태 (BEFORE, SALE, PROGRESS 등)
+                        return !isFinished;
+                    }
+
+                    return false;
+                })
                 .map(wish -> {
                     AuctionProductsEntity product = wish.getAuction();
 
@@ -110,5 +143,7 @@ public class WishlistService {
                             .build();
                 })
                 .collect(Collectors.toList());
+
+        // 필터링
     }
 }

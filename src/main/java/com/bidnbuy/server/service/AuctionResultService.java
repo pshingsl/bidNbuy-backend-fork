@@ -6,6 +6,7 @@ import com.bidnbuy.server.dto.MyPageSummaryDto;
 import com.bidnbuy.server.entity.AuctionResultEntity;
 import com.bidnbuy.server.entity.UserEntity;
 import com.bidnbuy.server.enums.ResultStatus;
+import com.bidnbuy.server.enums.TradeFilterStatus;
 import com.bidnbuy.server.repository.AuctionResultRepository;
 import com.bidnbuy.server.repository.ImageRepository;
 import com.bidnbuy.server.repository.UserRepository;
@@ -48,7 +49,7 @@ public class AuctionResultService {
     @Transactional(readOnly = true)
     private List<AuctionPurchaseHistoryDto> getRecentPurchases(Long userId) {
 
-        List<AuctionPurchaseHistoryDto> history = getPurchaseHistory(userId);
+        List<AuctionPurchaseHistoryDto> history = getPurchaseHistory(userId, TradeFilterStatus.ALL);
 
         if (history.size() > 3) {
             return history.subList(0, 3);
@@ -59,7 +60,7 @@ public class AuctionResultService {
     @Transactional(readOnly = true)
     private List<AuctionSalesHistoryDto> getRecentSales(Long userId) {
 
-        List<AuctionSalesHistoryDto> history = getSalesHistory(userId);
+        List<AuctionSalesHistoryDto> history = getSalesHistory(userId, TradeFilterStatus.ALL);
 
         if (history.size() > 3) {
             return history.subList(0, 3);
@@ -69,20 +70,22 @@ public class AuctionResultService {
 
     // 마이페이지 - 구매내역  (낙찰 내역) 조회
     @Transactional(readOnly = true)
-    public List<AuctionPurchaseHistoryDto> getPurchaseHistory(Long userId) {
+    public List<AuctionPurchaseHistoryDto> getPurchaseHistory(Long userId, TradeFilterStatus filterStatus) {
         List<AuctionResultEntity> results = auctionResultRepository.findByWinner_UserId_Optimized(userId);
 
         return results.stream()
+                .filter(result -> isMatchingStatus(result.getResultStatus(), filterStatus))
                 .map(this::toPurchaseDto)
                 .collect(Collectors.toList());
     }
 
     // 마이페이지 - 판매 내역 (판매 결과) 조회
-    public List<AuctionSalesHistoryDto> getSalesHistory(Long userId) {
+    public List<AuctionSalesHistoryDto> getSalesHistory(Long userId, TradeFilterStatus filterStatus) {
         // 판매자(Auction_User) 기준으로 조회합니다.
         List<AuctionResultEntity> results = auctionResultRepository.findByAuction_User_UserId_Optimized(userId);
 
         return results.stream()
+                .filter(result -> isMatchingStatus(result.getResultStatus(), filterStatus))
                 .map(this::toSalesDto)
                 .collect(Collectors.toList());
     }
@@ -130,6 +133,27 @@ public class AuctionResultService {
                 .build();
     }
 
+    private boolean isMatchingStatus(ResultStatus resultStatus, TradeFilterStatus filterStatus) {
+        if (filterStatus == TradeFilterStatus.ALL) {
+            return true;
+        }
+
+        return switch (filterStatus) {
+            case ONGOING ->
+                // 진행 중: 결제 대기 중인 상태만 해당
+                    resultStatus == ResultStatus.SUCCESS_PENDING_PAYMENT;
+
+            case COMPLETED ->
+                // 완료: 거래 완료 상태만 해당
+                    resultStatus == ResultStatus.SUCCESS_COMPLETED;
+
+            case CANCELLED ->
+                // 취소/실패: 유찰 또는 거래 취소 상태만 해당
+                    resultStatus == ResultStatus.FAILURE || resultStatus == ResultStatus.CANCELED;
+
+            default -> false; // 정의되지 않은 상태
+        };
+    }
 
     // 구매내역에 페이별로 조회
     private String determineStatusText(AuctionResultEntity result) {
