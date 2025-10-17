@@ -32,7 +32,7 @@ public class AuctionResultController {
     public ResponseEntity<?> getPurchaseHistory(
             @AuthenticationPrincipal Long userId) {
         TradeFilterStatus defaultFilter = TradeFilterStatus.ALL;
-        F
+
         List<AuctionPurchaseHistoryDto> history = auctionResultService.getPurchaseHistory(userId, defaultFilter);
 
         return ResponseEntity.ok(history);
