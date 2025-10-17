@@ -78,7 +78,7 @@ public class ChatMessageService {
         Long sellerId = chatRoom.getSellerId().getUserId();
 
         if(currentUserId.equals(buyerId)||currentUserId.equals(sellerId)){
-//            markMessagesAsRead(chatRoom, currentUser);
+            markMessagesAsRead(chatRoom, currentUser);
         }else{
             throw new AccessDeniedException("접근 권한이 없습니다.");
         }
