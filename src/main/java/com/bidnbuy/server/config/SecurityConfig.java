@@ -80,7 +80,7 @@ public class SecurityConfig {
                             , "/auth/naver/loginstart", "/auth/email/**", "/auth/password/**", "/chat_test.html**", "/ws/bid/**", "/images/**").permitAll()
                     .requestMatchers("/chatrooms/**").authenticated()
                     .requestMatchers("/admin/auth/signup", "/admin/auth/login", "/admin/auth/reissue").permitAll() // 관리자 회원가입, 로그인, 토큰재발급 일단 허용
-                    .requestMatchers("/orders/**", "/payments/**").permitAll()  // ✅ 테스트용 오픈
+                    .requestMatchers("/orders/**", "/payments/**", "/inquiries/**").permitAll()  // ✅ 테스트용 오픈 - 강기병
                     .requestMatchers("/admin/**").hasRole("ADMIN") // 나머지 관리자
                     .anyRequest().authenticated()
             ).csrf(csrf -> csrf.disable());
