@@ -9,4 +9,5 @@ public class ChatMessageRequestDto {
     private Long chatroomId;
     private String message;
     private String type;
+
 }

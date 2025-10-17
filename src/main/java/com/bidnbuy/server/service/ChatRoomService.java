@@ -29,6 +29,7 @@ public class ChatRoomService {
     private final ChatRoomRepository chatRoomRepository;
     private final UserService userService;
     private final AuctionProductsService auctionProductsService;
+    private final ChatMessageService chatMessageService;
 
     //판매자 상품글에서 채팅방 생성
     public ChatRoomDto findOrCreateChatRoom(ChatRoomCreateRequestDto requestDto){
@@ -85,6 +86,8 @@ public class ChatRoomService {
         UserEntity counterpartUser = isCurrentUserBuyer ? chatRoom.getSellerId():chatRoom.getBuyerId();
         AuctionProductsEntity auctionProducts = chatRoom.getAuctionId();
 
+        Long unreadCount = chatMessageService.getUnreadMessageCount(chatRoom.getChatroomId(), currentUserId);
+
         return ChatRoomListDto.builder()
                 .chatroomId(chatRoom.getChatroomId())
                 .auctionId(auctionProducts.getAuctionId())
@@ -95,7 +98,7 @@ public class ChatRoomService {
                 .auctionImageUrl(null)
                 .lastMessagePreview(chatRoom.getLastMessagePreview())
                 .lastMessageTime(chatRoom.getLastMessageTime())
-                .unreadCount(chatRoom.getUnreadCount())
+                .unreadCount(unreadCount.intValue())
                 .build();
     }
 
@@ -114,13 +117,13 @@ public class ChatRoomService {
 
             } else {
                 log.warn("경매 상품 정보 조회 중 상품을 찾을 수 없습니다. Auction ID: {}", auctionId);
-                dto.setAuctionTitle("[삭제된 상품]");
+                dto.setAuctionTitle("삭제된 상품");
                 dto.setAuctionImageUrl(null);
             }
 
         } catch (Exception e) {
             log.error("Auction ID {} 처리 중 치명적인 예외 발생: {}", auctionId, e.getMessage(), e);
-            dto.setAuctionTitle("[오류 발생 상품]");
+            dto.setAuctionTitle("오류 발생 상품");
             dto.setAuctionImageUrl(null);
         }
         return dto;

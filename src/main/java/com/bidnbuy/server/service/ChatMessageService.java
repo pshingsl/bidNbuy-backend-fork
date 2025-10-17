@@ -78,7 +78,7 @@ public class ChatMessageService {
         Long sellerId = chatRoom.getSellerId().getUserId();
 
         if(currentUserId.equals(buyerId)||currentUserId.equals(sellerId)){
-            markMessagesAsRead(chatRoom, currentUser);
+//            markMessagesAsRead(chatRoom, currentUser);
         }else{
             throw new AccessDeniedException("접근 권한이 없습니다.");
         }
@@ -101,6 +101,21 @@ public class ChatMessageService {
                 .createdAt(entity.getCreateAt())
                 .isRead(entity.isRead())
                 .build();
+    }
+
+    //메세지 읽음처리
+    @Transactional
+    public void processMarkingMessageAsRead(Long chatroomId, Long currentUserId){
+        ChatRoomEntity chatRoom = chatRoomRepository.findById(chatroomId)
+                .orElseThrow(()-> new EntityNotFoundException("채팅방을 찾을 수 없음"));
+        UserEntity reader = userRepository.findById(currentUserId)
+                .orElseThrow(()-> new EntityNotFoundException("유저를 찾을 수 없습니다."));
+        Long buyerId = chatRoom.getBuyerId().getUserId();
+        Long sellerId = chatRoom.getSellerId().getUserId();
+        if(!currentUserId.equals(buyerId)&& !currentUserId.equals(sellerId)){
+            throw new AccessDeniedException("접근 권한이 없습니다.");
+        }
+        markMessagesAsRead(chatRoom, reader);
     }
 
     //메세지 읽음 처리하기
@@ -135,8 +150,4 @@ public class ChatMessageService {
                 false
         );
     }
-
-
-
-
 }

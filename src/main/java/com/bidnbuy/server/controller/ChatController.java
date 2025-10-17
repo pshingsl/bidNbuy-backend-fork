@@ -2,15 +2,22 @@ package com.bidnbuy.server.controller;
 
 import com.bidnbuy.server.dto.ChatMessageDto;
 import com.bidnbuy.server.dto.ChatMessageRequestDto;
+import com.bidnbuy.server.dto.ResponseDto;
+import com.bidnbuy.server.entity.UserEntity;
 import com.bidnbuy.server.service.ChatMessageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
 
 import java.security.Principal;
 
@@ -45,5 +52,12 @@ public class ChatController {
         messageSendingTemplate.convertAndSend(destination, saveMessage);
 
         log.info("메세지 브로드캐스트 : destination={}", destination);
+    }
+
+    @PutMapping("/chat/{chatroomId}/read")
+    public ResponseEntity<?> markMessageAsRead(@PathVariable Long chatroomId, @AuthenticationPrincipal UserDetails userDetails){
+        Long currentUserId = ((UserEntity) userDetails).getUserId();
+        chatMessageService.processMarkingMessageAsRead(chatroomId, currentUserId);
+        return ResponseEntity.ok().build();
     }
 }
