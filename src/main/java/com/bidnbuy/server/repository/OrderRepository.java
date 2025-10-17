@@ -24,4 +24,9 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
     // 판매자가 본인인 경우
     @Query("SELECT o FROM OrderEntity o WHERE o.seller.userId = :userId AND (:status IS NULL OR o.orderStatus = :status)")
     List<OrderEntity> findSaleOrders(@Param("userId") Long userId, @Param("status") String status);
+
+    // 온도 계산식
+    @Query("SELECT AVG(o.rating) FROM OrderEntity o WHERE o.seller.userId = :sellerId AND o.rating > 0")
+    Double getAverageRatingBySeller(@Param("sellerId") Long sellerId);
+
 }

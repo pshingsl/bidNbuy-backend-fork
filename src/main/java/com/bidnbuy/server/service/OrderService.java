@@ -51,6 +51,14 @@ public class OrderService {
         // 저장
         order.setRating(rating);
         orderRepository.save(order);
+
+        //  판매자 온도 갱신
+        Double avg = orderRepository.getAverageRatingBySeller(order.getSeller().getUserId());
+        Double newTemperature = (avg != null ? avg * 10 : null);
+
+        UserEntity seller = order.getSeller();
+        seller.setUserTemperature(newTemperature);
+        userRepository.save(seller);
     }
     
 

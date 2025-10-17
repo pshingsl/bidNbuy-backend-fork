@@ -86,4 +86,8 @@ public class UserEntity {
     // 유저 프로필 이미지
     @Column(name = "profile_image_url", length = 512, nullable = true)
     private String profileImageUrl;
+
+    // 유저 온도 (별점 평균 × 10)
+    @Column(name = "user_temperature", nullable = true)
+    private Double userTemperature;
 }
