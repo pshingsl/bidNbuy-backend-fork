@@ -52,10 +52,10 @@ public class WishlistService {
                     wishlistRepository.delete(wishlist);
 
                     // 5. 삭제 후, 총 찜 개수와 상태를 반환
-                   Integer likeCount = wishlistRepository.countByAuction(auction);
+                   Integer wishCount = wishlistRepository.countByAuction(auction);
                     return WishlistDto.builder()
                             .isLiked(false) // 찜 취소됨
-                            .likeCount(likeCount)
+                            .wishCount(wishCount)
                             .auctionId(auctionId)
                             .build();
                 })
@@ -70,10 +70,10 @@ public class WishlistService {
                     wishlistRepository.save(newWishlist);
 
                     // 7. 등록 후, 총 찜 개수와 상태를 반환
-                    Integer likeCount = wishlistRepository.countByAuction(auction);
+                    Integer wishCount = wishlistRepository.countByAuction(auction);
                     return WishlistDto.builder()
                             .isLiked(true) // 찜 등록됨
-                            .likeCount(likeCount)
+                            .wishCount(wishCount)
                             .auctionId(auctionId)
                             .build();
                 });
