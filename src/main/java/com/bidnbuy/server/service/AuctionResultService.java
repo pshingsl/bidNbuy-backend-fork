@@ -35,8 +35,8 @@ public class AuctionResultService {
         List<AuctionPurchaseHistoryDto> recentPurchases = getRecentPurchases(userId); // 구매
         List<AuctionSalesHistoryDto> recentSales = getRecentSales(userId); // 판매
         
-        // TODO 아직 리뷰 받는 게 없어서 온도 하드코딩 추후에 완료되면 적용
-        Double temperature = 36.5;
+        // 온도
+        Double temperature = user.getUserTemperature();
 
         return MyPageSummaryDto.builder().nickname(user.getNickname())
                 .temperature(temperature)
