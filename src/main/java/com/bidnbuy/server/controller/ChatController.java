@@ -5,6 +5,8 @@ import com.bidnbuy.server.dto.ChatMessageRequestDto;
 import com.bidnbuy.server.dto.ResponseDto;
 import com.bidnbuy.server.entity.UserEntity;
 import com.bidnbuy.server.service.ChatMessageService;
+import com.bidnbuy.server.service.ImageService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +19,10 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.security.Principal;
 
@@ -27,6 +32,7 @@ import java.security.Principal;
 public class ChatController {
     private final SimpMessageSendingOperations messageSendingTemplate;
     private final ChatMessageService chatMessageService;
+    private final ImageService imageService;
 
     @MessageMapping("/chat/message")
     public void sendMessage(@Payload ChatMessageRequestDto requestDto, SimpMessageHeaderAccessor accessor){
@@ -59,5 +65,31 @@ public class ChatController {
         Long currentUserId = ((UserEntity) userDetails).getUserId();
         chatMessageService.processMarkingMessageAsRead(chatroomId, currentUserId);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/chat/{chatroomId}/image")
+    public ResponseEntity<String> uploadChatImage(@PathVariable Long chatroomId,
+                                                  Principal principal,
+                                                  @RequestParam("file")MultipartFile imageFile){
+        if(principal == null){
+            return ResponseEntity.status(401).body("인증되지 않은 사용자");
+        }
+        Long userId;
+        try {
+            userId = Long.parseLong(principal.getName());
+        }catch (NumberFormatException e) {
+            return ResponseEntity.status(403).body("올바르지 않은 사용자 id");
+        }
+
+        try{
+            String imageUrl = imageService.uploadChatMessageImage(chatroomId, userId, imageFile);
+            return ResponseEntity.ok(imageUrl);
+        }catch (IllegalArgumentException e){
+            return ResponseEntity.badRequest().body(e.getMessage()); //빈 파일
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(404).body(e.getMessage()); //채팅방 , 사용자 문제
+        } catch (RuntimeException e){
+            return ResponseEntity.status(500).body("이미지 업로드 중 서버 오류 발생");
+        }
     }
 }

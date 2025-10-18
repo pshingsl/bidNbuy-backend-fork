@@ -1,16 +1,13 @@
 package com.bidnbuy.server.service;
 
-import com.bidnbuy.server.entity.AuctionProductsEntity;
-import com.bidnbuy.server.entity.ImageEntity;
-import com.bidnbuy.server.entity.UserEntity;
+import com.bidnbuy.server.entity.*;
 import com.bidnbuy.server.enums.ImageType;
-import com.bidnbuy.server.repository.AuctionProductsRepository;
-import com.bidnbuy.server.repository.ImageRepository;
-import com.bidnbuy.server.repository.UserRepository;
+import com.bidnbuy.server.repository.*;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -33,6 +30,8 @@ public class ImageService {
     private final AuctionProductsRepository auctionProductsRepository;
     private final UserRepository userRepository;
     private final S3UploadService s3UploadService;
+    private final ChatMessageRepository chatMessageRepository;
+    private final ChatRoomRepository chatRoomRepository;
 
 
     // 경매 상품 이미지를 S3에 저장하고 S3 URL을 반환
@@ -109,18 +108,34 @@ public class ImageService {
     }
 
     // 채팅에서 이미지 추가
-    public String uploadChatMessageImage(Long chatRoomId, MultipartFile imageFile) {
+    public String uploadChatMessageImage(Long chatRoomId, Long userId,  MultipartFile imageFile) {
         if (imageFile.isEmpty()) {
-            throw new RuntimeException("업로드 이미지 없음");
+            throw new IllegalArgumentException("업로드 이미지 없음");
         }
+        ChatRoomEntity chatRoom = chatRoomRepository.findById(chatRoomId)
+                .orElseThrow(()->new EntityNotFoundException("채팅방을 찾을 수 없음"));
+        UserEntity sender = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다, id:" + userId));
+
+
         String s3Directory = "chat-images/" + chatRoomId + "/";
         String s3ImageUrl;
 
         try {
             s3ImageUrl = s3UploadService.uploadFile(imageFile, s3Directory);
-        } catch (Exception e) {
+        } catch (IOException e) {
             throw new RuntimeException("채팅 이미지 업로드에 실패", e);
         }
+        ChatMessageEntity chatMessage = ChatMessageEntity.builder()
+                .chatroomId(chatRoom)
+                .senderId(sender)
+                .message(null)
+                .imageUrl(s3ImageUrl)
+                .messageType(ChatMessageEntity.MessageType.IMAGE)
+                .isRead(false)
+                .build();
+        chatMessageRepository.save(chatMessage);
+
         return s3ImageUrl;
     }
 }

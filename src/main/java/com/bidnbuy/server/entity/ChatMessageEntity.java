@@ -62,7 +62,8 @@ public class ChatMessageEntity {
     public enum MessageType{
         CHAT,
         REQUEST,
-        SYSTEM
+        SYSTEM,
+        IMAGE
     }
 }
 
