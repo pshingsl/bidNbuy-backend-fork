@@ -2,11 +2,9 @@ package com.bidnbuy.server.service;
 
 import com.bidnbuy.server.dto.CreateInquiryRequest;
 import com.bidnbuy.server.dto.InquiryResponse;
-import com.bidnbuy.server.entity.AdminEntity;
-import com.bidnbuy.server.entity.Inquiries;
+import com.bidnbuy.server.entity.InquiriesEntity;
 import com.bidnbuy.server.entity.UserEntity;
 import com.bidnbuy.server.enums.InquiryEnums;
-import com.bidnbuy.server.repository.AdminRepository;
 import com.bidnbuy.server.repository.InquiriesRepository;
 import com.bidnbuy.server.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +22,8 @@ public class InquiriesService {
 
     // 문의 상세 조회
     public InquiryResponse getInquiryDetail(Long userId, Long inquiryId) {
-        Inquiries inquiry = inquiriesRepository.findByInquiriesIdAndUserUserId(inquiryId, userId)
+        InquiriesEntity inquiry = inquiriesRepository
+                .findByInquiriesIdAndUserUserIdAndType(inquiryId, userId, InquiryEnums.InquiryType.GENERAL)
                 .orElseThrow(() -> new IllegalArgumentException("해당 문의를 찾을 수 없습니다."));
 
         return InquiryResponse.fromEntity(inquiry);
@@ -33,7 +32,8 @@ public class InquiriesService {
     // 내 문의 조회하기
     // 내 문의 조회
     public List<InquiryResponse> getMyInquiries(Long userId) {
-        List<Inquiries> inquiries = inquiriesRepository.findByUserUserId(userId);
+        List<InquiriesEntity> inquiries = inquiriesRepository
+                .findByUserUserIdAndType(userId, InquiryEnums.InquiryType.GENERAL);
 
         return inquiries.stream()
                 .map(InquiryResponse::fromEntity)
@@ -46,7 +46,7 @@ public class InquiriesService {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
 
-        Inquiries inquiry = Inquiries.builder()
+        InquiriesEntity inquiry = InquiriesEntity.builder()
                 .user(user)
                 .admin(null) // 등록 시점에는 관리자가 배정되지 않음
                 .type(InquiryEnums.InquiryType.GENERAL)
@@ -56,7 +56,7 @@ public class InquiriesService {
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        Inquiries saved = inquiriesRepository.save(inquiry);
+        InquiriesEntity saved = inquiriesRepository.save(inquiry);
         return InquiryResponse.fromEntity(saved);
     }
 }

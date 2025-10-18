@@ -1,6 +1,6 @@
 package com.bidnbuy.server.dto;
 
-import com.bidnbuy.server.entity.Inquiries;
+import com.bidnbuy.server.entity.InquiriesEntity;
 import com.bidnbuy.server.enums.InquiryEnums;
 import lombok.Builder;
 import lombok.Getter;
@@ -17,14 +17,14 @@ public class InquiryResponse {
     private InquiryEnums.InquiryType type;
     private LocalDateTime createdAt;
 
-    public static InquiryResponse fromEntity(Inquiries inquiries) {
+    public static InquiryResponse fromEntity(InquiriesEntity inquiriesEntity) {
         return InquiryResponse.builder()
-                .inquiriesId(inquiries.getInquiriesId())
-                .title(inquiries.getTitle())
-                .content(inquiries.getContent())
-                .status(inquiries.getStatus())
-                .type(inquiries.getType())
-                .createdAt(inquiries.getCreatedAt())
+                .inquiriesId(inquiriesEntity.getInquiriesId())
+                .title(inquiriesEntity.getTitle())
+                .content(inquiriesEntity.getContent())
+                .status(inquiriesEntity.getStatus())
+                .type(inquiriesEntity.getType())
+                .createdAt(inquiriesEntity.getCreatedAt())
                 .build();
     }
 }
