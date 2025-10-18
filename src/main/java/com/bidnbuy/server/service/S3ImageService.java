@@ -95,4 +95,20 @@ public class S3ImageService {
 //
 //        return newS3ImageUrl;
 //    }
+
+    //채팅에서 이미지 추가
+//    public String uploadChatMessageImage(Long chatRoomId, MultipartFile imageFile){
+//        if(imageFile.isEmpty()){
+//            throw new RuntimeException("업로드 이미지 없음");
+//        }
+//        String s3Directory="chat-images/"+chatRoomId+"/";
+//        String s3ImageUrl;
+//
+//        try{
+//            s3ImageUrl = s3UploadService.uploadFile(imageFile, s3Directory);
+//        }catch (Exception e){
+//            throw new RuntimeException("채팅 이미지 업로드에 실패", e);
+//        }
+//        return s3ImageUrl;
+//    }
 }

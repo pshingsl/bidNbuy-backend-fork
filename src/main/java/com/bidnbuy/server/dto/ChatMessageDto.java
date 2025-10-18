@@ -19,7 +19,7 @@ public class ChatMessageDto {
     private String message;
 //    private long buyerId;
 //    private long sellerId;
-    private String imageUrl;
+    private String imageUrl; //s3사용
     private ChatMessageEntity.MessageType messageType;
     private LocalDateTime createdAt;
     private boolean isRead;
