@@ -3,6 +3,7 @@ package com.bidnbuy.server.service;
 import com.bidnbuy.server.dto.UserSignupRequestDto;
 import com.bidnbuy.server.entity.UserEntity;
 import com.bidnbuy.server.enums.AuthStatus;
+import com.bidnbuy.server.enums.UserStatus;
 import com.bidnbuy.server.exception.CustomAuthenticationException;
 import com.bidnbuy.server.repository.RefreshTokenRepository;
 import com.bidnbuy.server.repository.UserRepository;
@@ -15,6 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.swing.text.html.Option;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Date;
@@ -58,21 +60,42 @@ public class UserService {
             throw new RuntimeException("비밀번호는 영문과 숫자를 포함해서 8자리 이상이어야 합니다.");
         }
 
-        //중복 이메일 검사
-        if (repository.existsByEmail(email)) {
-            log.warn("email already exists{}", email);
-            throw new RuntimeException("email already exists");
-        }
+//        //중복 이메일 검사
+//        if (repository.existsByEmail(email)) {
+//            log.warn("email already exists{}", email);
+//            throw new RuntimeException("email already exists");
+//        }
 
         if(!emailVerificationService.isEmailVerified(email)){
             log.warn("email not verified for signup:{}:", email );
             throw new CustomAuthenticationException("이메일 인증부터 해야 함");
+        }
+        //삭제된 계정 포함 이메일 조회
+        Optional<UserEntity> existingUserOptional = repository.findByEmailWithDeleted(email);
+        if(existingUserOptional.isPresent()){
+            UserEntity existingUser = existingUserOptional.get();
+
+            //계정 활성
+            if(existingUser.getUserStatus() == UserStatus.Y && existingUser.getDeletedAt() == null){
+                log.warn("email already exists and is active:{}", email);
+                throw new RuntimeException("이미 사용 중인 이메일입니다.");
+            }else{
+                //삭제된 계정
+                existingUser.setDeletedAt(null);
+                existingUser.setUserStatus(UserStatus.Y);
+                existingUser.setAuthStatus(AuthStatus.Y);
+                existingUser.setNickname(nickname);
+                existingUser.setPassword(passwordEncoder.encode(password));
+
+                return repository.save(existingUser); //재활성화 계정 저장
+            }
         }
 
         UserEntity newUser = UserEntity.builder()
                 .email(email)
                 .nickname(nickname)
                 .authStatus(AuthStatus.Y)
+                .userStatus(UserStatus.Y)
                 .role("ROLE_USER")
                 .password(passwordEncoder.encode(password))
                 .build();
@@ -89,6 +112,11 @@ public class UserService {
             log.warn("User not found for email:{}", email);
             return null;
         }
+
+        if(ogUser.getDeletedAt() !=null || ogUser.getUserStatus() == UserStatus.N){
+            throw new CustomAuthenticationException("탈퇴된 계정입니다. 재가입이 필요합니다.");
+        }
+
         //비밀번호 일치
         if (passwordEncoder.matches(password, ogUser.getPassword())) {
             return ogUser;
@@ -202,13 +230,18 @@ public class UserService {
     }
 
     //회원 탈퇴
+    @Transactional
     public void deleteUser(Long userId, String inputPassword) {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new UsernameNotFoundException("user not found:{}" + userId));
         if (!passwordEncoder.matches(inputPassword, user.getPassword())) {
             throw new RuntimeException("비밀번호가 일치하지 않습니다.");
         }
-        userRepository.deleteById(userId);
+        user.setDeletedAt(LocalDateTime.now());
+        user.setUserStatus(UserStatus.N);
+//        userRepository.deleteById(userId);
+        emailVerificationService.clearVerificationStatus(user.getEmail());
+        user.setAuthStatus(AuthStatus.N);
     }
 
     //userId로 찾기

@@ -7,6 +7,7 @@ import com.bidnbuy.server.enums.IsVerified;
 import com.bidnbuy.server.repository.EmailVerificationRepository;
 import com.bidnbuy.server.repository.UserRepository;
 import jakarta.persistence.Temporal;
+import jakarta.transaction.TransactionScoped;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -60,6 +61,12 @@ public class EmailVerificationService {
                 .orElse(false);
     }
 
-
+    @Transactional
+    public void clearVerificationStatus(String email){
+        emailVerificationRepository.findByEmail(email)
+                .ifPresent(entity->{
+                    entity.setIsVerified(IsVerified.N);
+                });
+    }
 
 }

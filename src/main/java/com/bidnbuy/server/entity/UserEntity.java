@@ -19,7 +19,9 @@ import java.util.List;
 @Getter
 @Setter
 @Entity
-@Table(name = "User")
+@Table(name = "User", uniqueConstraints = {
+        @UniqueConstraint(name = "UC_EmailAndDeletedAt", columnNames = {"email", "deleted_at"})
+})
 @SQLDelete(sql = "UPDATE user SET deleted_at = CURRENT_TIMESTAMP WHERE user_id = ?")
 @SQLRestriction("deleted_at IS NULL")
 public class UserEntity {
@@ -36,7 +38,7 @@ public class UserEntity {
     @JoinColumn(name = "address_id", nullable = true)
     private AddressEntity addressId;
 
-    @Column(name = "email", nullable = false, unique = true, length = 255)
+    @Column(name = "email", nullable = false, length = 255)
     private String email;
 
     @Column(name = "password", nullable = false, length = 100)
