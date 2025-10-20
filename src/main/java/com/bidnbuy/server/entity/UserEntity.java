@@ -28,15 +28,14 @@ public class UserEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id", nullable = false)
-    private long userId;
+    private Long userId;
 
     @ManyToOne
     @JoinColumn(name = "admin_id", nullable = true) //나중에 false로 바꾸기
     private AdminEntity admin;
 
-    @ManyToOne
-    @JoinColumn(name = "address_id", nullable = true)
-    private AddressEntity addressId;
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<AddressEntity> address = new ArrayList<>();
 
     @Column(name = "email", nullable = false, length = 255)
     private String email;
@@ -97,10 +96,6 @@ public class UserEntity {
     @Column(name = "penalty_points", nullable = false)
     @Builder.Default
     private int penaltyPoints = 0;
-
-    // 유저 전화번호
-    @Column(name = "user_tel", nullable = true)
-    private String tel;
 
     // 정지 해제 예정일
     @Column(name = "suspended_until")

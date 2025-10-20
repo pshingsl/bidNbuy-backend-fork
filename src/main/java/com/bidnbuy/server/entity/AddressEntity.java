@@ -22,6 +22,14 @@ public class AddressEntity {
     @Column(name="address_id", nullable = true) //구현시 notnull로 바꿔서 사용
     private long addressId;
 
+    // 유저 실제 이름 -> 유저에서 처리하면 데이터 무결성이 발생해서 여기에다 컬럼 추가
+    @Column(name="recipient_name", nullable = false, length = 50)
+    private String recipientName;
+
+    // 유저 전화번호
+    @Column(name="phone_number", nullable = false, length = 20)
+    private String phoneNumber;
+
     @Column(name="zonecode", nullable = false, length = 10)
     private String zonecode;
 
@@ -41,4 +49,9 @@ public class AddressEntity {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private UserEntity user;
+
 }
