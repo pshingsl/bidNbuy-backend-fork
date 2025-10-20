@@ -19,13 +19,11 @@ import java.util.Optional;
 @Repository
 public interface AuctionProductsRepository extends JpaRepository<AuctionProductsEntity, Long> {
 
-    // 💡 [추가] 1. 특정 사용자가 등록한 경매 물품 목록 조회
+    // 특정 사용자가 등록한 경매 물품 목록 조회
     List<AuctionProductsEntity> findByUser(UserEntity user);
 
 
-    /**
-     * 전체 상품을 가격 범위, 판매 상태, 삭제되지 않음 기준으로 필터링하여 조회합니다.
-     */
+    // 전체 상품을 가격 범위, 판매 상태, 삭제되지 않음 기준으로 필터링하여 조회합니다.
     @Query("SELECT p FROM AuctionProductsEntity p " +
             "LEFT JOIN FETCH p.user u " +
             "LEFT JOIN FETCH p.category c " +
@@ -87,7 +85,8 @@ public interface AuctionProductsRepository extends JpaRepository<AuctionProducts
             "JOIN FETCH p.user u " +
             "JOIN FETCH p.category c " +
             "LEFT JOIN FETCH p.images i " +
-            "WHERE p.auctionId = :auctionId")
+            "WHERE p.auctionId = :auctionId " +
+            "AND p.deletedAt IS NULL")
     Optional<AuctionProductsEntity> findByIdWithDetails(Long auctionId);
 
     // 삭제
