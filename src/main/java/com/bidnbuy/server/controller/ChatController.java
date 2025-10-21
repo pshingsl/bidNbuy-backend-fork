@@ -61,9 +61,20 @@ public class ChatController {
     }
 
     @PutMapping("/chat/{chatroomId}/read")
-    public ResponseEntity<?> markMessageAsRead(@PathVariable Long chatroomId, @AuthenticationPrincipal UserDetails userDetails){
-        Long currentUserId = ((UserEntity) userDetails).getUserId();
+    public ResponseEntity<?> markMessageAsRead(@PathVariable Long chatroomId, Principal principal){
+        if(principal == null){
+            log.error("인증정보 없음");
+            return ResponseEntity.status(401).body("인증되지않은 사용자");
+        }
+        Long currentUserId;
+        try{
+            currentUserId = Long.parseLong(principal.getName());
+        } catch (NumberFormatException e) {
+            log.error("사용자 id추출 실패:{}", e.getMessage());
+            return ResponseEntity.status(403).body("올바르지 않은 사용자 id");
+        }
         chatMessageService.processMarkingMessageAsRead(chatroomId, currentUserId);
+        log.info("채팅방 읽음처리 요청완료, 사용자 id:{}",currentUserId);
         return ResponseEntity.ok().build();
     }
 
