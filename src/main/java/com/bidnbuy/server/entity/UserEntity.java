@@ -100,4 +100,19 @@ public class UserEntity {
     // 정지 해제 예정일
     @Column(name = "suspended_until")
     private LocalDateTime suspendedUntil;
+
+    // 정지 상태
+    @Column(name = "is_suspended", nullable = false)
+    @Builder.Default
+    private boolean isSuspended = false;
+
+    // 정지 횟수 (최초 1회 제한)
+    @Column(name = "suspension_count", nullable = false)
+    @Builder.Default
+    private int suspensionCount = 0;
+
+    // 강퇴 횟수 (최초 1회 제한)
+    @Column(name = "ban_count", nullable = false)
+    @Builder.Default
+    private int banCount = 0;
 }
