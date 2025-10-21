@@ -25,7 +25,7 @@ public class PenaltyEntity {
     private UserEntity user;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "type", nullable = false, length = 50)
+    @Column(name = "type", nullable = false, length = 10)
     private PenaltyType type;
 
     @Column(name = "points", nullable = false)
