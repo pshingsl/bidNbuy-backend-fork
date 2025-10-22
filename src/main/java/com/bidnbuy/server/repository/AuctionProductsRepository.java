@@ -1,6 +1,7 @@
 package com.bidnbuy.server.repository;
 
 import com.bidnbuy.server.entity.AuctionProductsEntity;
+import com.bidnbuy.server.entity.AuctionResultEntity;
 import com.bidnbuy.server.entity.UserEntity;
 import com.bidnbuy.server.enums.SellingStatus;
 import jakarta.persistence.LockModeType;
@@ -110,7 +111,16 @@ public interface AuctionProductsRepository extends JpaRepository<AuctionProducts
     );
 
 
-    List<AuctionProductsEntity> findTop3ByUser_UserIdAndDeletedAtIsNullOrderByCreatedAtDesc(Long userId);
+    List<AuctionProductsEntity> findTop3ByUser_UserIdAndSellingStatusInAndDeletedAtIsNullOrderByCreatedAtDesc(
+            Long userId,
+            List<SellingStatus> sellingStatuses // 💡 SellingStatusIn 조건에 의해 이 리스트가 매칭됨
+    );
+
+
+    List<AuctionProductsEntity> findByUser_UserIdAndSellingStatusInAndDeletedAtIsNull(
+            Long userId,
+            List<SellingStatus> sellingStatuses
+    );
 
     // 이메일로 특정 유저 경매 상품 조회 - 관리자용
     @Query("SELECT p FROM AuctionProductsEntity p " +

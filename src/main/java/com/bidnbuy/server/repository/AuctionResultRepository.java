@@ -23,4 +23,7 @@ public interface AuctionResultRepository extends JpaRepository<AuctionResultEnti
 
     List<AuctionResultEntity> findByOrder_OrderId(Long orderId);
 
+    // 마이페이지 최근 구매내역
+    List<AuctionResultEntity> findTop3ByWinner_UserIdOrderByAuction_EndTimeDesc(Long userId);
+
 }
