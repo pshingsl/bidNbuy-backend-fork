@@ -7,6 +7,7 @@ import com.bidnbuy.server.entity.AuctionProductsEntity;
 import com.bidnbuy.server.entity.AuctionResultEntity;
 import com.bidnbuy.server.entity.UserEntity;
 import com.bidnbuy.server.enums.ResultStatus;
+import com.bidnbuy.server.enums.SellingStatus;
 import com.bidnbuy.server.enums.TradeFilterStatus;
 import com.bidnbuy.server.repository.AuctionProductsRepository;
 import com.bidnbuy.server.repository.AuctionResultRepository;
@@ -17,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -37,7 +39,7 @@ public class AuctionResultService {
         // 마이페이지 최근
         List<AuctionPurchaseHistoryDto> recentPurchases = getRecentPurchases(userId); // 구매
         List<AuctionSalesHistoryDto> recentSales = getRecentSales(userId); // 판매
-        
+
         // 온도
         Double temperature = user.getUserTemperature();
 
@@ -53,18 +55,30 @@ public class AuctionResultService {
     @Transactional(readOnly = true)
     private List<AuctionPurchaseHistoryDto> getRecentPurchases(Long userId) {
 
-        List<AuctionPurchaseHistoryDto> history = getPurchaseHistory(userId, TradeFilterStatus.ALL);
+        List<AuctionResultEntity> recentResults =
+                auctionResultRepository.findTop3ByWinner_UserIdOrderByAuction_EndTimeDesc(userId);
 
-        if (history.size() > 3) {
-            return history.subList(0, 3);
-        }
-        return history;
+        // DTO로 변환하여 반환
+        return recentResults.stream()
+                .map(result -> toPurchaseDto(result)) // toPurchaseDto 사용
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     private List<AuctionSalesHistoryDto> getRecentSales(Long userId) {
 
-        List<AuctionProductsEntity> activeAuctions = auctionProductsRepository.findTop3ByUser_UserIdAndDeletedAtIsNullOrderByCreatedAtDesc(userId);
+        // 판매 중 또는 시작 전 상태만 조회
+        List<SellingStatus> activeStatuses = List.of(
+                SellingStatus.BEFORE,
+                SellingStatus.SALE,
+                SellingStatus.PROGRESS
+        );
+
+        List<AuctionProductsEntity> activeAuctions =
+                auctionProductsRepository.findTop3ByUser_UserIdAndSellingStatusInAndDeletedAtIsNullOrderByCreatedAtDesc(
+                        userId,
+                        activeStatuses
+                );
 
         return activeAuctions.stream()
                 .map(this::toActiveSalesDto)
@@ -84,13 +98,53 @@ public class AuctionResultService {
 
     // 마이페이지 - 판매 내역 (판매 결과) 조회
     public List<AuctionSalesHistoryDto> getSalesHistory(Long userId, TradeFilterStatus filterStatus) {
-        // 판매자(Auction_User) 기준으로 조회합니다.
-        List<AuctionResultEntity> results = auctionResultRepository.findByAuction_User_UserId_Optimized(userId);
+        List<AuctionSalesHistoryDto> salesHistory = new ArrayList<>();
 
-        return results.stream()
-                .filter(result -> isMatchingStatus(result.getResultStatus(), filterStatus))
-                .map(this::toSalesDto)
-                .collect(Collectors.toList());
+        // 경매 진행 중 / 시작전 필터링
+        if (filterStatus == TradeFilterStatus.ONGOING || filterStatus == TradeFilterStatus.ALL) {
+            List<SellingStatus> ongoingStatuses = List.of(SellingStatus.BEFORE, SellingStatus.SALE, SellingStatus.PROGRESS);
+
+            List<AuctionProductsEntity> activeAuctions =
+                    auctionProductsRepository.findByUser_UserIdAndSellingStatusInAndDeletedAtIsNull(
+                            userId,
+                            ongoingStatuses
+                    );
+
+            List<AuctionSalesHistoryDto> activeSales = activeAuctions.stream()
+                    .map(this::toActiveSalesDto)
+                    .collect(Collectors.toList());
+
+            if(filterStatus == TradeFilterStatus.ONGOING) {
+                return activeSales;
+            }
+            salesHistory.addAll(activeSales);
+        }
+
+        // 2. 경매 종료 후 거래 상태 필터링 (ResultStatus 사용)
+        if (filterStatus == TradeFilterStatus.COMPLETED || filterStatus == TradeFilterStatus.CANCELLED || filterStatus == TradeFilterStatus.ALL) {
+
+            List<AuctionResultEntity> results = auctionResultRepository.findByAuction_User_UserId_Optimized(userId);
+
+            List<AuctionSalesHistoryDto> completedSales = results.stream()
+                    .filter(result -> {
+                        // ALL이거나, COMPLETED/CANCELLED 필터일 때만 ResultStatus 매칭
+                        if (filterStatus == TradeFilterStatus.ALL) {
+                            return result.getResultStatus() != null;
+                        }
+                        return isMatchingStatus(result.getResultStatus(), filterStatus);
+                    })
+                    .map(this::toSalesDto)
+                    .collect(Collectors.toList());
+
+            salesHistory.addAll(completedSales);
+        }
+
+        // 3. 필터가 COMPLETED/CANCELLED인 경우 (1번 로직을 타지 않음)
+        if (filterStatus == TradeFilterStatus.COMPLETED || filterStatus == TradeFilterStatus.CANCELLED) {
+            return salesHistory;
+        }
+
+        return salesHistory;
     }
 
     // 구매 내역
@@ -142,16 +196,17 @@ public class AuctionResultService {
         }
 
         return switch (filterStatus) {
-            case ONGOING ->
-                // 진행 중: 결제 대기 중인 상태만 해당
-                    resultStatus == ResultStatus.SUCCESS_PENDING_PAYMENT;
 
+            // 진행 중: 결제 대기 중인 상태만 해당
+            case ONGOING ->
+                    resultStatus == ResultStatus.SUCCESS_PENDING_PAYMENT || resultStatus == ResultStatus.SUCCESS_PAID;
+
+            // 완료: 거래 완료 상태만 해당
             case COMPLETED ->
-                // 완료: 거래 완료 상태만 해당
                     resultStatus == ResultStatus.SUCCESS_COMPLETED;
 
+            // 취소/실패: 유찰 또는 거래 취소 상태만 해당
             case CANCELLED ->
-                // 취소/실패: 유찰 또는 거래 취소 상태만 해당
                     resultStatus == ResultStatus.FAILURE || resultStatus == ResultStatus.CANCELED;
 
             default -> false; // 정의되지 않은 상태
@@ -159,7 +214,7 @@ public class AuctionResultService {
     }
 
     // 상태 메서드
-    private AuctionSalesHistoryDto toActiveSalesDto(AuctionProductsEntity auction){
+    private AuctionSalesHistoryDto toActiveSalesDto(AuctionProductsEntity auction) {
 
         String imageUrl = imageRepository.findFirstImageUrlByAuctionId(auction.getAuctionId())
                 .orElse("/images/default_product.png");
@@ -181,7 +236,7 @@ public class AuctionResultService {
     // 구매내역에 페이별로 조회
     private String determineStatusText(AuctionResultEntity result) {
         ResultStatus status = result.getResultStatus();
-        
+
         // 이건 의논해서 물어봐야함
         if (status == ResultStatus.FAILURE) {
             return "유찰 (종료)";
