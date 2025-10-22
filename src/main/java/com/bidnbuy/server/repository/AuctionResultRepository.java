@@ -21,4 +21,6 @@ public interface AuctionResultRepository extends JpaRepository<AuctionResultEnti
     @Query("SELECT r FROM AuctionResultEntity r JOIN FETCH r.auction a JOIN FETCH a.user u WHERE u.userId = :userId")
     List<AuctionResultEntity> findByAuction_User_UserId_Optimized(@Param("userId") Long userId);
 
+    List<AuctionResultEntity> findByOrder_OrderId(Long orderId);
+
 }
