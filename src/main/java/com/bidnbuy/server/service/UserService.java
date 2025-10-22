@@ -121,6 +121,20 @@ public class UserService {
             throw new CustomAuthenticationException("탈퇴된 계정입니다. 재가입이 필요합니다.");
         }
 
+        // 정지 상태 체크/해제
+        if (ogUser.isSuspended() && ogUser.getSuspendedUntil() != null) {
+            if (ogUser.getSuspendedUntil().isBefore(LocalDateTime.now())) {
+                // 정지 기간 만료된 경우 자동 해제
+                ogUser.setSuspended(false);
+                ogUser.setSuspendedUntil(null);
+                repository.save(ogUser);
+                log.info("정지 해제: userId={}, email={}", ogUser.getUserId(), email);
+            } else {
+                // 정지 기간인 경우
+                throw new CustomAuthenticationException("정지된 계정입니다. 정지 해제일: " + ogUser.getSuspendedUntil());
+            }
+        }
+
         //비밀번호 일치
         if (passwordEncoder.matches(password, ogUser.getPassword())) {
             return ogUser;
