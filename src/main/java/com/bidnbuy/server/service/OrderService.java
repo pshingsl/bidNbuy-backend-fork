@@ -59,7 +59,7 @@ public class OrderService {
 
         //  판매자 온도 갱신
         Double avg = orderRepository.getAverageRatingBySeller(order.getSeller().getUserId());
-        Double newTemperature = (avg != null ? avg * 10 : null);
+        Double newTemperature = (avg != null ? avg * 10 : 0);
 
         UserEntity seller = order.getSeller();
         seller.setUserTemperature(newTemperature);
