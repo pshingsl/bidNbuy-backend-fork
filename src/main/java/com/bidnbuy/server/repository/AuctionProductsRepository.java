@@ -108,4 +108,6 @@ public interface AuctionProductsRepository extends JpaRepository<AuctionProducts
             Long auctionId,
             List<SellingStatus> sellingStatuses
     );
+
+    List<AuctionProductsEntity> findTop3ByUser_UserIdAndDeletedAtIsNullOrderByCreatedAtDesc(Long userId);
 }
