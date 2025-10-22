@@ -236,39 +236,6 @@ public class OrderService {
 
     }
 
-    // 주문 상태 변경 메서드
-    @Transactional
-    public void markOrderAsPaid(Long orderId) {
-
-        // 주문 조회
-        OrderEntity order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("Order not found: " + orderId));
-
-        //  이미 완료된 상태인지 확인 (중복 처리 방지)
-        if ("PAID".equalsIgnoreCase(order.getOrderStatus()) ||
-                "COMPLETED".equalsIgnoreCase(order.getOrderStatus())) {
-            System.err.println("경고: 이미 결제 완료된 주문을 다시 PAID로 시도함. Order ID: " + orderId);
-            return;
-        }
-
-        // 주문 상태를 PAID로 변경
-        order.setOrderStatus("PAID");
-        order.setUpdatedAt(LocalDateTime.now());
-        orderRepository.save(order);
-
-        // 결재가 완료되어 결과 갱신
-        List<AuctionResultEntity> results = auctionResultRepository.findByOrder_OrderId(orderId);
-
-        if(!results.isEmpty()) {
-            AuctionResultEntity result = results.get(0);
-
-            result.setResultStatus(ResultStatus.SUCCESS_PAID);
-            auctionResultRepository.save(result);
-
-            System.out.println("주문 상태 PAID로 변경 완료: Order ID " + orderId);
-        }
-    }
-
     public OrderEntity findById(Long orderId) {
         return orderRepository.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("Order not found: " + orderId));
