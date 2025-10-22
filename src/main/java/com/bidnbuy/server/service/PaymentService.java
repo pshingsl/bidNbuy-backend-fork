@@ -34,6 +34,7 @@ public class PaymentService {
     private final TossPaymentClient tossPaymentClient;
     private final ObjectMapper objectMapper;
     private final OrderRepository orderRepository;
+    private final OrderService orderService;
 
     // 자동 취소 (스케줄러가 호출)
     @Transactional
@@ -41,7 +42,7 @@ public class PaymentService {
         for (OrderEntity order : expiredOrders) {
             try {
                 if (order.getPayment() != null) {
-                    // ✅ 기존 cancelPayment 로직 그대로 사용
+                    // 기존 cancelPayment 로직 그대로 사용
                     PaymentCancelRequestDto dto = new PaymentCancelRequestDto(
                             order.getPayment().getTossPaymentKey(),
                             "결제 기한 초과 자동 취소",
@@ -167,7 +168,7 @@ public class PaymentService {
                 .orElseThrow(() -> new IllegalArgumentException(
                         "Payment not found by merchantOrderId: " + dto.getOrderId()));
 
-        // ✅ 이미 성공 상태라면 그대로 리턴
+        // 이미 성공 상태라면 그대로 리턴
         if (payment.getTossPaymentStatus() == paymentStatus.PaymentStatus.SUCCESS) {
             log.info("이미 승인된 결제: {}", dto.getOrderId());
             return payment;
@@ -177,11 +178,24 @@ public class PaymentService {
         payment.setTossPaymentStatus(mapToPaymentStatus(dto.getStatus()));
         payment.setTossPaymentMethod(mapToPaymentMethod(dto.getMethod()));
 
+        paymentStatus.PaymentStatus newStatus = mapToPaymentStatus(dto.getStatus());
+        payment.setTossPaymentStatus(newStatus);
+
         if (dto.getApprovedAt() != null) {
             OffsetDateTime odt = OffsetDateTime.parse(dto.getApprovedAt());
             payment.setApprovedAt(odt.toLocalDateTime());
         }
 
+        PaymentEntity savedPayment = paymentRepository.save(payment);
+
+        if(newStatus == paymentStatus.PaymentStatus.SUCCESS) {
+            OrderEntity order = savedPayment.getOrder();
+            if (order != null) {
+                log.info("결제 성공. 주문 상태 PAID로 변경 요청. Order ID: {}", order.getOrderId());
+                // order 엔티티가 영속성 컨텍스트에 있으므로, ID를 통해 OrderService 호출
+                orderService.markOrderAsPaid(order.getOrderId());
+            }
+        }
 
         return paymentRepository.save(payment);
     }
