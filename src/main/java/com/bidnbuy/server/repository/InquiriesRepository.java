@@ -10,10 +10,16 @@ import java.util.Optional;
 public interface InquiriesRepository extends JpaRepository<InquiriesEntity, Long> {
 
     // 일반 조회(전체, 상태필터링) (문의)
-    List<InquiriesEntity> findByUserUserIdAndType(Long userId, InquiryEnums.InquiryType type);
+    //List<InquiriesEntity> findByUserUserIdAndType(Long userId, InquiryEnums.InquiryType type);
+
+    // 일반 조회 (전체)
+    List<InquiriesEntity> findByUserUserId(Long userId);
 
     // 상세 조회 (문의)
-    Optional<InquiriesEntity> findByInquiriesIdAndUserUserIdAndType(Long inquiryId, Long userId, InquiryEnums.InquiryType type);
+    //Optional<InquiriesEntity> findByInquiriesIdAndUserUserIdAndType(Long inquiryId, Long userId, InquiryEnums.InquiryType type);
+
+    // 상세 조회(전체)
+    Optional<InquiriesEntity> findByInquiriesIdAndUserUserId(Long inquiryId, Long userId);
 
     // 일반 조회(신고)
     List<InquiriesEntity> findByUser_UserIdAndType(Long userId, InquiryEnums.InquiryType type);

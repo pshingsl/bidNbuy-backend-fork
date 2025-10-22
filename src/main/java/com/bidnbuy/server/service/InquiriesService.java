@@ -23,17 +23,15 @@ public class InquiriesService {
     // 문의 상세 조회
     public InquiryResponse getInquiryDetail(Long userId, Long inquiryId) {
         InquiriesEntity inquiry = inquiriesRepository
-                .findByInquiriesIdAndUserUserIdAndType(inquiryId, userId, InquiryEnums.InquiryType.GENERAL)
+                .findByInquiriesIdAndUserUserId(inquiryId, userId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 문의를 찾을 수 없습니다."));
 
         return InquiryResponse.fromEntity(inquiry);
     }
 
-    // 내 문의 조회하기
-    // 내 문의 조회
+    // 내 문의, 신고 조회하기
     public List<InquiryResponse> getMyInquiries(Long userId) {
-        List<InquiriesEntity> inquiries = inquiriesRepository
-                .findByUserUserIdAndType(userId, InquiryEnums.InquiryType.GENERAL);
+        List<InquiriesEntity> inquiries = inquiriesRepository.findByUserUserId(userId);
 
         return inquiries.stream()
                 .map(InquiryResponse::fromEntity)

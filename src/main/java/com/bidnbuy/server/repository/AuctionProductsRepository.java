@@ -109,5 +109,32 @@ public interface AuctionProductsRepository extends JpaRepository<AuctionProducts
             List<SellingStatus> sellingStatuses
     );
 
+
     List<AuctionProductsEntity> findTop3ByUser_UserIdAndDeletedAtIsNullOrderByCreatedAtDesc(Long userId);
+
+    // 이메일로 특정 유저 경매 상품 조회 - 관리자용
+    @Query("SELECT p FROM AuctionProductsEntity p " +
+            "LEFT JOIN FETCH p.user u " +
+            "LEFT JOIN FETCH p.category c " +
+            "WHERE p.deletedAt IS NULL " +
+            "AND p.sellingStatus IN :statuses " +
+            "AND u.email = :userEmail " +
+            "AND (:#{#searchKeyword} IS NULL OR p.title LIKE %:#{#searchKeyword}%) " +
+            "AND (:#{#minPrice} IS NULL OR p.currentPrice >= :#{#minPrice}) " +
+            "AND (:#{#maxPrice} IS NULL OR p.currentPrice <= :#{#maxPrice}) " +
+            "AND (" +
+            "( :#{#mainCategoryId} IS NULL AND :#{#subCategoryId} IS NULL ) OR " +
+            "( :#{#subCategoryId} IS NOT NULL AND c.categoryId = :#{#subCategoryId} ) OR " +
+            "( :#{#mainCategoryId} IS NOT NULL AND :#{#subCategoryId} IS NULL AND (c.parent.categoryId = :#{#mainCategoryId} OR c.categoryId = :#{#mainCategoryId}) )" +
+            ")")
+    Page<AuctionProductsEntity> findByUserEmailAndStatuses(
+            @Param("userEmail") String userEmail,
+            @Param("statuses") List<SellingStatus> statuses,
+            @Param("searchKeyword") String searchKeyword,
+            @Param("mainCategoryId") Integer mainCategoryId,
+            @Param("subCategoryId") Integer subCategoryId,
+            @Param("minPrice") Integer minPrice,
+            @Param("maxPrice") Integer maxPrice,
+            Pageable pageable
+    );
 }

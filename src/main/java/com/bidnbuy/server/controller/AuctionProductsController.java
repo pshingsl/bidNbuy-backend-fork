@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -57,8 +58,20 @@ public class AuctionProductsController {
             @RequestParam(defaultValue = "false") Boolean includeEnded,
             @RequestParam(required = false) String searchKeyword,
             @RequestParam(required = false) Integer mainCategoryId,
-            @RequestParam(required = false) Integer subCategoryId
+            @RequestParam(required = false) Integer subCategoryId,
+            @RequestParam(required = false) String userEmail
     ) {
+        // 관리자용 이메일 조회
+        if (userEmail != null && !userEmail.trim().isEmpty()) {
+            boolean isAdmin = SecurityContextHolder.getContext().getAuthentication().getAuthorities()
+                    .stream()
+                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
+            
+            if (!isAdmin) {
+                return ResponseEntity.status(403).build();
+            }
+        }
+        
         PagingResponseDto<AuctionListResponseDto> list = auctionProductsService.getAllAuctions(
                 page,
                 size,
@@ -68,7 +81,8 @@ public class AuctionProductsController {
                 includeEnded,
                 searchKeyword,
                 mainCategoryId,
-                subCategoryId
+                subCategoryId,
+                userEmail
         );
         return ResponseEntity.ok(list);
     }
@@ -97,6 +111,23 @@ public class AuctionProductsController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("삭제 중 오류가 발생했습니다.");
+        }
+    }
+
+    // 관리자용 경매 삭제
+    @DeleteMapping("/admin/{auctionId}")
+    public ResponseEntity<?> deleteAuctionByAdmin(@PathVariable Long auctionId) {
+        try {
+            auctionProductsService.deleteAuctionByAdmin(auctionId);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("삭제 중 오류가 발생했습니다.");
         }
     }
 

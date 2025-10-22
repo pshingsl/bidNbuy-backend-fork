@@ -1,7 +1,9 @@
 package com.bidnbuy.server.service;
 
 import com.bidnbuy.server.dto.UserSignupRequestDto;
+import com.bidnbuy.server.entity.AdminEntity;
 import com.bidnbuy.server.entity.UserEntity;
+import com.bidnbuy.server.repository.AdminRepository;
 import com.bidnbuy.server.enums.AuthStatus;
 import com.bidnbuy.server.enums.UserStatus;
 import com.bidnbuy.server.exception.CustomAuthenticationException;
@@ -34,15 +36,17 @@ public class UserService {
     private final UserRepository userRepository;
     private final EmailVerificationService emailVerificationService; //회원가입 시에 이메일 인증으로 수정
     private final RefreshTokenRepository refreshTokenRepository;
+    private final AdminRepository adminRepository;
 
     public UserService(UserRepository repository, PasswordEncoder passwordEncoder,
                        UserRepository userRepository, EmailVerificationService emailVerificationService,
-                       RefreshTokenRepository refreshTokenRepository) {
+                       RefreshTokenRepository refreshTokenRepository, AdminRepository adminRepository) {
         this.repository = repository;
         this.passwordEncoder = passwordEncoder;
         this.userRepository = userRepository;
         this.emailVerificationService = emailVerificationService;
         this.refreshTokenRepository = refreshTokenRepository;
+        this.adminRepository = adminRepository;
     }
 
     private static final String PASSWORD_REGEX =
@@ -267,6 +271,27 @@ public class UserService {
                         },
                         () -> {
                             log.warn("유효한 토큰이 없음");
+                        }
+                );
+    }
+
+    // 관리자 로그아웃
+    @Transactional
+    public void logoutAdmin(Long adminId) {
+        log.info("관리자 로그아웃: {}", adminId);
+
+        AdminEntity adminEntity = adminRepository.findById(adminId)
+                .orElseThrow(() -> new NoSuchElementException(adminId + "해당 관리자를 찾을 수 없음"));
+
+        // 관리자 리프레시 토큰 삭제
+        refreshTokenRepository.findByAdmin(adminEntity)
+                .ifPresentOrElse(
+                        refreshToken -> {
+                            refreshTokenRepository.delete(refreshToken);
+                            log.info("관리자 토큰 삭제 성공");
+                        },
+                        () -> {
+                            log.warn("유효한 관리자 토큰 없음");
                         }
                 );
     }

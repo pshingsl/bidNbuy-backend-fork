@@ -10,6 +10,7 @@ import com.bidnbuy.server.enums.ImageType;
 import com.bidnbuy.server.enums.SellingStatus;
 import com.bidnbuy.server.repository.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -27,6 +28,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuctionProductsService {
 
     // 불변성을 보장하기 위해 final로 사용
@@ -107,8 +109,8 @@ public class AuctionProductsService {
             Boolean includeEnded,
             String searchKeyword,
             Integer mainCategoryId,
-            Integer subCategoryId
-
+            Integer subCategoryId,
+            String userEmail
     ) {
 
         // 상태 리스트 결정, 정렬, 페이지
@@ -117,15 +119,24 @@ public class AuctionProductsService {
         Pageable pageable = PageRequest.of(page, size, sort);
 
         // 2. Repository 호출: 수정한 가격/상태 필터링 메서드 호출
-        Page<AuctionProductsEntity> auctionPage = auctionProductsRepository.findDynamicFilteredAuctions(
-                searchKeyword,
-                mainCategoryId,
-                subCategoryId,
-                minPrice,
-                maxPrice,
-                statuses,
-                pageable
-        );
+        // 이메일로 특정 유저 경매 상품 조회 추가
+        Page<AuctionProductsEntity> auctionPage;
+        if (userEmail != null && !userEmail.trim().isEmpty()) {
+            auctionPage = auctionProductsRepository.findByUserEmailAndStatuses(
+                    userEmail, statuses, searchKeyword, mainCategoryId, subCategoryId, minPrice, maxPrice, pageable
+            );
+        } else {
+            // 기존 필터링
+            auctionPage = auctionProductsRepository.findDynamicFilteredAuctions(
+                    searchKeyword,
+                    mainCategoryId,
+                    subCategoryId,
+                    minPrice,
+                    maxPrice,
+                    statuses,
+                    pageable
+            );
+        }
 
         // 3. DTO 변환 및 반환
         return buildPagingResponse(auctionPage);
@@ -186,7 +197,7 @@ public class AuctionProductsService {
         Integer wishCount = wishlistRepository.countByAuction(products);
 
         // 판매자 온도 (임의 값 또는 실제 로직을 통해 가져와야 함)
-        final Double DEFAULT_TEMP = 36.5;
+        Double sellerTemperature = products.getUser().getUserTemperature();
 
         // 대소분류 분리
         CategoryEntity subCategoryEntity = products.getCategory();
@@ -228,7 +239,7 @@ public class AuctionProductsService {
                 .images(imageDtos)
                 .sellingStatus(sellingStatus)
                 .wishCount(wishCount)
-                .sellerTemperature(DEFAULT_TEMP)
+                .sellerTemperature(sellerTemperature)
                 .build();
     }
 
@@ -247,6 +258,18 @@ public class AuctionProductsService {
         products.setDeletedAt(LocalDateTime.now());
 
         auctionProductsRepository.save(products);
+    }
+
+    // 관리자용 삭제
+    @Transactional
+    public void deleteAuctionByAdmin(Long auctionId) {
+        AuctionProductsEntity products = auctionProductsRepository.findByAuctionIdAndDeletedAtIsNull(auctionId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 경매를 찾을 수 없습니다: " + auctionId));
+
+        products.setDeletedAt(LocalDateTime.now());
+        auctionProductsRepository.save(products);
+        
+        log.info("관리자에 의해 경매 삭제: auctionId={}, title={}", auctionId, products.getTitle());
     }
 
 
