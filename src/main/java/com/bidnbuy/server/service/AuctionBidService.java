@@ -15,6 +15,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -39,14 +40,21 @@ public class AuctionBidService {
         AuctionProductsEntity auctionProduct = auctionProductsRepository.findByIdWithLock(auctionId)
                 .orElseThrow(() -> new RuntimeException("AUCTION_NOT_FOUND, 존재하지 않는 경매 물품입니다."));
 
+        // 자신이 판매한 경매물품 입찰 금지
         Long sellerId = auctionProduct.getUser().getUserId();
-        if(userId == sellerId) {
+        if (userId == sellerId) {
             throw new RuntimeException("SELF_BIDDING_FORBIDDEN, 자신이 등록한 경매 물품에는 입찰할 수 없습니다.");
         }
 
         // 경매가 진행 중인지 확인
         if (auctionProduct.getSellingStatus() != SellingStatus.PROGRESS) {
             throw new RuntimeException("AUCTION_NOT_IN_PROGRESS, 현재 입찰이 불가능합니다. 경매가 진행 중이 아닙니다.");
+        }
+
+        // 경매 끝났을때 입찰 막기
+        LocalDateTime now = LocalDateTime.now();
+        if (now.isAfter(auctionProduct.getEndTime())) {
+            throw new RuntimeException("AUCTION_ENDED, 이미 경매가 종료된 물품입니다.");
         }
 
         // 사용자의 최소 입찰 금애이 현재 입찰 금액 비교

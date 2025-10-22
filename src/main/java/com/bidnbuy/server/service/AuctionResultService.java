@@ -3,10 +3,12 @@ package com.bidnbuy.server.service;
 import com.bidnbuy.server.dto.AuctionPurchaseHistoryDto;
 import com.bidnbuy.server.dto.AuctionSalesHistoryDto;
 import com.bidnbuy.server.dto.MyPageSummaryDto;
+import com.bidnbuy.server.entity.AuctionProductsEntity;
 import com.bidnbuy.server.entity.AuctionResultEntity;
 import com.bidnbuy.server.entity.UserEntity;
 import com.bidnbuy.server.enums.ResultStatus;
 import com.bidnbuy.server.enums.TradeFilterStatus;
+import com.bidnbuy.server.repository.AuctionProductsRepository;
 import com.bidnbuy.server.repository.AuctionResultRepository;
 import com.bidnbuy.server.repository.ImageRepository;
 import com.bidnbuy.server.repository.UserRepository;
@@ -24,6 +26,7 @@ public class AuctionResultService {
     private final AuctionResultRepository auctionResultRepository;
     private final UserRepository userRepository;
     private final ImageRepository imageRepository;
+    private final AuctionProductsRepository auctionProductsRepository;
 
     // 마이페이지 기본
     @Transactional(readOnly = true)
@@ -61,12 +64,11 @@ public class AuctionResultService {
     @Transactional(readOnly = true)
     private List<AuctionSalesHistoryDto> getRecentSales(Long userId) {
 
-        List<AuctionSalesHistoryDto> history = getSalesHistory(userId, TradeFilterStatus.ALL);
+        List<AuctionProductsEntity> activeAuctions = auctionProductsRepository.findTop3ByUser_UserIdAndDeletedAtIsNullOrderByCreatedAtDesc(userId);
 
-        if (history.size() > 3) {
-            return history.subList(0, 3);
-        }
-        return history;
+        return activeAuctions.stream()
+                .map(this::toActiveSalesDto)
+                .collect(Collectors.toList());
     }
 
     // 마이페이지 - 구매내역  (낙찰 내역) 조회
@@ -154,6 +156,26 @@ public class AuctionResultService {
 
             default -> false; // 정의되지 않은 상태
         };
+    }
+
+    // 상태 메서드
+    private AuctionSalesHistoryDto toActiveSalesDto(AuctionProductsEntity auction){
+
+        String imageUrl = imageRepository.findFirstImageUrlByAuctionId(auction.getAuctionId())
+                .orElse("/images/default_product.png");
+
+        String statusText = auction.getSellingStatus().name();
+
+        return AuctionSalesHistoryDto.builder()
+                .auctionId(auction.getAuctionId())
+                .title(auction.getTitle())
+                .itemImageUrl(imageUrl)
+                .startTime(auction.getStartTime())
+                .endTime(auction.getEndTime())
+                .statusText(statusText)
+                .finalPrice(auction.getCurrentPrice())
+                .winnerNickname(null)
+                .build();
     }
 
     // 구매내역에 페이별로 조회

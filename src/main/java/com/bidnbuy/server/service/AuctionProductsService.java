@@ -197,7 +197,7 @@ public class AuctionProductsService {
         Integer wishCount = wishlistRepository.countByAuction(products);
 
         // 판매자 온도 (임의 값 또는 실제 로직을 통해 가져와야 함)
-        final Double DEFAULT_TEMP = 36.5;
+        Double sellerTemperature = products.getUser().getUserTemperature();
 
         // 대소분류 분리
         CategoryEntity subCategoryEntity = products.getCategory();
@@ -239,7 +239,7 @@ public class AuctionProductsService {
                 .images(imageDtos)
                 .sellingStatus(sellingStatus)
                 .wishCount(wishCount)
-                .sellerTemperature(DEFAULT_TEMP)
+                .sellerTemperature(sellerTemperature)
                 .build();
     }
 
@@ -354,7 +354,8 @@ public class AuctionProductsService {
     @Transactional(readOnly = true)
     public AuctionProductsEntity findById(Long auctionId) {
 
-        List<SellingStatus> allowedStatuses = List.of(SellingStatus.PROGRESS, SellingStatus.SALE);
+        List<SellingStatus> allowedStatuses = List.of(SellingStatus.PROGRESS, SellingStatus.SALE,
+                SellingStatus.FINISH);
 
         return auctionProductsRepository.findByAuctionIdAndSellingStatusIn(auctionId, allowedStatuses)
                 .orElseThrow(() -> new RuntimeException("Auction product not found"));

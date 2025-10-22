@@ -109,6 +109,9 @@ public interface AuctionProductsRepository extends JpaRepository<AuctionProducts
             List<SellingStatus> sellingStatuses
     );
 
+
+    List<AuctionProductsEntity> findTop3ByUser_UserIdAndDeletedAtIsNullOrderByCreatedAtDesc(Long userId);
+
     // 이메일로 특정 유저 경매 상품 조회 - 관리자용
     @Query("SELECT p FROM AuctionProductsEntity p " +
             "LEFT JOIN FETCH p.user u " +
