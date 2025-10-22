@@ -1,8 +1,12 @@
 package com.bidnbuy.server.service;
 
 import com.bidnbuy.server.dto.*;
+import com.bidnbuy.server.entity.AuctionResultEntity;
 import com.bidnbuy.server.entity.OrderEntity;
 import com.bidnbuy.server.entity.UserEntity;
+import com.bidnbuy.server.enums.ResultStatus;
+import com.bidnbuy.server.enums.SellingStatus;
+import com.bidnbuy.server.repository.AuctionResultRepository;
 import com.bidnbuy.server.repository.OrderRepository;
 import com.bidnbuy.server.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -21,6 +25,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
     private final PaymentService paymentService;
+    private final AuctionResultRepository auctionResultRepository;
 
     // 볍점 부여
     @Transactional
@@ -60,7 +65,7 @@ public class OrderService {
         seller.setUserTemperature(newTemperature);
         userRepository.save(seller);
     }
-    
+
 
     //주문 상태 업데이트
     @Transactional
@@ -79,12 +84,25 @@ public class OrderService {
         order.setUpdatedAt(LocalDateTime.now());
         orderRepository.save(order);
 
+        // 최종 완료 상태일 경우 AuctionResultEntity 상태도 변경
+        if ("COMPLETED".equalsIgnoreCase(dto.getStatus())) {
+            // 낙찰자의 정보를 가져온다.
+
+            List<AuctionResultEntity> results = auctionResultRepository.findByOrder_OrderId(orderId);
+
+            if (!results.isEmpty()) {
+                AuctionResultEntity result = results.get(0);
+
+                result.setResultStatus(ResultStatus.SUCCESS_COMPLETED); // 최종 거래 완료 상태
+                auctionResultRepository.save(result);
+
+                System.out.println("거래 완료 상태로 변경 완료: AuctionResult ID " + result.getResultId());
+            }
+        }
+
         // (reason은 로그용으로만 사용하거나, 별도 테이블에 기록 가능)
         return new OrderUpdateResponseDto(order.getOrderId(), "주문 상태가 변경되었습니다.");
     }
-
-
-
 
 
     //상세 조회
@@ -109,7 +127,6 @@ public class OrderService {
                 .updatedAt(order.getUpdatedAt())
                 .build();
     }
-
 
 
     // 조회
@@ -138,8 +155,6 @@ public class OrderService {
     }
 
 
-
-
     /**
      * 자동 취소 로직 (스케줄러에서 주기적으로 호출)
      * - CASE A: 아직 결제 진행 안됨 → 주문만 취소
@@ -163,7 +178,7 @@ public class OrderService {
             try {
                 Integer cancelAmount = order.getPayment().getTotalAmount();
 
-                // ✅ paymentService의 cancelPayment() 재사용 (일반 취소 로직 그대로 활용)
+                // paymentService의 cancelPayment() 재사용 (일반 취소 로직 그대로 활용)
                 PaymentCancelRequestDto dto = new PaymentCancelRequestDto(
                         order.getPayment().getTossPaymentKey(),
                         "결제 기한 초과 자동 취소",
@@ -171,7 +186,7 @@ public class OrderService {
                 );
                 paymentService.cancelPayment(dto);
 
-                // ✅ 주문 취소 상태 반영
+                // 주문 취소 상태 반영
                 order.setOrderStatus("CANCELED");
                 order.setUpdatedAt(LocalDateTime.now());
                 orderRepository.save(order);
@@ -219,6 +234,39 @@ public class OrderService {
                 .updatedAt(saved.getUpdatedAt())
                 .build();
 
+    }
+
+    // 주문 상태 변경 메서드
+    @Transactional
+    public void markOrderAsPaid(Long orderId) {
+
+        // 주문 조회
+        OrderEntity order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("Order not found: " + orderId));
+
+        //  이미 완료된 상태인지 확인 (중복 처리 방지)
+        if ("PAID".equalsIgnoreCase(order.getOrderStatus()) ||
+                "COMPLETED".equalsIgnoreCase(order.getOrderStatus())) {
+            System.err.println("경고: 이미 결제 완료된 주문을 다시 PAID로 시도함. Order ID: " + orderId);
+            return;
+        }
+
+        // 주문 상태를 PAID로 변경
+        order.setOrderStatus("PAID");
+        order.setUpdatedAt(LocalDateTime.now());
+        orderRepository.save(order);
+
+        // 결재가 완료되어 결과 갱신
+        List<AuctionResultEntity> results = auctionResultRepository.findByOrder_OrderId(orderId);
+
+        if(!results.isEmpty()) {
+            AuctionResultEntity result = results.get(0);
+
+            result.setResultStatus(ResultStatus.SUCCESS_PAID);
+            auctionResultRepository.save(result);
+
+            System.out.println("주문 상태 PAID로 변경 완료: Order ID " + orderId);
+        }
     }
 
     public OrderEntity findById(Long orderId) {
