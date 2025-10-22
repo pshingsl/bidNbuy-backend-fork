@@ -331,7 +331,8 @@ public class AuctionProductsService {
     @Transactional(readOnly = true)
     public AuctionProductsEntity findById(Long auctionId) {
 
-        List<SellingStatus> allowedStatuses = List.of(SellingStatus.PROGRESS, SellingStatus.SALE);
+        List<SellingStatus> allowedStatuses = List.of(SellingStatus.PROGRESS, SellingStatus.SALE,
+                SellingStatus.FINISH);
 
         return auctionProductsRepository.findByAuctionIdAndSellingStatusIn(auctionId, allowedStatuses)
                 .orElseThrow(() -> new RuntimeException("Auction product not found"));
