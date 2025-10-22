@@ -2,10 +2,13 @@ package com.bidnbuy.server.service;
 
 import com.bidnbuy.server.config.TossPaymentClient;
 import com.bidnbuy.server.dto.*;
+import com.bidnbuy.server.entity.AuctionResultEntity;
 import com.bidnbuy.server.entity.OrderEntity;
 import com.bidnbuy.server.entity.PaymentCancelEntity;
 import com.bidnbuy.server.entity.PaymentEntity;
+import com.bidnbuy.server.enums.ResultStatus;
 import com.bidnbuy.server.enums.paymentStatus;
+import com.bidnbuy.server.repository.AuctionResultRepository;
 import com.bidnbuy.server.repository.OrderRepository;
 import com.bidnbuy.server.repository.PaymentCancelRepository;
 import com.bidnbuy.server.repository.PaymentRepository;
@@ -34,7 +37,8 @@ public class PaymentService {
     private final TossPaymentClient tossPaymentClient;
     private final ObjectMapper objectMapper;
     private final OrderRepository orderRepository;
-    private final OrderService orderService;
+    private final AuctionResultRepository auctionResultRepository;
+
 
     // 자동 취소 (스케줄러가 호출)
     @Transactional
@@ -190,13 +194,47 @@ public class PaymentService {
 
         if(newStatus == paymentStatus.PaymentStatus.SUCCESS) {
             OrderEntity order = savedPayment.getOrder();
-            if (order != null) {
-                log.info("결제 성공. 주문 상태 PAID로 변경 요청. Order ID: {}", order.getOrderId());
-                // order 엔티티가 영속성 컨텍스트에 있으므로, ID를 통해 OrderService 호출
-                orderService.markOrderAsPaid(order.getOrderId());
+            if (order == null) {
+                throw new IllegalStateException("Payment에 연결된 Order를 찾을 수 없습니다.");
+            }
+            Long orderId = order.getOrderId();
+            if ("PAID".equalsIgnoreCase(order.getOrderStatus()) ||
+                    "COMPLETED".equalsIgnoreCase(order.getOrderStatus())) {
+                System.err.println("경고: 이미 결제 완료된 주문을 다시 PAID로 시도함. Order ID: " + orderId);
+                return savedPayment;
+            }
+            order.setOrderStatus("PAID");
+            order.setUpdatedAt(LocalDateTime.now());
+            orderRepository.save(order);
+
+            System.out.println("주문 상태 PAID로 변경 완료: Order ID " + orderId);
+
+            List<AuctionResultEntity> results = auctionResultRepository.findByOrder_OrderId(orderId);
+
+            if(!results.isEmpty()) {
+                AuctionResultEntity result = results.get(0);
+
+                result.setResultStatus(ResultStatus.SUCCESS_PAID);
+                auctionResultRepository.save(result);
+
+                System.out.println("경매 결과 상태 SUCCESS_PAID로 변경 완료: AuctionResult ID " + result.getResultId());
             }
         }
 
+        // 4. Toss 응답 상태가 COMPLETED일 경우 (최종 거래 완료 상태)
+        if ("COMPLETED".equalsIgnoreCase(dto.getStatus())) {
+
+            List<AuctionResultEntity> results = auctionResultRepository.findByOrder_OrderId(savedPayment.getOrder().getOrderId());
+
+            if (!results.isEmpty()) {
+                AuctionResultEntity result = results.get(0);
+
+                result.setResultStatus(ResultStatus.SUCCESS_COMPLETED); // 최종 거래 완료 상태
+                auctionResultRepository.save(result);
+
+                System.out.println("거래 완료 상태로 변경 완료: AuctionResult ID " + result.getResultId());
+            }
+        }
         return paymentRepository.save(payment);
     }
 
