@@ -1,6 +1,7 @@
 package com.bidnbuy.server.repository;
 
 import com.bidnbuy.server.entity.AuctionResultEntity;
+import com.bidnbuy.server.enums.ResultStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -26,4 +27,6 @@ public interface AuctionResultRepository extends JpaRepository<AuctionResultEnti
     // 마이페이지 최근 구매내역
     List<AuctionResultEntity> findTop3ByWinner_UserIdOrderByAuction_EndTimeDesc(Long userId);
 
+    // 유저프로필 판매완료 건수
+    long countByAuction_User_UserIdAndResultStatus(Long userId, ResultStatus resultStatus);
 }

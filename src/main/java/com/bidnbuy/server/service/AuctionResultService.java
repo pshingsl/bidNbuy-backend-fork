@@ -3,6 +3,7 @@ package com.bidnbuy.server.service;
 import com.bidnbuy.server.dto.AuctionPurchaseHistoryDto;
 import com.bidnbuy.server.dto.AuctionSalesHistoryDto;
 import com.bidnbuy.server.dto.MyPageSummaryDto;
+import com.bidnbuy.server.dto.UserProfileSummaryDto;
 import com.bidnbuy.server.entity.AuctionProductsEntity;
 import com.bidnbuy.server.entity.AuctionResultEntity;
 import com.bidnbuy.server.entity.UserEntity;
@@ -230,6 +231,30 @@ public class AuctionResultService {
                 .statusText(statusText)
                 .finalPrice(auction.getCurrentPrice())
                 .winnerNickname(null)
+                .build();
+    }
+
+    // 다른 유저 조회
+    @Transactional(readOnly = true)
+    public UserProfileSummaryDto getOtherUserProfile(Long userId, Long targetUserId) {
+
+        // 대상 사용자 정보 조회
+        UserEntity user = userRepository.findById(targetUserId)
+                .orElseThrow(() -> new EntityNotFoundException("대상 사용자를 찾을 수 없습니다. ID: " + targetUserId));
+
+        // 통계(구매, 판매)
+        long totalProductsCount = auctionProductsRepository.countByUser_UserIdAndDeletedAtIsNull(targetUserId);
+        long salesCompletedCount = auctionResultRepository.countByAuction_User_UserIdAndResultStatus(
+                targetUserId,
+                ResultStatus.SUCCESS_COMPLETED
+        );
+
+        return UserProfileSummaryDto.builder()
+                .nickname(user.getNickname())
+                .temperature(user.getUserTemperature())
+                .profileImageUrl(user.getProfileImageUrl())
+                .totalProductsCount(totalProductsCount)
+                .salesCompletedCount(salesCompletedCount)
                 .build();
     }
 

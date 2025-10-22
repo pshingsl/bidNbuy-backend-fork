@@ -4,10 +4,7 @@ import com.bidnbuy.server.dto.*;
 import com.bidnbuy.server.entity.UserEntity;
 import com.bidnbuy.server.exception.CustomAuthenticationException;
 import com.bidnbuy.server.security.JwtProvider;
-import com.bidnbuy.server.service.AuthService;
-import com.bidnbuy.server.service.EmailService;
-import com.bidnbuy.server.service.ImageService;
-import com.bidnbuy.server.service.UserService;
+import com.bidnbuy.server.service.*;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
@@ -40,14 +37,16 @@ public class   UserController {
     private final JwtProvider jwtProvider;
     private final EmailService emailService;
     private final ImageService imageService;
+    private final AuctionResultService auctionResultService;
 
     @Autowired
-    public UserController(UserService userService, AuthService authService, JwtProvider jwtProvider, EmailService emailService, ImageService imageService){
+    public UserController(UserService userService, AuthService authService, JwtProvider jwtProvider, EmailService emailService, ImageService imageService, AuctionResultService auctionResultService){
         this.userService = userService;
         this.authService = authService;
         this.jwtProvider = jwtProvider;
         this.emailService = emailService;
         this.imageService = imageService;
+        this.auctionResultService = auctionResultService;
     }
 
     @Value("${naver.client.id}")
@@ -300,6 +299,15 @@ public class   UserController {
                 .build();
 
         return  ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/other/{targetUserId}")
+    public ResponseEntity<UserProfileSummaryDto> getUserProfile(@AuthenticationPrincipal Long userId, @PathVariable Long targetUserId) {
+
+        // AuctionResultService를 사용하여 다른 사용자의 프로필 요약 정보를 가져옵니다.
+        UserProfileSummaryDto profile = auctionResultService.getOtherUserProfile(userId, targetUserId);
+
+        return ResponseEntity.ok(profile);
     }
 
     //로그아웃
