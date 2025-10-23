@@ -140,7 +140,7 @@ public class ImageService {
                 .build();
         ChatMessageEntity savedMessage = chatMessageRepository.save(chatMessage);
 
-        String previewText = (messageText != null && !messageText.trim().isEmpty() ? messageText:"사진");
+        String previewText = "사진";
         chatRoom.setLastMessagePreview(previewText);
         chatRoom.setLastMessageTime(savedMessage.getCreateAt());
 
