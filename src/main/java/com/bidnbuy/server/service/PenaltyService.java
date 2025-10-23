@@ -60,9 +60,11 @@ public class PenaltyService {
         // 30점 이상 6개월 정지 (최초 1회)
         else if (totalPoints >= 30 && user.getSuspensionCount() == 0) {
             user.setSuspensionCount(1);
-            user.setSuspendedUntil(LocalDateTime.now().plusMonths(6));
+            // 개발 -> 배포 시 변경
+            // user.setSuspendedUntil(LocalDateTime.now().plusMonths(6)); // 6개월 정지
+            user.setSuspendedUntil(LocalDateTime.now().plusMinutes(15)); // 개발 중엔 15분 정지로
             user.setSuspended(true);
-            log.warn("사용자 6개월 정지: userId={}, totalPoints={}", user.getUserId(), totalPoints);
+            log.warn("사용자 정지: userId={}, totalPoints={}, 해제일={}", user.getUserId(), totalPoints, user.getSuspendedUntil());
         }
     }
 
