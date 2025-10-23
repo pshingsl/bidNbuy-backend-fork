@@ -127,7 +127,7 @@ public class ChatMessageService {
         try{
             int updatedCount = chatMessageRepository.markMessagesAsRead(chatRoom, reader);
             if(updatedCount > 0){
-                String destination = "/chat/readstatus/"+chatRoom.getChatroomId();
+                String destination = "/topic/chat/readstatus/"+chatRoom.getChatroomId();
                 ChatReadStatusUpdateDto updateDto = new ChatReadStatusUpdateDto(
                         chatRoom.getChatroomId(),
                         reader.getUserId(),
