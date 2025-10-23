@@ -46,9 +46,23 @@ public class AuthService {
             throw new CustomAuthenticationException("이메일 인증이 필요합니다.");
         }
 
-        if (loginUser == null) {
-            // 인증 실패 시 예외 처리
-            throw new CustomAuthenticationException("Login failed. Check your email and password.");
+        // 정지 상태 체크/해제
+        if (loginUser.isSuspended() && loginUser.getSuspendedUntil() != null) {
+            if (loginUser.getSuspendedUntil().isBefore(java.time.LocalDateTime.now())) {
+                // 정지 기간 만료된 경우 자동 해제
+                loginUser.setSuspended(false);
+                loginUser.setSuspendedUntil(null);
+                userRepository.save(loginUser);
+                log.info("정지 해제: userId={}, email={}", loginUser.getUserId(), email);
+            } else {
+                // 정지 기간인 경우
+                throw new CustomAuthenticationException("정지 계정 // 정지해제일: " + loginUser.getSuspendedUntil());
+            }
+        }
+
+        // 강퇴 상태 체크
+        if (loginUser.getDeletedAt() != null) {
+            throw new CustomAuthenticationException("강제 탈퇴 계정");
         }
 
         // 2. 로그인 성공 시 access/refresh 토큰 생성
@@ -141,6 +155,26 @@ public class AuthService {
         if(loginUser.getAuthStatus() != AuthStatus.Y){
             loginUser.setAuthStatus(AuthStatus.Y); //카카오 로그인 유저 이메일 인증상태 Y로 변경
         }
+
+        // 정지 상태 체크/해제
+        if (loginUser.isSuspended() && loginUser.getSuspendedUntil() != null) {
+            if (loginUser.getSuspendedUntil().isBefore(java.time.LocalDateTime.now())) {
+                // 정지 기간 만료된 경우 자동 해제
+                loginUser.setSuspended(false);
+                loginUser.setSuspendedUntil(null);
+                userRepository.save(loginUser);
+                log.info("정지 해제: userId={}, email={}", loginUser.getUserId(), userEmail);
+            } else {
+                // 정지 기간인 경우
+                throw new CustomAuthenticationException("정지 계정 // 정지해제일: " + loginUser.getSuspendedUntil());
+            }
+        }
+
+        // 강퇴 상태 체크
+        if (loginUser.getDeletedAt() != null) {
+            throw new CustomAuthenticationException("강제 탈퇴 계정");
+        }
+
         Long userId = loginUser.getUserId();
 
         //자체엑세스 리프레시 토큰 생성, 저장
@@ -184,6 +218,26 @@ public class AuthService {
         if(loginUser.getAuthStatus() !=AuthStatus.Y){
             loginUser.setAuthStatus((AuthStatus.Y)); //인증된 사용자로 변경
         }
+
+        // 정지 상태 체크/해제
+        if (loginUser.isSuspended() && loginUser.getSuspendedUntil() != null) {
+            if (loginUser.getSuspendedUntil().isBefore(java.time.LocalDateTime.now())) {
+                // 정지 기간 만료된 경우 자동 해제
+                loginUser.setSuspended(false);
+                loginUser.setSuspendedUntil(null);
+                userRepository.save(loginUser);
+                log.info("정지 해제: userId={}, email={}", loginUser.getUserId(), userEmail);
+            } else {
+                // 정지 기간인 경우
+                throw new CustomAuthenticationException("정지 계정 // 정지해제일: " + loginUser.getSuspendedUntil());
+            }
+        }
+
+        // 강퇴 상태 체크
+        if (loginUser.getDeletedAt() != null) {
+            throw new CustomAuthenticationException("강제 탈퇴 계정");
+        }
+
         Long userId = loginUser.getUserId();
 
         //자체 엑세스, 리프레시 토큰 생성
