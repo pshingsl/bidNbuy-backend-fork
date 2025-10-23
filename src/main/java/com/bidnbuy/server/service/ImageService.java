@@ -112,7 +112,7 @@ public class ImageService {
     }
 
     // 채팅에서 이미지 추가
-    public String uploadChatMessageImage(Long chatRoomId, Long userId,  MultipartFile imageFile) {
+    public String uploadChatMessageImage(Long chatRoomId, Long userId,  MultipartFile imageFile, String messageText) {
         if (imageFile.isEmpty()) {
             throw new IllegalArgumentException("업로드 이미지 없음");
         }
@@ -133,13 +133,15 @@ public class ImageService {
         ChatMessageEntity chatMessage = ChatMessageEntity.builder()
                 .chatroomId(chatRoom)
                 .senderId(sender)
-                .message(null)
+                .message(messageText)
                 .imageUrl(s3ImageUrl)
                 .messageType(ChatMessageEntity.MessageType.IMAGE)
                 .isRead(false)
                 .build();
         ChatMessageEntity savedMessage = chatMessageRepository.save(chatMessage);
-        chatRoom.setLastMessagePreview("사진");
+
+        String previewText = (messageText != null && !messageText.trim().isEmpty() ? messageText:"사진");
+        chatRoom.setLastMessagePreview(previewText);
         chatRoom.setLastMessageTime(savedMessage.getCreateAt());
 
         ChatMessageDto messageDto = chatMessageService.convertToDto(savedMessage);

@@ -81,7 +81,8 @@ public class ChatController {
     @PostMapping("/chat/{chatroomId}/image")
     public ResponseEntity<String> uploadChatImage(@PathVariable Long chatroomId,
                                                   Principal principal,
-                                                  @RequestParam("file")MultipartFile imageFile){
+                                                  @RequestParam("file")MultipartFile imageFile,
+                                                  @RequestParam(value="messageText", required = false)String messageText){
         if(principal == null){
             return ResponseEntity.status(401).body("인증되지 않은 사용자");
         }
@@ -93,7 +94,7 @@ public class ChatController {
         }
 
         try{
-            String imageUrl = imageService.uploadChatMessageImage(chatroomId, userId, imageFile);
+            String imageUrl = imageService.uploadChatMessageImage(chatroomId, userId, imageFile, messageText);
             return ResponseEntity.ok(imageUrl);
         }catch (IllegalArgumentException e){
             return ResponseEntity.badRequest().body(e.getMessage()); //빈 파일
