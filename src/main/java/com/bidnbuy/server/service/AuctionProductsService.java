@@ -166,6 +166,7 @@ public class AuctionProductsService {
                             .auctionId(product.getAuctionId())
                             .title(product.getTitle())
                             .currentPrice(product.getCurrentPrice())
+                            .createdAt(product.getCreatedAt())
                             .endTime(product.getEndTime())
                             .sellingStatus(calculateSellingStatus(product))
                             //.categoryName(product.getCategory().getCategoryName())
@@ -308,6 +309,7 @@ public class AuctionProductsService {
                 .auctionId(product.getAuctionId())
                 .title(product.getTitle())
                 .currentPrice(product.getCurrentPrice())
+                .createdAt(product.getCreatedAt())
                 .endTime(product.getEndTime())
                 .sellingStatus(calculateSellingStatus(product)) // calculateSellingStatus도 클래스에 있어야 합니다.
                 //  .categoryName(product.getCategory().getCategoryName())
