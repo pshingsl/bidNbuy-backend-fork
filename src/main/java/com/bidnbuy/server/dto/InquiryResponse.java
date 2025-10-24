@@ -16,6 +16,9 @@ public class InquiryResponse {
     private InquiryEnums.InquiryStatus status;
     private InquiryEnums.InquiryType type;
     private LocalDateTime createdAt;
+    // 관리자 답변 추가
+    private String requestTitle;
+    private String requestContent;
 
     public static InquiryResponse fromEntity(InquiriesEntity inquiriesEntity) {
         return InquiryResponse.builder()
@@ -25,6 +28,8 @@ public class InquiryResponse {
                 .status(inquiriesEntity.getStatus())
                 .type(inquiriesEntity.getType())
                 .createdAt(inquiriesEntity.getCreatedAt())
+                .requestTitle(inquiriesEntity.getRequestTitle())     // 관리자 답변 제목
+                .requestContent(inquiriesEntity.getRequestContent()) // 관리자 답변 내용
                 .build();
     }
 }
