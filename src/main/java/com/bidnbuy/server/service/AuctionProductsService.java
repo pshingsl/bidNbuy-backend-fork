@@ -96,7 +96,7 @@ public class AuctionProductsService {
         }
 
         // 알림 추가 - kgb
-//        userNotificationService.createNotification(userId, NotificationType.ALERT, "경매가 등록되었습니다.");
+        userNotificationService.createNotification(userId, NotificationType.ALERT, "경매가 등록되었습니다.");
 
         return savedProducts;
     }
@@ -271,7 +271,7 @@ public class AuctionProductsService {
 
         products.setDeletedAt(LocalDateTime.now());
         auctionProductsRepository.save(products);
-        
+
         log.info("관리자에 의해 경매 삭제: auctionId={}, title={}", auctionId, products.getTitle());
     }
 

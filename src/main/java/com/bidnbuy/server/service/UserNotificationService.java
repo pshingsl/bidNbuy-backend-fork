@@ -36,10 +36,12 @@ public class UserNotificationService {
     public void createNotification(Long userId, NotificationType type, String content) {
         log.info("🔔 createNotification 호출됨 userId={}, type={}, message={}", userId, type, content);
 
+        // 1. 유저 확인
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         log.info("✅ 알림 대상 사용자 찾음: {}", user.getUserId());
 
+        // 2. DB 저장
         NotificationEntity noti = NotificationEntity.builder()
                 .user(user)
                 .type(type)
@@ -50,6 +52,7 @@ public class UserNotificationService {
 
         NotificationEntity saved = notificationRepository.save(noti);
 
+        // 3. FCM 전송 (토큰 없거나 실패해도 DB는 남음)
         // 🔔 타입별 타이틀 설정
         String title;
         switch (type) {
@@ -60,51 +63,55 @@ public class UserNotificationService {
         }
 
         // ✅ FCM 전송
-        fcmService.sendNotification(
-                userId,
-                title,                        // 타입별 타이틀 전달
-                content,                      // 본문 내용
-                type.name(),                  // 알림 타입
-                saved.getNotificationId(),    // 식별자
-                saved.getCreatedAt()          // 생성일자
-        );
+        try {
+            fcmService.sendNotification(
+                    userId,
+                    title,                        // 타입별 타이틀 전달
+                    content,                      // 본문 내용
+                    type.name(),                  // 알림 타입
+                    saved.getNotificationId(),    // 식별자
+                    saved.getCreatedAt()          // 생성일자
+            );
+        } catch (Exception e) {
+            log.warn("⚠️ FCM 전송 실패 (DB 저장은 완료됨): {}", e.getMessage());
+        }
+    };
+
+        // ✅ 소프트 삭제 (개별)
+        @Transactional
+        public void deleteNotification (Long notificationId){
+            notificationRepository.findById(notificationId).ifPresent(noti -> {
+                noti.setDeletedAt(LocalDateTime.now());
+                notificationRepository.save(noti);
+            });
+        }
+
+        // ✅ 소프트 삭제 (전체)
+        @Transactional
+        public void deleteAllNotifications (Long userId){
+            List<NotificationEntity> notis = notificationRepository.findByUser_UserIdAndDeletedAtIsNullOrderByCreatedAtDesc(userId);
+            notis.forEach(n -> n.setDeletedAt(LocalDateTime.now()));
+            notificationRepository.saveAll(notis);
+        }
+
+
+        /** 유저 알림 목록 전체 조회 */
+        @Transactional(readOnly = true)
+        public List<NotificationResponse> getUserNotifications (Long userId){
+            return notificationRepository.findByUser_UserIdAndDeletedAtIsNullOrderByCreatedAtDesc(userId)
+                    .stream()
+                    .map(NotificationResponse::fromEntity)
+                    .toList();
+        }
+
+        /** 알림 읽음 처리 */
+        @Transactional
+        public void markAsRead (Long notificationId){
+            notificationRepository.findById(notificationId).ifPresent(noti -> {
+                noti.setRead(true);
+                notificationRepository.save(noti);
+            });
+        }
+
+
     }
-
-    // ✅ 소프트 삭제 (개별)
-    @Transactional
-    public void deleteNotification(Long notificationId) {
-        notificationRepository.findById(notificationId).ifPresent(noti -> {
-            noti.setDeletedAt(LocalDateTime.now());
-            notificationRepository.save(noti);
-        });
-    }
-
-    // ✅ 소프트 삭제 (전체)
-    @Transactional
-    public void deleteAllNotifications(Long userId) {
-        List<NotificationEntity> notis = notificationRepository.findByUser_UserIdAndDeletedAtIsNullOrderByCreatedAtDesc(userId);
-        notis.forEach(n -> n.setDeletedAt(LocalDateTime.now()));
-        notificationRepository.saveAll(notis);
-    }
-
-
-    /** 유저 알림 목록 전체 조회 */
-    @Transactional(readOnly = true)
-    public List<NotificationResponse> getUserNotifications(Long userId) {
-        return notificationRepository.findByUser_UserIdAndDeletedAtIsNullOrderByCreatedAtDesc(userId)
-                .stream()
-                .map(NotificationResponse::fromEntity)
-                .toList();
-    }
-
-    /** 알림 읽음 처리 */
-    @Transactional
-    public void markAsRead(Long notificationId) {
-        notificationRepository.findById(notificationId).ifPresent(noti -> {
-            noti.setRead(true);
-            notificationRepository.save(noti);
-        });
-    }
-
-
-}

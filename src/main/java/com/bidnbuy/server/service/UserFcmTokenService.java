@@ -17,6 +17,7 @@ public class UserFcmTokenService {
     private final UserRepository userRepository;
 
 
+    // 토큰 등록
     public void registerToken(Long userId, String token) {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -30,5 +31,15 @@ public class UserFcmTokenService {
                             .build();
                     return tokenRepository.save(entity);
                 });
+    }
+
+    // 토큰 삭제 (로그아웃, 권한 철회 등)
+    public void deleteToken(String token) {
+        tokenRepository.findByToken(token).ifPresent(tokenRepository::delete);
+    }
+
+    // 유저별 모든 토큰 삭제 (회원 탈퇴 시)
+    public void deleteAllByUser(Long userId) {
+        tokenRepository.deleteAllByUserId(userId);
     }
 }
