@@ -1,14 +1,13 @@
 package com.bidnbuy.server.service;
 
 import com.bidnbuy.server.dto.*;
-import com.bidnbuy.server.entity.AuctionProductsEntity;
-import com.bidnbuy.server.entity.CategoryEntity;
-import com.bidnbuy.server.entity.ImageEntity;
-import com.bidnbuy.server.entity.UserEntity;
+import com.bidnbuy.server.entity.*;
 import com.bidnbuy.server.enums.AuctionStatus;
 import com.bidnbuy.server.enums.ImageType;
+import com.bidnbuy.server.enums.NotificationType;
 import com.bidnbuy.server.enums.SellingStatus;
 import com.bidnbuy.server.repository.*;
+import com.sun.tools.jconsole.JConsoleContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,6 +38,7 @@ public class AuctionProductsService {
     private final WishlistRepository wishlistRepository;
     private final AuctionHistoryService auctionHistoryService;
     private final ImageService imageService;
+    private final UserNotificationService userNotificationService;
 
     @Transactional
     public AuctionProductsEntity create(Long userId, CreateAuctionDto dto, List<MultipartFile> imageFiles) {
@@ -94,6 +94,9 @@ public class AuctionProductsService {
                     AuctionStatus.PROGRESS
             );
         }
+
+        // 알림 추가 - kgb
+        userNotificationService.createNotification(userId, NotificationType.ALERT, "경매가 등록되었습니다.");
 
         return savedProducts;
     }

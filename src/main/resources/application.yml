@@ -1,3 +1,10 @@
 # application.yml
 file:
   upload-dir: C:/temp/bidnbuy_uploads/auction-products
+
+# fcm 기본 설정파일
+fcm:
+  service:
+    account:
+      file: bid-n-buy-service-key.json
+

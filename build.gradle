@@ -61,7 +61,13 @@ dependencies {
 
     implementation 'software.amazon.awssdk:s3:2.20.108' // 💡 예시 버전
     implementation 'software.amazon.awssdk:s3-transfer-manager:2.20.108'
-	implementation 'com.google.firebase:firebase-admin:9.3.0'
+
+
+
+    // 알람 firebase
+    implementation 'com.google.firebase:firebase-admin:9.2.0'
+    implementation 'com.google.auth:google-auth-library-oauth2-http:1.19.0'
+
 }
 
 tasks.named('test') {

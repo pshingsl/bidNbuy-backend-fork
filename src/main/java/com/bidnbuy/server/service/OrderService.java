@@ -45,7 +45,7 @@ public class OrderService {
 
         // 4) 별점 유효성 체크
         if (rating < 1 || rating > 10) {
-            throw new IllegalArgumentException("별점은 1~5 사이여야 합니다.");
+            throw new IllegalArgumentException("별점은 1~10 사이여야 합니다.");
         }
 
         // 저장
