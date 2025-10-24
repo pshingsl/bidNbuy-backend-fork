@@ -23,6 +23,12 @@ public class UserNotificationService {
     private final UserRepository userRepository;
     private final FcmService fcmService;
 
+    // 알림 전체 읽음 처림
+    @Transactional
+    public void markAllAsRead(Long userId) {
+        notificationRepository.markAllAsReadByUserId(userId);
+    }
+
     /**
      * 알림 생성 (이력 저장)
      */

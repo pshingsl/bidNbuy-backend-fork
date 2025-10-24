@@ -27,7 +27,7 @@ public class FcmService {
             throw new RuntimeException("No FCM token for user");
         }
 
-        //setNotification => OS측에서 백그라운드 알림, 나머지 => 모달에서 사용가능하게 변경
+        //setNotification => OS측에서 백그라운드 알림, 나머지 putData => 모달, 포그라운드 알림에서 사용가능하게 변경
         for (UserFcmTokenEntity t : tokens) {
             Message message = Message.builder()
                     .setToken(t.getToken())

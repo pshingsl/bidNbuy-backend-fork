@@ -4,6 +4,7 @@ import com.bidnbuy.server.dto.NotificationResponse;
 import com.bidnbuy.server.entity.NotificationEntity;
 import com.bidnbuy.server.service.UserNotificationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,6 +17,13 @@ import java.util.Map;
 public class NotificationController {
 
     private final UserNotificationService userNotificationService;
+
+    // 알림 전체 읽음 처리
+    @PatchMapping("/read-all")
+    public ResponseEntity<Void> markAllAsRead(@AuthenticationPrincipal Long userId) {
+        userNotificationService.markAllAsRead(userId);
+        return ResponseEntity.ok().build();
+    }
 
     // 알림 목록 전체 조회
     @GetMapping
