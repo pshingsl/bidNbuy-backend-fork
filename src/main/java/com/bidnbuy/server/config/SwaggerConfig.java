@@ -26,8 +26,8 @@ public class SwaggerConfig {
         SecurityRequirement securityRequirement = new SecurityRequirement().addList("BearerAuth");
 
         return new OpenAPI()
-                .info(new Info().title("Todolist API")
-                        .description("Todolist Application API Documentation")
+                .info(new Info().title("Bid&Buy API")
+                        .description("Bid&Buy API API Documentation")
                         .version("v1.0"))
                 .addSecurityItem(securityRequirement)  // Security Requirement 추가
                 .schemaRequirement("BearerAuth", securityScheme);  // Security Scheme 추가
