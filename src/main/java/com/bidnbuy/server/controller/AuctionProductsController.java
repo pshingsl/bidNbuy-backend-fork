@@ -79,12 +79,12 @@ public class AuctionProductsController {
             boolean isAdmin = SecurityContextHolder.getContext().getAuthentication().getAuthorities()
                     .stream()
                     .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
-            
+
             if (!isAdmin) {
                 return ResponseEntity.status(403).build();
             }
         }
-        
+
         PagingResponseDto<AuctionListResponseDto> list = auctionProductsService.getAllAuctions(
                 page,
                 size,

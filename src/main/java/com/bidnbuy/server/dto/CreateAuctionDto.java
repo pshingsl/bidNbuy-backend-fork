@@ -48,7 +48,11 @@ public class CreateAuctionDto {
     @NotNull(message = "경매 마감 일시는 필수 입력 항목입니다.")
     private LocalDateTime endTime;
 
+<<<<<<< HEAD
 //    /@NotNull(message = "이미지는 필수 입력 항목입니다.")
+=======
+    //    /@NotNull(message = "이미지는 필수 입력 항목입니다.")
+>>>>>>> origin/dev
     @Size(min = 1, max = 10, message = "이미지 첨부는 1~10장까지 첨부 가능합니다.")
     private List<MultipartFile> images;
 
