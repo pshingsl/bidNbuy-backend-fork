@@ -3,6 +3,14 @@ package com.bidnbuy.server.controller;
 import com.bidnbuy.server.dto.*;
 import com.bidnbuy.server.entity.AuctionProductsEntity;
 import com.bidnbuy.server.service.AuctionProductsService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Parameters;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -22,17 +30,22 @@ public class AuctionProductsController {
     @Autowired
     private AuctionProductsService auctionProductsService;
 
-
+    @Operation(summary = "상품 등록", description = "상품 등록시 사용되는 API")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "등록 성공",
+                    content = @Content(schema = @Schema(implementation = CreateAuctionDto.class))),
+            @ApiResponse(responseCode = "400", description = "등록 실패")
+    })
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> createAuction(
             @AuthenticationPrincipal Long userId,
-            @ModelAttribute @Valid CreateAuctionDto dto,
-            @RequestPart(value = "images") List<MultipartFile> imageFiles
+            @Valid @ModelAttribute CreateAuctionDto dto,
+            @RequestPart(value = "images", required = false) List<MultipartFile> imageFiles
     ) {
 
-        if (imageFiles == null || imageFiles.isEmpty()) {
-            throw new IllegalArgumentException("경매 상품 이미지는 최소 1개 이상 필요합니다.");
-        }
+//        if (imageFiles == null || imageFiles.isEmpty()) {
+//            throw new IllegalArgumentException("경매 상품 이미지는 최소 1개 이상 필요합니다.");
+//        }
 
         AuctionProductsEntity newProduct = auctionProductsService.create(userId, dto, imageFiles);
 
