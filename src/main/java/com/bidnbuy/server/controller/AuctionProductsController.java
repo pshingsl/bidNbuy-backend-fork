@@ -40,12 +40,12 @@ public class AuctionProductsController {
     public ResponseEntity<?> createAuction(
             @AuthenticationPrincipal Long userId,
             @Valid @ModelAttribute CreateAuctionDto dto,
-            @RequestPart(value = "images", required = false) List<MultipartFile> imageFiles
+            @RequestPart(value = "images") List<MultipartFile> imageFiles
     ) {
 
-//        if (imageFiles == null || imageFiles.isEmpty()) {
-//            throw new IllegalArgumentException("경매 상품 이미지는 최소 1개 이상 필요합니다.");
-//        }
+        if (imageFiles == null || imageFiles.isEmpty()) {
+            throw new IllegalArgumentException("경매 상품 이미지는 최소 1개 이상 필요합니다.");
+        }
 
         AuctionProductsEntity newProduct = auctionProductsService.create(userId, dto, imageFiles);
 
@@ -61,6 +61,12 @@ public class AuctionProductsController {
     }
 
     // 전체 조회 하나로 통일
+    @Operation(summary = "상품 조회", description = "상품 조회시 사용되는 API")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공",
+                    content = @Content(schema = @Schema(implementation = AuctionListResponseDto.class))),
+            @ApiResponse(responseCode = "400", description = "조회 실패")
+    })
     @GetMapping
     public ResponseEntity<PagingResponseDto<AuctionListResponseDto>> getAllAuctions(
             @RequestParam(defaultValue = "0") int page,

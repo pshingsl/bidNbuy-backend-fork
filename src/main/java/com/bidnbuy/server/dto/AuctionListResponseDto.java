@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 @Builder
 public class AuctionListResponseDto {
     private Long auctionId;
+    private Long sellerId;
     private String title;
     private Integer currentPrice; // 현재 최고 입찰가
     private LocalDateTime createdAt;

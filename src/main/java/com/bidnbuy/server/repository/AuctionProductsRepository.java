@@ -7,6 +7,7 @@ import com.bidnbuy.server.enums.SellingStatus;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -21,7 +22,8 @@ import java.util.Optional;
 public interface AuctionProductsRepository extends JpaRepository<AuctionProductsEntity, Long> {
 
     // 특정 사용자가 등록한 경매 물품 목록 조회
-    List<AuctionProductsEntity> findByUser(UserEntity user);
+    @Query("SELECT p FROM AuctionProductsEntity p JOIN FETCH p.user u WHERE u = :user")
+    List<AuctionProductsEntity> findProductsByUserEagerly(@Param("user") UserEntity user);
 
 
     // 전체 상품을 가격 범위, 판매 상태, 삭제되지 않음 기준으로 필터링하여 조회합니다.
@@ -113,7 +115,7 @@ public interface AuctionProductsRepository extends JpaRepository<AuctionProducts
 
     List<AuctionProductsEntity> findTop3ByUser_UserIdAndSellingStatusInAndDeletedAtIsNullOrderByCreatedAtDesc(
             Long userId,
-            List<SellingStatus> sellingStatuses // 💡 SellingStatusIn 조건에 의해 이 리스트가 매칭됨
+            List<SellingStatus> sellingStatuses // SellingStatusIn 조건에 의해 이 리스트가 매칭됨
     );
 
 
@@ -150,4 +152,6 @@ public interface AuctionProductsRepository extends JpaRepository<AuctionProducts
             @Param("maxPrice") Integer maxPrice,
             Pageable pageable
     );
+
+
 }
