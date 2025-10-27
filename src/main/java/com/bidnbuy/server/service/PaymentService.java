@@ -36,6 +36,7 @@ public class PaymentService {
     private final AuctionResultRepository auctionResultRepository;
     private final AuctionProductsRepository auctionProductsRepository;
     private final AuctionHistoryRepository auctionHistoryRepository;
+    private final SettlementService settlementService;
 
 
     // 자동 취소 (스케줄러가 호출)
@@ -250,7 +251,9 @@ public class PaymentService {
                 // Order와 Result 연결
                 order.setResult(result);
                 orderRepository.save(order);
-
+                
+                // Settlement 생성 (정산 정보)
+                settlementService.createSettlement(order, savedPayment.getTotalAmount());
             }
         }
 
@@ -312,6 +315,8 @@ public class PaymentService {
                 order.setResult(result);
                 orderRepository.save(order);
             }
+
+            // 정산처리 나중에
         }
 
         // 3. 결제 취소/실패 처리
