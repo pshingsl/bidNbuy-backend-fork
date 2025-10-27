@@ -213,6 +213,7 @@ public class OrderService {
         UserEntity buyer = userRepository.findById(dto.getBuyerId())
                 .orElseThrow(() -> new IllegalArgumentException("Buyer not found: " + dto.getBuyerId()));
 
+
         OrderEntity order = new OrderEntity();
         order.setSeller(seller);
         order.setBuyer(buyer);

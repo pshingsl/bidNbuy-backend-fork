@@ -1,5 +1,8 @@
 package com.bidnbuy.server.enums;
 
+import lombok.Getter;
+
+@Getter
 public enum ResultStatus {
     SUCCESS_PENDING_PAYMENT,    // 낙찰 후 결제 대기중(진행 중)
     SUCCESS_PAID,               // 낙찰 후 결제 완료, 거래 진행 중 (Order 상태: PAID)

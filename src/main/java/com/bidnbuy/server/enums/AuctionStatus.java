@@ -1,5 +1,8 @@
 package com.bidnbuy.server.enums;
 
+import lombok.Getter;
+
+@Getter
 public enum AuctionStatus {
     // 경매 진행 상태
     PROGRESS,       // 진행 중
