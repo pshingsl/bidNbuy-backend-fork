@@ -90,7 +90,7 @@ public class SecurityConfig {
                         .requestMatchers("/notifications/token/**").authenticated() //기타 알림 API는 인증 필요 여부에 따라 결정
                         .requestMatchers("/orders/**", "/payments/**", "/inquiries/**", "/reports/**").permitAll()  // ✅ 테스트용 오픈 - 강기병
 
-                        .requestMatchers("/admin/auth/signup", "/admin/auth/login", "/admin/auth/reissue").permitAll() // 관리자 회원가입, 로그인, 토큰재발급 일단 허용
+                        .requestMatchers("/admin/auth/signup", "/admin/auth/login", "/admin/auth/reissue", "/admin/auth/password/**").permitAll() // 관리자 회원가입, 로그인, 토큰재발급, 비번재발급 일단 허용
                         .requestMatchers("/admin/**").hasRole("ADMIN") // 나머지 관리자
                         .anyRequest().authenticated()
                 ).csrf(csrf -> csrf.disable());
