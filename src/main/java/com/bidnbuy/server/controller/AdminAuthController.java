@@ -2,6 +2,9 @@ package com.bidnbuy.server.controller;
 
 import com.bidnbuy.server.dto.AdminLoginRequestDto;
 import com.bidnbuy.server.dto.AdminSignupRequestDto;
+import com.bidnbuy.server.dto.PasswordConfirmRequestDto;
+import com.bidnbuy.server.dto.PasswordRequestDto;
+import com.bidnbuy.server.dto.PasswordResetRequestDto;
 import com.bidnbuy.server.dto.ResponseDto;
 import com.bidnbuy.server.dto.TokenReissueRequestDto;
 import com.bidnbuy.server.dto.TokenResponseDto;
@@ -9,7 +12,9 @@ import com.bidnbuy.server.dto.UpdateIpRequestDto;
 import com.bidnbuy.server.entity.AdminEntity;
 import com.bidnbuy.server.exception.CustomAuthenticationException;
 import com.bidnbuy.server.service.AdminAuthService;
+import com.bidnbuy.server.service.EmailService;
 import com.bidnbuy.server.service.UserService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +32,7 @@ public class AdminAuthController {
 
     private final AdminAuthService adminAuthService;
     private final UserService userService;
+    private final EmailService emailService;
 
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@Valid @RequestBody AdminSignupRequestDto requestDto, HttpServletRequest request) {
@@ -107,6 +113,54 @@ public class AdminAuthController {
         } catch (Exception e) {
             log.error("관리자 로그아웃 중 에러 발생: {}", e.getMessage());
             return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    // 관리자 임시 비번
+    @PostMapping("/password/request")
+    public ResponseEntity<?> requestPasswordReset(@RequestBody PasswordResetRequestDto request) {
+        log.info("관리자 임시 비밀번호 요청: {}", request.getEmail());
+        
+        try {
+            AdminEntity admin = adminAuthService.findByEmail(request.getEmail());
+            String tempPassword = adminAuthService.generateAndSaveTempPassword(admin);
+            emailService.sendTempPasswordEmailForAdmin(admin.getEmail(), tempPassword);
+            
+            return ResponseEntity.ok().body("임시 비밀번호가 이메일로 발송되었습니다.");
+        } catch (Exception e) {
+            log.error("관리자 임시 비밀번호 요청 실패: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // 임시 비번 검증
+    @PostMapping("/password/verify")
+    public ResponseEntity<?> confirmPasswordUpdate(@RequestBody PasswordConfirmRequestDto requestDto) {
+        log.info("관리자 임시 비밀번호 검증 요청: {}", requestDto.getEmail());
+        
+        try {
+            adminAuthService.verifyTempPassword(requestDto.getEmail(), requestDto.getTempPassword());
+            return ResponseEntity.ok().body("임시 비밀번호가 확인되었습니다. 새 비밀번호를 설정해 주세요.");
+        } catch (UsernameNotFoundException e) {
+            return ResponseEntity.badRequest().body("해당 관리자를 찾을 수 없습니다.");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body("임시 비밀번호가 일치하지 않거나 만료되었습니다.");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("알 수 없는 오류가 발생했습니다. 다시 시도해 주세요.");
+        }
+    }
+
+    // 새 비밀번호 설정
+    @PostMapping("/password/reset")
+    public ResponseEntity<?> resetPassword(@RequestBody PasswordRequestDto requestDto) {
+        log.info("관리자 새 비밀번호 설정: {}", requestDto.getEmail());
+        
+        try {
+            adminAuthService.finalResetPassword(requestDto.getEmail(), requestDto.getNewPassword());
+            return ResponseEntity.ok().body("새 비밀번호가 성공적으로 설정되었습니다.");
+        } catch (Exception e) {
+            log.error("관리자 새 비밀번호 설정 실패: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 }

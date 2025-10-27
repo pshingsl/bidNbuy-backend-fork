@@ -143,4 +143,43 @@ public class EmailService {
             throw new RuntimeException("임시 비밀번호 이메일 전송 실패", e);
         }
     }
+
+    // 관리자 임시 비번 발송
+    public void sendTempPasswordEmailForAdmin(String toEmail, String tempPassword) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
+
+            helper.setFrom(new InternetAddress(fromEmail, "Bid-&-Buy 관리자"));
+            helper.setTo(toEmail);
+            helper.setSubject("[Bid-&-Buy] [관리자] 비밀번호 재설정 임시 비밀번호");
+
+            String htmlContent = String.format(
+                    "<div style=\" width: 540px; height: 600px; border-top: 4px solid #8322BF; margin: 100px auto; padding: 30px 0; box-sizing: border-box;\">" +
+                            "<h1 style=\"margin: 0; padding: 0 5px; font-size: 28px; font-weight: 400;\">" +
+                            "<span style=\"font-size: 30px; margin: 0 0 10px 3px; font-weight: 800;\">Bid<span style=\"color: #8322BF;\">&</span>Buy</span><br />" +
+                            "<span style=\"color: #8322BF;\">[관리자] 임시 비밀번호</span> 안내입니다." +
+                            "</h1>" +
+                            "<p style=\"font-size: 16px; line-height: 26px; margin-top: 50px; padding: 0 5px;\">" +
+                            "관리자님 안녕하세요.<br />" +
+                            "요청하신 임시 비밀번호가 생성되었습니다.<br />" +
+                            "</p>" +
+                            "<p style=\"font-size: 16px; margin: 40px 5px 20px; line-height: 28px;\">" +
+                            "임시 비밀번호: <br />" +
+                            "<span style=\"font-size: 24px;\">%s</span>" +
+                            "</p>" +
+                            "<p style=\"font-size: 14px; color: #999; margin-top: 30px; padding: 0 5px;\">" +
+                            "※ 임시 비밀번호는 10분간 유효합니다." +
+                            "</p>" +
+                            "</div>", tempPassword
+            );
+
+            helper.setText(htmlContent, true);
+
+            mailSender.send(message);
+        } catch (MessagingException | UnsupportedEncodingException e) {
+            log.error("관리자 임시 비밀번호 이메일 전송 중 오류 발생: {}", e.getMessage());
+            throw new RuntimeException("관리자 임시 비밀번호 이메일 전송 실패", e);
+        }
+    }
 }

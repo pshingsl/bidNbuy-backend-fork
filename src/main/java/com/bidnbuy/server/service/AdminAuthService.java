@@ -18,7 +18,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.security.SecureRandom;
 import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Slf4j
 @Service
@@ -270,5 +272,88 @@ public class AdminAuthService {
                 .refreshToken(newRefreshToken)
                 .accessTokenExpiresIn(jwtProvider.getAccessTokenExpirationTime())
                 .build();
+    }
+
+    // 임시 비번
+    // 생성&저장
+    public String generateAndSaveTempPassword(AdminEntity admin) {
+        String tempPassword = generateRandomPassword();
+        String hashedPassword = passwordEncoder.encode(tempPassword);
+        
+        admin.setTempPasswordHash(hashedPassword);
+        admin.setTempPasswordExpiryDate(LocalDateTime.now().plusMinutes(10));
+        
+        adminRepository.save(admin);
+        
+        return tempPassword;
+    }
+
+    // 랜덤 생성
+    private String generateRandomPassword() {
+        String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        SecureRandom random = new SecureRandom();
+        StringBuilder sb = new StringBuilder(8);
+        
+        for (int i = 0; i < 8; i++) {
+            sb.append(CHARACTERS.charAt(random.nextInt(CHARACTERS.length())));
+        }
+        return sb.toString();
+    }
+
+    // 검증
+    public void verifyTempPassword(String email, String tempPw) {
+        AdminEntity admin = adminRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomAuthenticationException("관리자를 찾을 수 없습니다."));
+        
+        if (!isTempPasswordValid(admin, tempPw)) {
+            throw new RuntimeException("임시 비밀번호가 일치하지 않거나 만료되었습니다.");
+        }
+    }
+
+    // 유효성
+    private boolean isTempPasswordValid(AdminEntity admin, String tempPw) {
+        if (admin.getTempPasswordExpiryDate() == null || 
+            admin.getTempPasswordExpiryDate().isBefore(LocalDateTime.now())) {
+            return false;
+        }
+        
+        if (passwordEncoder.matches(tempPw, admin.getTempPasswordHash())) {
+            return true;
+        }
+        return false;
+    }
+
+    // 초기화
+    private void clearTempPassword(AdminEntity admin) {
+        admin.setTempPasswordHash(null);
+        admin.setTempPasswordExpiryDate(null);
+        adminRepository.save(admin);
+    }
+
+    // 비번 업데이트
+    public void updatePassword(AdminEntity admin, String newPassword) {
+        String hashedPw = passwordEncoder.encode(newPassword);
+        admin.setPassword(hashedPw);
+        adminRepository.save(admin);
+    }
+
+    // 비번 재설정
+    @Transactional
+    public void finalResetPassword(String email, String newPassword) {
+        AdminEntity admin = adminRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomAuthenticationException("관리자를 찾을 수 없습니다."));
+        
+        if (!newPassword.matches(PASSWORD_REGEX)) {
+            throw new CustomAuthenticationException("비밀번호는 영문과 숫자를 포함해 8자리 이상이어야 합니다.");
+        }
+        
+        clearTempPassword(admin);
+        updatePassword(admin, newPassword);
+    }
+
+    // 조회
+    public AdminEntity findByEmail(String email) {
+        return adminRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomAuthenticationException("관리자를 찾을 수 없습니다."));
     }
 }
