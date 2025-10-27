@@ -1,6 +1,7 @@
 package com.bidnbuy.server.repository;
 
 import com.bidnbuy.server.entity.AuctionResultEntity;
+import com.bidnbuy.server.entity.OrderEntity;
 import com.bidnbuy.server.enums.ResultStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -33,4 +34,6 @@ public interface AuctionResultRepository extends JpaRepository<AuctionResultEnti
     // winnerId로 조회하되 아직 order가 안 매핑된 가장 최근 결과 1개만
     Optional<AuctionResultEntity> findFirstByWinner_UserIdAndOrderIsNullOrderByClosedAtDesc(Long userId);
 
+    // Order과 연결
+    Optional<AuctionResultEntity> findByOrder(OrderEntity order);
 }
