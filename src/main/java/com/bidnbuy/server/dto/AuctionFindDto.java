@@ -19,12 +19,12 @@ import java.util.stream.Collectors;
 public class AuctionFindDto {
     // 1. 상품 기본 정보
     private List<ImageDto> images; // 이미지
-    private Integer auctionId;        // 상품 아이디
+    private Long auctionId;        // 상품 아이디
     private String title;          // 제품명
     private String description;    // 제품 설명
 
     // 2. 카테고리 정보
-    private Integer categoryId;
+    private Long categoryId;
     // private String categoryName; // 카테고리 이름
     private String categoryMain;
     private String categorySub;

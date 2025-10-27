@@ -22,7 +22,7 @@ public class CreateAuctionDto {
 
     @NotNull(message = "카테고리는 필수 선택 항목입니다.")
     @Schema(example = "11", required = true)
-    private Integer categoryId;
+    private Long categoryId;
 
     @NotBlank(message = "상품명은 필수 입력 항목입니다.")
     @Schema(example = "경매 등록 제목", required = true)

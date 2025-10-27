@@ -111,8 +111,8 @@ public class AuctionProductsService {
             String sortBy,
             Boolean includeEnded,
             String searchKeyword,
-            Integer mainCategoryId,
-            Integer subCategoryId,
+            Long mainCategoryId,
+            Long subCategoryId,
             String userEmail
     ) {
 
@@ -180,7 +180,7 @@ public class AuctionProductsService {
 
     // 상세조회
     @Transactional(readOnly = true)
-    public AuctionFindDto getAuctionFind(Integer auctionId, Long userId) {
+    public AuctionFindDto getAuctionFind(Long auctionId, Long userId) {
         // auctionId로 상품을 조회하며, 필요한 연관 엔티티(user, category, images)를 JOIN FETCH로 함께 가져옵니다.
         AuctionProductsEntity products = auctionProductsRepository.findByIdWithDetails(auctionId)
                 .orElseThrow(() -> new IllegalArgumentException("Auction Not Found with ID: " + auctionId));
@@ -250,7 +250,7 @@ public class AuctionProductsService {
 
     // 삭제
     @Transactional
-    public void deleteAuction(Integer auctionId, Long userId) {
+    public void deleteAuction(Long auctionId, Long userId) {
         AuctionProductsEntity products = auctionProductsRepository.findByAuctionIdAndDeletedAtIsNull(auctionId)
                 .orElseThrow(() -> new IllegalArgumentException("Auction Not Found or already deleted with ID: " + auctionId));
 
@@ -267,7 +267,7 @@ public class AuctionProductsService {
 
     // 관리자용 삭제
     @Transactional
-    public void deleteAuctionByAdmin(Integer auctionId) {
+    public void deleteAuctionByAdmin(Long auctionId) {
         AuctionProductsEntity products = auctionProductsRepository.findByAuctionIdAndDeletedAtIsNull(auctionId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 경매를 찾을 수 없습니다: " + auctionId));
 
@@ -359,7 +359,7 @@ public class AuctionProductsService {
     }
 
     @Transactional(readOnly = true)
-    public AuctionProductsEntity findById(Integer auctionId) {
+    public AuctionProductsEntity findById(Long auctionId) {
 
         List<SellingStatus> allowedStatuses = List.of(SellingStatus.PROGRESS, SellingStatus.SALE,
                 SellingStatus.FINISH);
@@ -370,7 +370,7 @@ public class AuctionProductsService {
 
     //채팅연결
     @Transactional(readOnly = true)
-    public Optional<AuctionProductsEntity> findByIdAnyway(Integer auctionId) {
+    public Optional<AuctionProductsEntity> findByIdAnyway(Long auctionId) {
         return auctionProductsRepository.findById(auctionId);
     }
 }

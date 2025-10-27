@@ -24,7 +24,7 @@ public class AuctionHistoryService {
 
     // 상태 변경 이력 기록
     @Transactional
-    public void recordStatusChange(Integer auctionId, AuctionStatus newStatus) {
+    public void recordStatusChange(Long auctionId, AuctionStatus newStatus) {
         AuctionProductsEntity auctionProduct = auctionProductsRepository.findById(auctionId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 경매 상품을 찾을 수 없습니다."));
 

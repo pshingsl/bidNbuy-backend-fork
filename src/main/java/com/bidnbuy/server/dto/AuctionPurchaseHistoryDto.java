@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 @Getter
 @Builder
 public class AuctionPurchaseHistoryDto {
-    private Integer auctionId;
+    private Long auctionId;
     private String title;
     private String itemImageUrl;
     private String sellerNickname;

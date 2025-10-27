@@ -19,7 +19,7 @@ public interface AuctionBidRepository extends JpaRepository<AuctionBidsEntity, L
     // 특정 겸매 물품의 현재 최고가를 찾는 메서드
     Optional<AuctionBidsEntity> findTopByAuctionOrderByBidPriceDesc(AuctionProductsEntity auction);
 
-   List<AuctionBidsEntity> findByAuction_AuctionIdOrderByBidPriceDesc(Integer auctionId);
+   List<AuctionBidsEntity> findByAuction_AuctionIdOrderByBidPriceDesc(Long auctionId);
 
-    Optional<AuctionBidsEntity> findTopByAuction_AuctionIdOrderByBidPriceDescBidTimeDesc(Integer auctionId);
+    Optional<AuctionBidsEntity> findTopByAuction_AuctionIdOrderByBidPriceDescBidTimeDesc(Long auctionId);
 }

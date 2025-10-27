@@ -25,7 +25,7 @@ public class AuctionProductsEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "auction_id")
-    private Integer auctionId;
+    private Long auctionId;
 
     // 유저테이블의 외래키 연결
     @ManyToOne(fetch = FetchType.LAZY)

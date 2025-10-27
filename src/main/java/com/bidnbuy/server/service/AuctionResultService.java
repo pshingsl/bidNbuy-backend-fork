@@ -156,7 +156,7 @@ public class AuctionResultService {
     private AuctionPurchaseHistoryDto toPurchaseDto(AuctionResultEntity result) {
         String status = determineStatusText(result);
 
-        Integer auctionId = result.getAuction().getAuctionId();
+        Long auctionId = result.getAuction().getAuctionId();
         String imageUrl = imageRepository.findFirstImageUrlByAuctionId(auctionId)
                 .orElse("/images/default_product.png");
 
@@ -174,7 +174,7 @@ public class AuctionResultService {
     private AuctionSalesHistoryDto toSalesDto(AuctionResultEntity result) {
         String statusText = determineStatusText(result);
 
-        Integer auctionId = result.getAuction().getAuctionId();
+        Long auctionId = result.getAuction().getAuctionId();
         String imageUrl = imageRepository.findFirstImageUrlByAuctionId(auctionId)
                 .orElse("/images/default_product.png");
 

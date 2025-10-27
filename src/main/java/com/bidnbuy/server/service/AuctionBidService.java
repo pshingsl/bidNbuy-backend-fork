@@ -30,7 +30,7 @@ public class AuctionBidService {
     private final SimpMessagingTemplate messagingTemplate; // 웹소켓 메세지 전송을 위해 필요
 
     @Transactional
-    public AuctionBidDto bid(Long userId, Integer auctionId, Integer bidPrice) {
+    public AuctionBidDto bid(Long userId, Long auctionId, Integer bidPrice) {
 
         // 1. 사용자 및 경매 물품 유효성 검증
         UserEntity user = userRepository.findById(userId)
@@ -98,7 +98,7 @@ public class AuctionBidService {
     }
 
     @Transactional(readOnly = true) // ⭐️ 조회 전용 트랜잭션으로 설정
-    public List<AuctionBidDto> getBidsByAuction(Integer auctionId) {
+    public List<AuctionBidDto> getBidsByAuction(Long auctionId) {
 
         // 1. 입찰기록 최고가 순으로 조화
         List<AuctionBidsEntity> bids = auctionBidRepository.findByAuction_AuctionIdOrderByBidPriceDesc(auctionId);

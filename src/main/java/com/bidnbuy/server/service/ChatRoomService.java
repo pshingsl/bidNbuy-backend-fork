@@ -102,7 +102,7 @@ public class ChatRoomService {
 
 
     private ChatRoomListDto processAuctionImage(ChatRoomListDto dto){
-        Integer auctionId = dto.getAuctionId();
+        Long auctionId = dto.getAuctionId();
 
         try {
             Optional<AuctionProductsEntity> optionalProduct = auctionProductsService.findByIdAnyway(auctionId);

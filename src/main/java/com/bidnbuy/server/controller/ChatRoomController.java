@@ -28,7 +28,7 @@ public class ChatRoomController {
     private final ChatMessageService chatMessageService;
 
     @PostMapping("/{auctionId}")
-    public ResponseEntity<ChatRoomDto> createChatRoom(@PathVariable Integer auctionId,
+    public ResponseEntity<ChatRoomDto> createChatRoom(@PathVariable Long auctionId,
                                                       @AuthenticationPrincipal Long userId,
                                                       @RequestBody ChatRoomCreateRequestDto requestDto){
         requestDto.setAuctionId(auctionId);

@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface AuctionProductsRepository extends JpaRepository<AuctionProductsEntity, Integer> {
+public interface AuctionProductsRepository extends JpaRepository<AuctionProductsEntity, Long> {
 
     // 특정 사용자가 등록한 경매 물품 목록 조회
     @Query("SELECT p FROM AuctionProductsEntity p JOIN FETCH p.user u WHERE u = :user")
@@ -68,8 +68,8 @@ public interface AuctionProductsRepository extends JpaRepository<AuctionProducts
             ")")
     Page<AuctionProductsEntity> findDynamicFilteredAuctions(
             @Param("searchKeyword") String searchKeyword,
-            @Param("mainCategoryId") Integer mainCategoryId,
-            @Param("subCategoryId") Integer subCategoryId,
+            @Param("mainCategoryId") Long mainCategoryId,
+            @Param("subCategoryId") Long subCategoryId,
             @Param("minPrice") Integer minPrice,
             @Param("maxPrice") Integer maxPrice,
             @Param("statuses") List<SellingStatus> statuses,
@@ -90,14 +90,14 @@ public interface AuctionProductsRepository extends JpaRepository<AuctionProducts
             "LEFT JOIN FETCH p.images i " +
             "WHERE p.auctionId = :auctionId " +
             "AND p.deletedAt IS NULL")
-    Optional<AuctionProductsEntity> findByIdWithDetails(Integer auctionId);
+    Optional<AuctionProductsEntity> findByIdWithDetails(Long auctionId);
 
     // 삭제
-    Optional<AuctionProductsEntity> findByAuctionIdAndDeletedAtIsNull(Integer auctionId);
+    Optional<AuctionProductsEntity> findByAuctionIdAndDeletedAtIsNull(Long auctionId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT a FROM AuctionProductsEntity a WHERE a.auctionId = :auctionId")
-    Optional<AuctionProductsEntity> findByIdWithLock(Integer auctionId);
+    Optional<AuctionProductsEntity> findByIdWithLock(Long auctionId);
 
     List<AuctionProductsEntity> findByEndTimeBeforeAndSellingStatusNot(
             LocalDateTime now,
@@ -105,10 +105,10 @@ public interface AuctionProductsRepository extends JpaRepository<AuctionProducts
     );
 
     //판매 중인 상품 조회
-    Optional<AuctionProductsEntity> findByAuctionIdAndSellingStatus(Integer auctionId, SellingStatus sellingStatus);
+    Optional<AuctionProductsEntity> findByAuctionIdAndSellingStatus(Long auctionId, SellingStatus sellingStatus);
 
     Optional<AuctionProductsEntity> findByAuctionIdAndSellingStatusIn(
-            Integer auctionId,
+            Long auctionId,
             List<SellingStatus> sellingStatuses
     );
 
@@ -146,8 +146,8 @@ public interface AuctionProductsRepository extends JpaRepository<AuctionProducts
             @Param("userEmail") String userEmail,
             @Param("statuses") List<SellingStatus> statuses,
             @Param("searchKeyword") String searchKeyword,
-            @Param("mainCategoryId") Integer mainCategoryId,
-            @Param("subCategoryId") Integer subCategoryId,
+            @Param("mainCategoryId") Long mainCategoryId,
+            @Param("subCategoryId") Long subCategoryId,
             @Param("minPrice") Integer minPrice,
             @Param("maxPrice") Integer maxPrice,
             Pageable pageable

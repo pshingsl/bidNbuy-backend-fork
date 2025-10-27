@@ -39,7 +39,7 @@ public class ImageService {
 
 
     // 경매 상품 이미지를 S3에 저장하고 S3 URL을 반환
-    public String uploadAuctionImage(Integer auctionId, MultipartFile imageFile) {
+    public String uploadAuctionImage(Long auctionId, MultipartFile imageFile) {
 
         if (imageFile.isEmpty()) {
             throw new IllegalArgumentException("업로드할 이미지가 없습니다.");

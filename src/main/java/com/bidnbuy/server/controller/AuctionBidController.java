@@ -20,7 +20,7 @@ public class AuctionBidController {
 
     @PostMapping("/{userId}")
     public ResponseEntity<?> placeBid(
-            @PathVariable Integer auctionId,
+            @PathVariable Long auctionId,
             @AuthenticationPrincipal Long userId,
             @RequestBody BidRequestDto requestDto) {
         AuctionBidDto result = auctionBidService.bid(
@@ -40,7 +40,7 @@ public class AuctionBidController {
 
     @GetMapping
     public ResponseEntity<ResponseDto<List<AuctionBidDto>>> getBidsByAuction(
-            @PathVariable Integer auctionId) {
+            @PathVariable Long auctionId) {
 
         // Service에서 입찰 기록 리스트
         List<AuctionBidDto> bidList = auctionBidService.getBidsByAuction(auctionId);

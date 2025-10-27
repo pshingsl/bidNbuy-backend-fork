@@ -76,8 +76,8 @@ public class AuctionProductsController {
             @RequestParam(defaultValue = "latest") String sortBy,
             @RequestParam(defaultValue = "false") Boolean includeEnded,
             @RequestParam(required = false) String searchKeyword,
-            @RequestParam(required = false) Integer mainCategoryId,
-            @RequestParam(required = false) Integer subCategoryId,
+            @RequestParam(required = false) Long mainCategoryId,
+            @RequestParam(required = false) Long subCategoryId,
             @RequestParam(required = false) String userEmail
     ) {
         // 관리자용 이메일 조회
@@ -109,7 +109,7 @@ public class AuctionProductsController {
     @GetMapping("/{auctionId}")
     public ResponseEntity<?> getAuctionFind(
             @AuthenticationPrincipal Long userId,
-            @PathVariable Integer auctionId
+            @PathVariable Long auctionId
     ) {
         AuctionFindDto find = auctionProductsService.getAuctionFind(auctionId, userId);
         return ResponseEntity.ok(find);
@@ -118,7 +118,7 @@ public class AuctionProductsController {
     @DeleteMapping("/{auctionId}")
     public ResponseEntity<?> deleteAuction(
             @AuthenticationPrincipal Long userId,
-            @PathVariable Integer auctionId
+            @PathVariable Long auctionId
     ) {
         try {
             auctionProductsService.deleteAuction(auctionId, userId);
@@ -139,7 +139,7 @@ public class AuctionProductsController {
 
     // 관리자용 경매 삭제
     @DeleteMapping("/admin/{auctionId}")
-    public ResponseEntity<?> deleteAuctionByAdmin(@PathVariable Integer auctionId) {
+    public ResponseEntity<?> deleteAuctionByAdmin(@PathVariable Long auctionId) {
         try {
             auctionProductsService.deleteAuctionByAdmin(auctionId);
             return ResponseEntity.noContent().build();

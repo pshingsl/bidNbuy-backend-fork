@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @Setter
 @Builder
 public class WishlistResponseDto {
-    private Integer auctionId;
+    private Long auctionId;
     private String title;
     private String mainImageUrl;
 

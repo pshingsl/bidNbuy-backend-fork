@@ -23,7 +23,7 @@ public class WishlistController {
     @PostMapping("/{auctionId}/like")
     public ResponseEntity<?> toggleLike(
             @AuthenticationPrincipal Long userId,
-            @PathVariable Integer auctionId
+            @PathVariable Long auctionId
     ) {
         // 로그인한 사용자가 아니면 401로 처리
         if (userId == null) {
