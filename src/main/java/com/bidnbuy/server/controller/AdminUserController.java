@@ -2,10 +2,10 @@ package com.bidnbuy.server.controller;
 
 import com.bidnbuy.server.dto.AdminUserListDto;
 import com.bidnbuy.server.dto.AdminUserDetailDto;
+import com.bidnbuy.server.dto.PagingResponseDto;
 import com.bidnbuy.server.service.AdminUserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -24,7 +24,7 @@ public class AdminUserController {
 
     // 회원 목록 조회
     @GetMapping
-    public ResponseEntity<Page<AdminUserListDto>> getUserList(
+    public ResponseEntity<PagingResponseDto<AdminUserListDto>> getUserList(
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
             @RequestParam(required = false) String email) {
         
@@ -32,7 +32,7 @@ public class AdminUserController {
                 pageable.getPageNumber(), pageable.getPageSize(), email);
         
         try {
-            Page<AdminUserListDto> users = adminUserService.getUserList(pageable, email);
+            PagingResponseDto<AdminUserListDto> users = adminUserService.getUserList(pageable, email);
             return ResponseEntity.ok(users);
         } catch (Exception e) {
             log.error("회원 목록 조회 중 오류 발생: {}", e.getMessage());

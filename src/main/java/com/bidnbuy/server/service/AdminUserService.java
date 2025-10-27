@@ -2,6 +2,7 @@ package com.bidnbuy.server.service;
 
 import com.bidnbuy.server.dto.AdminUserListDto;
 import com.bidnbuy.server.dto.AdminUserDetailDto;
+import com.bidnbuy.server.dto.PagingResponseDto;
 import com.bidnbuy.server.dto.PenaltyHistoryDto;
 import com.bidnbuy.server.entity.UserEntity;
 import com.bidnbuy.server.entity.PenaltyEntity;
@@ -27,7 +28,7 @@ public class AdminUserService {
     private final PenaltyRepository penaltyRepository;
 
     // 회원 목록 조회 (페이징)
-    public Page<AdminUserListDto> getUserList(Pageable pageable, String email) {
+    public PagingResponseDto<AdminUserListDto> getUserList(Pageable pageable, String email) {
         log.info("회원 목록 조회 요청: page={}, size={}, email={}", 
                 pageable.getPageNumber(), pageable.getPageSize(), email);
         
@@ -39,7 +40,19 @@ public class AdminUserService {
             users = userRepository.findAllIncludingDeleted(pageable);
         }
         
-        return users.map(this::convertToUserListDto);
+        List<AdminUserListDto> dtoList = users.getContent().stream()
+                .map(this::convertToUserListDto)
+                .collect(Collectors.toList());
+        
+        return PagingResponseDto.<AdminUserListDto>builder()
+                .data(dtoList)
+                .totalPages(users.getTotalPages())
+                .totalElements(users.getTotalElements())
+                .currentPage(users.getNumber())
+                .pageSize(users.getSize())
+                .isFirst(users.isFirst())
+                .isLast(users.isLast())
+                .build();
     }
 
     // 회원 상세 조회

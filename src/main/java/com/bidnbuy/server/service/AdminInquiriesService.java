@@ -3,6 +3,7 @@ package com.bidnbuy.server.service;
 import com.bidnbuy.server.dto.AdminInquiryListDto;
 import com.bidnbuy.server.dto.AdminInquiryDetailDto;
 import com.bidnbuy.server.dto.AdminInquiryReplyRequestDto;
+import com.bidnbuy.server.dto.PagingResponseDto;
 import com.bidnbuy.server.entity.InquiriesEntity;
 import com.bidnbuy.server.entity.AdminEntity;
 import com.bidnbuy.server.enums.InquiryEnums;
@@ -16,6 +17,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -27,7 +30,7 @@ public class AdminInquiriesService {
     private final AdminRepository adminRepository;
 
     // 문의 목록 조회
-    public Page<AdminInquiryListDto> getInquiryList(Pageable pageable, InquiryEnums.InquiryType type, InquiryEnums.InquiryStatus status, String title, String userEmail) {
+    public PagingResponseDto<AdminInquiryListDto> getInquiryList(Pageable pageable, InquiryEnums.InquiryType type, InquiryEnums.InquiryStatus status, String title, String userEmail) {
         log.info("관리자 문의 목록 조회 요청: page={}, size={}, type={}, status={}, title={}, userEmail={}", 
                 pageable.getPageNumber(), pageable.getPageSize(), type, status, title, userEmail);
         
@@ -73,7 +76,19 @@ public class AdminInquiriesService {
             }
         }
         
-        return inquiries.map(this::convertToInquiryListDto);
+        List<AdminInquiryListDto> dtoList = inquiries.getContent().stream()
+                .map(this::convertToInquiryListDto)
+                .collect(Collectors.toList());
+        
+        return PagingResponseDto.<AdminInquiryListDto>builder()
+                .data(dtoList)
+                .totalPages(inquiries.getTotalPages())
+                .totalElements(inquiries.getTotalElements())
+                .currentPage(inquiries.getNumber())
+                .pageSize(inquiries.getSize())
+                .isFirst(inquiries.isFirst())
+                .isLast(inquiries.isLast())
+                .build();
     }
 
     // 문의 상세 조회
