@@ -69,6 +69,29 @@ public class ChatMessageService {
                 .build();
     }
 
+    //결제 완료시 자동 메세지 보내기
+    @Transactional
+    public void sendAutoMessage(Long chatroomId, String message ){
+        UserEntity autoSender = userRepository.findByNickname("SYSTEM")
+                .orElseThrow(()-> new EntityNotFoundException("시스템 유저 오류 발생, 발신자를 찾지 못해 발신 실패"));
+
+        ChatRoomEntity chatRoom = chatRoomRepository.findById(chatroomId)
+                .orElseThrow(()->new EntityNotFoundException("채팅방을 찾는데 실패했습니다."));
+
+        ChatMessageEntity autoMessageEntity = ChatMessageEntity.builder()
+                .chatroomId(chatRoom)
+                .senderId(autoSender)
+                .message(message)
+                .messageType(ChatMessageEntity.MessageType.SYSTEM) // 자동 메시지 타입
+                .build();
+
+        //디비 저장
+        ChatMessageEntity savedEntity = chatMessageRepository.save(autoMessageEntity);
+
+        chatRoom.setLastMessagePreview(savedEntity.getMessage());
+        chatRoom.setLastMessageTime(savedEntity.getCreateAt());
+    }
+
     //채팅 메세지 조회
     @Transactional
     public List<ChatMessageDto> getMessageByChatRoomId(Long chatroomId, Long currentUserId){

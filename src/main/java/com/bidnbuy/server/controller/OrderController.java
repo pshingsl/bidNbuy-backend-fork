@@ -52,7 +52,20 @@ public class OrderController {
 
     // 주문 상태 변경
     @PutMapping("/{orderId}")
-    public ResponseEntity<OrderUpdateResponseDto> updateOrder(@PathVariable Long orderId, @AuthenticationPrincipal Long userId, @RequestBody OrderUpdateRequestDto dto) {
+    public ResponseEntity<OrderUpdateResponseDto> updateOrder(
+            @PathVariable Long orderId,
+            @RequestBody OrderUpdateRequestDto dto) {
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        Long userId;
+
+        try{
+            userId = Long.parseLong(authentication.getName());
+        }catch (NumberFormatException e){
+            throw new SecurityException("유효하지 않은 사용자 id");
+        }
+
         OrderUpdateResponseDto response = orderService.updateOrderStatus(orderId, userId, dto);
         return ResponseEntity.ok(response);
     }

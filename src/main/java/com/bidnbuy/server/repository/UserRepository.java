@@ -13,8 +13,11 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
     @Query("select user from UserEntity user where user.email = :email and user.deletedAt is null")
     Optional<UserEntity> findByEmail(String email); //로그인, 정보 조회
     Boolean existsByEmail(String email); //아이디(이메일) 중복확인
+
     @Query("select user from UserEntity user where user.email = :email")
     Optional<UserEntity> findByEmailWithDeleted(String email);
+
+    Optional<UserEntity> findByNickname(String nickname);
 
     // 관리자용
     // 모든 사용자 조회 (강퇴 포함)
