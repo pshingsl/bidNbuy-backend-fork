@@ -7,12 +7,10 @@ import com.bidnbuy.server.entity.AuctionProductsEntity;
 import com.bidnbuy.server.entity.ChatRoomEntity;
 import com.bidnbuy.server.entity.UserEntity;
 import com.bidnbuy.server.repository.ChatRoomRepository;
-import com.sun.tools.jconsole.JConsoleContext;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

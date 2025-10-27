@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class ChatRoomListDto {
     private long chatroomId;
-    private long auctionId;
+    private Long auctionId;
 
     private long counterpartId;
     private String counterpartNickname;

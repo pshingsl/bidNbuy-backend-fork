@@ -44,4 +44,10 @@ public class AdminEntity {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    @Column(name = "temp_password_hash", length = 100, nullable = true)
+    private String tempPasswordHash;
+
+    @Column(name = "temp_password_expiry_date", nullable = true)
+    private LocalDateTime tempPasswordExpiryDate;
 }

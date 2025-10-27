@@ -115,4 +115,14 @@ public class UserEntity {
     @Column(name = "ban_count", nullable = false)
     @Builder.Default
     private int banCount = 0;
+
+    // 계좌 관련
+    @Column(name = "bank_name", length = 50)
+    private String bankName;   // 은행명
+
+    @Column(name = "account_number", length = 50)
+    private String accountNumber;   // 계좌번호
+
+    @Column(name = "account_holder", length = 50)
+    private String accountHolder;   // 예금주
 }

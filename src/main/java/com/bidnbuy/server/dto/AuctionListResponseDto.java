@@ -9,8 +9,10 @@ import java.time.LocalDateTime;
 @Builder
 public class AuctionListResponseDto {
     private Long auctionId;
+    private Long sellerId;
     private String title;
     private Integer currentPrice; // 현재 최고 입찰가
+    private LocalDateTime createdAt;
     private LocalDateTime endTime;
     private String mainImageUrl;  // 목록에서는 대표 이미지 URL 1개만 필요
     private String sellingStatus; // 진행 중, 종료 등

@@ -24,7 +24,7 @@ public class AuctionFindDto {
     private String description;    // 제품 설명
 
     // 2. 카테고리 정보
-    private Integer categoryId;
+    private Long categoryId;
     // private String categoryName; // 카테고리 이름
     private String categoryMain;
     private String categorySub;

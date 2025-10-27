@@ -19,7 +19,7 @@ public class CategoryService {
 
     // 단일 카테고리 조회 상세 정보를 볼때 사용
     @Transactional(readOnly = true)
-    public CategoryDto findById(Integer categoryId) {
+    public CategoryDto findById(Long categoryId) {
         Optional<CategoryEntity> optionalCategory = categoryRepository.findById(categoryId);
 
         if(optionalCategory.isEmpty()) {
@@ -40,7 +40,7 @@ public class CategoryService {
 
     // 중분류 (등록/조회 프론트 화면에서 사용)
     @Transactional(readOnly = true)
-    public List<CategoryDto> findChildrenByParentId(Integer parentId){
+    public List<CategoryDto> findChildrenByParentId(Long parentId){
 
         // 유효성 검사
         categoryRepository.findById(parentId)

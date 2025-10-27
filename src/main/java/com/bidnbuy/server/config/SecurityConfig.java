@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
@@ -37,16 +39,17 @@ public class SecurityConfig {
     private CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
 
     @Bean
-    public RestTemplate restTemplate(){
+    public RestTemplate restTemplate() {
         return new RestTemplate();
     }
+
     @Bean
-    public PasswordEncoder passwordEncoder(){
+    public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
     @Bean
-    public CorsConfigurationSource corsConfigurationSource(){
+    public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
         configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://127.0.0.1:5173"));
@@ -62,34 +65,35 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.cors(cors->cors.configurationSource(corsConfigurationSource()))
-            .csrf(csrf -> csrf.disable())
-            .httpBasic(httpBasic -> httpBasic.disable())
-            .sessionManagement(session -> session
-                    .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            )
-            .exceptionHandling(exceptionHandling
-                    ->exceptionHandling.authenticationEntryPoint(customAuthenticationEntryPoint))
-                
+        http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(csrf -> csrf.disable())
+                .httpBasic(httpBasic -> httpBasic.disable())
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .exceptionHandling(exceptionHandling
+                        -> exceptionHandling.authenticationEntryPoint(customAuthenticationEntryPoint))
+
                 //인증 경로 설정
-            .authorizeHttpRequests(authorize -> authorize
-                    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers("/swagger", "/swagger-ui.html", "/swagger-ui/**", "/api-docs", "/api-docs/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                    // 비로그인 조회 허용
-                    .requestMatchers(HttpMethod.GET, "/category/top").permitAll()
-                    .requestMatchers(HttpMethod.GET, "/category/children/**").permitAll()
-                    .requestMatchers(HttpMethod.GET, "/auctions/**").permitAll()
+                        // 비로그인 조회 허용
+                        .requestMatchers(HttpMethod.GET, "/category/top").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/category/children/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/auctions/**").permitAll()
 
-                    .requestMatchers("/auth/signup", "/auth/login", "/auth/kakao","/favicon.ico", "/auth/naver", "/auth/reissue"
-                            , "/auth/naver/loginstart", "/auth/email/**", "/auth/password/**", "/chat_test.html**", "/ws/bid/**", "/images/**").permitAll()
-                    .requestMatchers("/chatrooms/**").authenticated()
-                    .requestMatchers("/notifications/token/**").authenticated() //기타 알림 API는 인증 필요 여부에 따라 결정
+                        .requestMatchers("/auth/signup", "/auth/login", "/auth/kakao", "/favicon.ico", "/auth/naver", "/auth/reissue"
+                                , "/auth/naver/loginstart", "/auth/email/**", "/auth/password/**", "/chat_test.html**", "/ws/bid/**", "/images/**").permitAll()
+                        .requestMatchers("/chatrooms/**").authenticated()
+                        .requestMatchers("/notifications/token/**").authenticated() //기타 알림 API는 인증 필요 여부에 따라 결정
                         .requestMatchers("/orders/**", "/payments/**", "/inquiries/**", "/reports/**").permitAll()  // ✅ 테스트용 오픈 - 강기병
 
-                    .requestMatchers("/admin/auth/signup", "/admin/auth/login", "/admin/auth/reissue").permitAll() // 관리자 회원가입, 로그인, 토큰재발급 일단 허용
-                    .requestMatchers("/admin/**").hasRole("ADMIN") // 나머지 관리자
-                    .anyRequest().authenticated()
-            ).csrf(csrf -> csrf.disable());
+                        .requestMatchers("/admin/auth/signup", "/admin/auth/login", "/admin/auth/reissue", "/admin/auth/password/**").permitAll() // 관리자 회원가입, 로그인, 토큰재발급, 비번재발급 일단 허용
+                        .requestMatchers("/admin/**").hasRole("ADMIN") // 나머지 관리자
+                        .anyRequest().authenticated()
+                ).csrf(csrf -> csrf.disable());
 
         http.addFilterBefore(
                 jwtAuthenticationFilter,
@@ -97,6 +101,12 @@ public class SecurityConfig {
         );
         //요청마다 jwtAuthenticationFilter필터 실행하기
 //        http.addFilterAfter(jwtAuthenticationFilter, CorsFilter.class);
+
         return http.build();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+        return configuration.getAuthenticationManager();
     }
 }

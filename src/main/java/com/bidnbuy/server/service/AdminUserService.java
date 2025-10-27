@@ -2,6 +2,7 @@ package com.bidnbuy.server.service;
 
 import com.bidnbuy.server.dto.AdminUserListDto;
 import com.bidnbuy.server.dto.AdminUserDetailDto;
+import com.bidnbuy.server.dto.PagingResponseDto;
 import com.bidnbuy.server.dto.PenaltyHistoryDto;
 import com.bidnbuy.server.entity.UserEntity;
 import com.bidnbuy.server.entity.PenaltyEntity;
@@ -9,7 +10,6 @@ import com.bidnbuy.server.repository.UserRepository;
 import com.bidnbuy.server.repository.PenaltyRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,19 +27,47 @@ public class AdminUserService {
     private final PenaltyRepository penaltyRepository;
 
     // 회원 목록 조회 (페이징)
-    public Page<AdminUserListDto> getUserList(Pageable pageable, String email) {
+    public PagingResponseDto<AdminUserListDto> getUserList(Pageable pageable, String email) {
         log.info("회원 목록 조회 요청: page={}, size={}, email={}", 
                 pageable.getPageNumber(), pageable.getPageSize(), email);
         
-        Page<UserEntity> users;
+        List<UserEntity> allUsers;
         
         if (email != null && !email.isEmpty()) {
-            users = userRepository.findByEmailContainingIgnoreCaseIncludingDeleted(email, pageable);
+            allUsers = userRepository.findByEmailContainingIgnoreCaseIncludingDeleted(email);
         } else {
-            users = userRepository.findAllIncludingDeleted(pageable);
+            allUsers = userRepository.findAllIncludingDeleted();
         }
         
-        return users.map(this::convertToUserListDto);
+        // 수동으로 페이징...
+        int totalElements = allUsers.size();
+        int pageSize = pageable.getPageSize();
+        int currentPage = pageable.getPageNumber();
+        int startIdx = currentPage * pageSize;
+        int endIdx = Math.min(startIdx + pageSize, totalElements);
+        
+        List<UserEntity> pagedUsers = allUsers.subList(
+                Math.min(startIdx, totalElements),
+                Math.min(endIdx, totalElements)
+        );
+        
+        List<AdminUserListDto> dtoList = pagedUsers.stream()
+                .map(this::convertToUserListDto)
+                .collect(Collectors.toList());
+        
+        int totalPages = (totalElements + pageSize - 1) / pageSize;
+        boolean isFirst = currentPage == 0;
+        boolean isLast = currentPage >= totalPages - 1 || totalElements == 0;
+        
+        return PagingResponseDto.<AdminUserListDto>builder()
+                .data(dtoList)
+                .totalPages(totalPages)
+                .totalElements(totalElements)
+                .currentPage(currentPage)
+                .pageSize(pageSize)
+                .isFirst(isFirst)
+                .isLast(isLast)
+                .build();
     }
 
     // 회원 상세 조회

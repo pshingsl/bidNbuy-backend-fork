@@ -4,6 +4,7 @@ import com.bidnbuy.server.entity.AuctionProductsEntity;
 import com.bidnbuy.server.entity.UserEntity;
 import com.bidnbuy.server.entity.WishlistEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import javax.swing.text.html.Option;
@@ -20,6 +21,6 @@ public interface WishlistRepository extends JpaRepository<WishlistEntity, Long> 
     // select count(auction) from wishlist w where w.auction
     Integer countByAuction(AuctionProductsEntity auction);
 
-    // select from wishlist w where useer.w
-    List<WishlistEntity> findByUser(UserEntity user);
+    @Query("SELECT w FROM WishlistEntity w JOIN FETCH w.auction a JOIN FETCH a.images i WHERE w.user = :user")
+    List<WishlistEntity> findByUserWithAuctionAndImages(UserEntity user);
 }

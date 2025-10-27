@@ -25,6 +25,7 @@ public class AuctionSchedulerService {
     private final OrderRepository orderRepository;
     private final AuctionHistoryService auctionHistoryService;
 
+    // 마감 시간이 된 경매를 처리하는 주요 스케줄러
     @Scheduled(fixedRate = 10000)
     @Transactional
     public void closeFinishedAuctions() {
@@ -44,6 +45,7 @@ public class AuctionSchedulerService {
         }
     }
 
+    // 개별 경매 마감
     @Transactional
     private void processAuctionClosing(AuctionProductsEntity auction) {
         Optional<AuctionBidsEntity> topBidOpt =
@@ -70,7 +72,7 @@ public class AuctionSchedulerService {
             orderEntity.setCreatedAt(LocalDateTime.now());
             orderEntity.setUpdatedAt(LocalDateTime.now());
 
-            orderEntity = orderRepository.save(orderEntity);
+            //  orderEntity = orderRepository.save(orderEntity);
         } else {
             //  유찰 (FAILURE)
             resultStatus = ResultStatus.FAILURE;
@@ -93,14 +95,14 @@ public class AuctionSchedulerService {
         AuctionResultEntity savedResult = auctionResultRepository.save(result);
 
         if (orderEntity != null) {
-            orderEntity.setResult(savedResult);
-            orderRepository.save(orderEntity);
+            //     orderEntity.setResult(savedResult);
+            //     orderRepository.save(orderEntity);
         }
 
         // 2. AuctionProductsEntity 상태 FINISH로 업데이트
         auction.setSellingStatus(SellingStatus.FINISH);
 
-        // ✅ 3. History 기록 (AuctionHistoryService의 독립 트랜잭션을 통해 안전하게 저장)
+        //History 기록 (AuctionHistoryService의 독립 트랜잭션을 통해 안전하게 저장)
         auctionHistoryService.recordStatusChange(
                 auction.getAuctionId(),
                 AuctionStatus.FINISHED
@@ -109,5 +111,50 @@ public class AuctionSchedulerService {
         // ❌ Builder를 이용한 중복 History 기록 로직과 헬퍼 메서드는 제거되었습니다.
 
         log.info("상품 ID {} 경매 마감 처리 완료.", auction.getAuctionId());
+    }
+
+    // 경매 도중에 판매자와 얘기해서 결재 성공했을때 경매 종료
+    @Transactional
+    public void closePaidAuctions(OrderEntity order) {
+        //  결제 성공 상태인지 확인
+        if (!order.getOrderStatus().equals("PAID")) {
+            log.warn("❌ 결제 완료 상태가 아님: orderId={}", order.getOrderId());
+            return;
+        }
+
+        // 2주문 타입이 ESCROW인지 확인
+        if (!"ESCROW".equals(order.getType())) {
+            log.info("⚠️ 경매 타입 주문이 아님. type={}, orderId={}", order.getType(), order.getOrderId());
+            return;
+        }
+
+        // 해당 주문과 연결된 경매 결과 조회
+        AuctionResultEntity result = auctionResultRepository.findByOrder(order)
+                .orElseThrow(() -> new IllegalStateException("해당 주문의 경매 결과가 존재하지 않습니다."));
+
+
+        AuctionProductsEntity auction = result.getAuction();
+
+        // 이미 종료된 경매면 중복 종료방지
+        if (auction.getSellingStatus() == SellingStatus.FINISH) {
+            log.info("⚠️ 이미 종료된 경매입니다. auctionId={}", auction.getAuctionId());
+            return;
+        }
+
+        // 경매 상태 FINISH로 변경 및 저장
+        auction.setSellingStatus(SellingStatus.FINISH);
+        auctionProductsRepository.save(auction);
+
+        // 경매 결과 UCCESS_PAID 변경 및 저장
+        result.setResultStatus(ResultStatus.SUCCESS_PAID);
+        auctionResultRepository.save(result);
+
+        // 경매기록
+        auctionHistoryService.recordStatusChange(
+                auction.getAuctionId(),
+                AuctionStatus.FINISHED
+        );
+
+        log.info("💰 결제 완료로 인한 경매 강제 종료 처리 완료: 경매 ID {}", auction.getAuctionId());
     }
 }

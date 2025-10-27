@@ -83,7 +83,7 @@ public class   UserController {
 
     //토큰 재발급
     @PostMapping("/reissue")
-        public ResponseEntity<?> reissueToken(@RequestBody TokenReissueRequestDto requestDto){
+    public ResponseEntity<?> reissueToken(@RequestBody TokenReissueRequestDto requestDto){
         try {
             AuthResponseDto reissueResponse = authService.reissue(requestDto.getRefreshToken());
 
@@ -124,10 +124,10 @@ public class   UserController {
         String state = jwtProvider.generateStateToken();
         session.setAttribute("naver_oauth_state", state);
         String naverAuthUrl = "https://nid.naver.com/oauth2.0/authorize" +
-                                "?response_type=code" +
-                                "&client_id=" + naverClientId +
-                                "&redirect_uri=" + redirectUri +
-                                "&state=" + state;
+                "?response_type=code" +
+                "&client_id=" + naverClientId +
+                "&redirect_uri=" + redirectUri +
+                "&state=" + state;
         return new RedirectView(naverAuthUrl);
         //http://localhost:8080/auth/naver/loginstart
     }
@@ -178,8 +178,8 @@ public class   UserController {
     public ResponseEntity<?> confirmPasswordUpdate(@RequestBody PasswordConfirmRequestDto requestDto){
         try{
             userService.verifyTempPassword(
-                requestDto.getEmail(),
-                requestDto.getTempPassword()
+                    requestDto.getEmail(),
+                    requestDto.getTempPassword()
             );
             return ResponseEntity.ok().body("임시 비밀번호가 확인되었습니다. 새 비번을 설정하세요.");
         }catch (UsernameNotFoundException e){
@@ -252,7 +252,7 @@ public class   UserController {
     // 프로필 이미지 업로드
     @PutMapping("/{userId}/profile")
     public ResponseEntity<?> uploadProfileImage(@AuthenticationPrincipal Long userId,
-              @RequestPart("images") MultipartFile imageFile ) {
+                                                @RequestPart("images") MultipartFile imageFile ) {
         String newImageUrl = imageService.updateProfileImage(userId, imageFile);
 
         UserImageDto response = UserImageDto.builder()
@@ -279,12 +279,12 @@ public class   UserController {
     @GetMapping("/{userId}/nickname")
     public ResponseEntity<?> updateNickName(@AuthenticationPrincipal Long userId) {
 
-       String nickname = userService.getNickName(userId);
+        String nickname = userService.getNickName(userId);
 
-       UserNickNameDto response = UserNickNameDto.builder()
-               .nickname(nickname)
-               .build();
-       return  ResponseEntity.ok(response);
+        UserNickNameDto response = UserNickNameDto.builder()
+                .nickname(nickname)
+                .build();
+        return  ResponseEntity.ok(response);
     }
 
     // 닉네임 조회
@@ -299,11 +299,12 @@ public class   UserController {
         return  ResponseEntity.ok(response);
     }
 
-    @GetMapping("/other/{targetUserId}")
-    public ResponseEntity<UserProfileSummaryDto> getUserProfile(@AuthenticationPrincipal Long userId, @PathVariable Long targetUserId) {
+    // 다른 유저 프로필 조회
+    @GetMapping("/other/{userId}")
+    public ResponseEntity<UserProfileSummaryDto> getUserProfile(@AuthenticationPrincipal Long userId) {
 
         // AuctionResultService를 사용하여 다른 사용자의 프로필 요약 정보를 가져옵니다.
-        UserProfileSummaryDto profile = userService.getOtherUserProfile(userId, targetUserId);
+        UserProfileSummaryDto profile = userService.getOtherUserProfile(userId);
 
         return ResponseEntity.ok(profile);
     }

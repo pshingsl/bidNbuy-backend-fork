@@ -111,8 +111,8 @@ public class AuctionProductsService {
             String sortBy,
             Boolean includeEnded,
             String searchKeyword,
-            Integer mainCategoryId,
-            Integer subCategoryId,
+            Long mainCategoryId,
+            Long subCategoryId,
             String userEmail
     ) {
 
@@ -144,38 +144,39 @@ public class AuctionProductsService {
         // 3. DTO 변환 및 반환
         return buildPagingResponse(auctionPage);
     }
-
-    @Transactional(readOnly = true)
-    public List<AuctionListResponseDto> getMyAuctionListSimple(Long userId) {
-
-        // 1. 사용자 엔티티 조회
-        UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 사용자 존재하지 않습니다."));
-
-        // 2. Repository를 통해 해당 사용자가 작성한 모든 상품을 조회
-        //    (***AuctionProductsRepository에 findByUser(UserEntity user) 정의 필수***)
-        List<AuctionProductsEntity> myProducts = auctionProductsRepository.findByUser(user);
-
-        // 3. DTO로 변환
-        return myProducts.stream()
-                .map(product -> {
-                    String mainImageUrl = imageRepository.findFirstImageUrlByAuctionId(product.getAuctionId())
-                            .orElse("default_product.png");
-
-                    return AuctionListResponseDto.builder()
-                            .auctionId(product.getAuctionId())
-                            .title(product.getTitle())
-                            .currentPrice(product.getCurrentPrice())
-                            .endTime(product.getEndTime())
-                            .sellingStatus(calculateSellingStatus(product))
-                            //.categoryName(product.getCategory().getCategoryName())
-                            .sellerNickname(product.getUser().getNickname())
-                            .mainImageUrl(mainImageUrl)
-                            .wishCount(wishlistRepository.countByAuction(product))
-                            .build();
-                })
-                .collect(Collectors.toList());
-    }
+//
+//    @Transactional(readOnly = true)
+//    public List<AuctionListResponseDto> getMyAuctionListSimple(Long userId) {
+//
+//        // 1. 사용자 엔티티 조회
+//        UserEntity user = userRepository.findById(userId)
+//                .orElseThrow(() -> new IllegalArgumentException("해당 사용자 존재하지 않습니다."));
+//
+//        // 2. Repository를 통해 해당 사용자가 작성한 모든 상품을 조회
+//        List<AuctionProductsEntity> myProducts = auctionProductsRepository.findProductsByUserEagerly(user);
+//
+//        // 3. DTO로 변환
+//        return myProducts.stream()
+//                .map(product -> {
+//                    String mainImageUrl = imageRepository.findFirstImageUrlByAuctionId(product.getAuctionId())
+//                            .orElse("default_product.png");
+//
+//                    return AuctionListResponseDto.builder()
+//                            .auctionId(product.getAuctionId())
+//                            .title(product.getTitle())
+//                            .currentPrice(product.getCurrentPrice())
+//                            .createdAt(product.getCreatedAt())
+//                            .endTime(product.getEndTime())
+//                            .sellingStatus(calculateSellingStatus(product))
+//                            //.categoryName(product.getCategory().getCategoryName())
+//                            .sellerId(product.getUser().getUserId())
+//                            .sellerNickname(product.getUser().getNickname())
+//                            .mainImageUrl(mainImageUrl)
+//                            .wishCount(wishlistRepository.countByAuction(product))
+//                            .build();
+//                })
+//                .collect(Collectors.toList());
+//    }
 
     // 상세조회
     @Transactional(readOnly = true)
@@ -220,6 +221,7 @@ public class AuctionProductsService {
             // 부모가 없다면 (스스로 대분류라면), 현재 이름을 mainCategory에 넣고 subCategory는 비움
             mainCategory = subCategoryEntity.getCategoryName();
             subCategory = null;
+
         }
 
         // 최종 DTO 빌드 및 반환
@@ -308,9 +310,11 @@ public class AuctionProductsService {
                 .auctionId(product.getAuctionId())
                 .title(product.getTitle())
                 .currentPrice(product.getCurrentPrice())
+                .createdAt(product.getCreatedAt())
                 .endTime(product.getEndTime())
                 .sellingStatus(calculateSellingStatus(product)) // calculateSellingStatus도 클래스에 있어야 합니다.
                 //  .categoryName(product.getCategory().getCategoryName())
+                .sellerId(product.getUser().getUserId())
                 .sellerNickname(product.getUser().getNickname())
                 .mainImageUrl(mainImageUrl)
                 .wishCount(wishCount)

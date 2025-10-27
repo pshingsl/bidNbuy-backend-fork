@@ -11,11 +11,13 @@ import com.bidnbuy.server.enums.IsDeletedStatus;
 import com.bidnbuy.server.enums.SellingStatus;
 import com.bidnbuy.server.enums.WishlistFilterStatus;
 import com.bidnbuy.server.repository.AuctionProductsRepository;
+import com.bidnbuy.server.repository.ImageRepository;
 import com.bidnbuy.server.repository.UserRepository;
 import com.bidnbuy.server.repository.WishlistRepository;
-import jakarta.transaction.Transactional;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -28,6 +30,7 @@ public class WishlistService {
     private final UserRepository userRepository;
     private final AuctionProductsRepository auctionProductsRepository;
     private final AuctionProductsService auctionProductsService;
+    private final ImageRepository imageRepository;
 
     @Transactional
     public WishlistDto like(Long userId, Long auctionId) {
@@ -52,7 +55,7 @@ public class WishlistService {
                     wishlistRepository.delete(wishlist);
 
                     // 5. 삭제 후, 총 찜 개수와 상태를 반환
-                   Integer wishCount = wishlistRepository.countByAuction(auction);
+                    Integer wishCount = wishlistRepository.countByAuction(auction);
                     return WishlistDto.builder()
                             .isLiked(false) // 찜 취소됨
                             .wishCount(wishCount)
@@ -80,6 +83,7 @@ public class WishlistService {
     }
 
     // 조회
+    @Transactional(readOnly = true)
     public List<WishlistResponseDto> getWishlist(Long userId, WishlistFilterStatus filterStatus) {
 
         // 1. 유저 존재하는지 확인
@@ -87,7 +91,7 @@ public class WishlistService {
                 .orElseThrow(() -> new RuntimeException("해당 유저 ID가 없습니다"));
 
         // 2. 해당 경매 물품이 있는지 확인
-        List<WishlistEntity> list =  wishlistRepository.findByUser(user);
+        List<WishlistEntity> list =  wishlistRepository.findByUserWithAuctionAndImages(user);
 
         return list.stream()
                 .filter(wish -> {
@@ -124,10 +128,7 @@ public class WishlistService {
                 .map(wish -> {
                     AuctionProductsEntity product = wish.getAuction();
 
-                    String mainImageUrl = product.getImages().stream()
-                            .filter(image -> ImageType.PRODUCT.equals(image.getImageType())) // ImageEntity에 getImageType()이 있다고 가정
-                            .findFirst()
-                            .map(ImageEntity::getImageUrl) // ImageEntity에 getImageUrl()이 있다고 가정
+                    String mainImageUrl = imageRepository.findFirstImageUrlByAuctionId(product.getAuctionId())
                             .orElse(null);
 
                     String sellingStatus = auctionProductsService.calculateSellingStatus(product);
@@ -135,7 +136,7 @@ public class WishlistService {
                     return WishlistResponseDto.builder()
                             .auctionId(product.getAuctionId())
                             .title(product.getTitle())
-                            .mainImageUrl(mainImageUrl) // 이미지 리스트 중 메인 이미지를 가져온다고 가정
+                            .mainImageUrl(mainImageUrl)
                             .currentPrice(product.getCurrentPrice())
                             .endTime(product.getEndTime())
                             .sellerNickname(product.getUser().getNickname()) // Fetch Join으로 User가 로드되어야 함
@@ -147,3 +148,6 @@ public class WishlistService {
         // 필터링
     }
 }
+
+
+
