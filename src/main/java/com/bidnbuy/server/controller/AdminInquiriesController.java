@@ -4,11 +4,11 @@ import com.bidnbuy.server.dto.AdminInquiryListDto;
 import com.bidnbuy.server.dto.AdminInquiryDetailDto;
 import com.bidnbuy.server.dto.AdminInquiryReplyRequestDto;
 import com.bidnbuy.server.dto.AdminInquiryStatusRequestDto;
+import com.bidnbuy.server.dto.PagingResponseDto;
 import com.bidnbuy.server.enums.InquiryEnums;
 import com.bidnbuy.server.service.AdminInquiriesService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -28,7 +28,7 @@ public class AdminInquiriesController {
 
     // 문의 목록 조회
     @GetMapping
-    public ResponseEntity<Page<AdminInquiryListDto>> getInquiryList(
+    public ResponseEntity<PagingResponseDto<AdminInquiryListDto>> getInquiryList(
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
             @RequestParam(required = false) InquiryEnums.InquiryType type,
             @RequestParam(required = false) InquiryEnums.InquiryStatus status,
@@ -39,7 +39,7 @@ public class AdminInquiriesController {
                 pageable.getPageNumber(), pageable.getPageSize(), type, status, title, userEmail);
         
         try {
-            Page<AdminInquiryListDto> inquiries = adminInquiriesService.getInquiryList(pageable, type, status, title, userEmail);
+            PagingResponseDto<AdminInquiryListDto> inquiries = adminInquiriesService.getInquiryList(pageable, type, status, title, userEmail);
             return ResponseEntity.ok(inquiries);
         } catch (Exception e) {
             log.error("문의 목록 조회 중 오류 발생: {}", e.getMessage());
