@@ -2,16 +2,11 @@ package com.bidnbuy.server.service;
 
 import com.bidnbuy.server.config.TossPaymentClient;
 import com.bidnbuy.server.dto.*;
-import com.bidnbuy.server.entity.AuctionResultEntity;
-import com.bidnbuy.server.entity.OrderEntity;
-import com.bidnbuy.server.entity.PaymentCancelEntity;
-import com.bidnbuy.server.entity.PaymentEntity;
+import com.bidnbuy.server.entity.*;
 import com.bidnbuy.server.enums.ResultStatus;
+import com.bidnbuy.server.enums.SettlementStatus;
 import com.bidnbuy.server.enums.paymentStatus;
-import com.bidnbuy.server.repository.AuctionResultRepository;
-import com.bidnbuy.server.repository.OrderRepository;
-import com.bidnbuy.server.repository.PaymentCancelRepository;
-import com.bidnbuy.server.repository.PaymentRepository;
+import com.bidnbuy.server.repository.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +33,7 @@ public class PaymentService {
     private final ObjectMapper objectMapper;
     private final OrderRepository orderRepository;
     private final AuctionResultRepository auctionResultRepository;
+    private final SettlementRepository settlementRepository;
 
 
     // 자동 취소 (스케줄러가 호출)
@@ -209,6 +205,17 @@ public class PaymentService {
 
             System.out.println("주문 상태 PAID로 변경 완료: Order ID " + orderId);
 
+            // 정산 생성
+            SettlementEntity settlement = SettlementEntity.builder()
+                    .order(order)
+                    .seller(order.getSeller())
+                    .payoutAmount(savedPayment.getTotalAmount())
+                    .payoutStatus(SettlementStatus.WAITING)
+                    .build();
+            settlementRepository.save(settlement);
+
+
+            // 경매 결과 상태 변경
             List<AuctionResultEntity> results = auctionResultRepository.findByOrder_OrderId(orderId);
 
             if(!results.isEmpty()) {

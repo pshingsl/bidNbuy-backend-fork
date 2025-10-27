@@ -5,7 +5,6 @@ import com.bidnbuy.server.entity.AuctionResultEntity;
 import com.bidnbuy.server.entity.OrderEntity;
 import com.bidnbuy.server.entity.UserEntity;
 import com.bidnbuy.server.enums.ResultStatus;
-import com.bidnbuy.server.enums.SellingStatus;
 import com.bidnbuy.server.repository.AuctionResultRepository;
 import com.bidnbuy.server.repository.OrderRepository;
 import com.bidnbuy.server.repository.UserRepository;
@@ -221,6 +220,15 @@ public class OrderService {
         order.setRating(0);
         order.setCreatedAt(LocalDateTime.now());
         order.setUpdatedAt(LocalDateTime.now());
+
+        // resultId 저장
+        AuctionResultEntity result = auctionResultRepository
+                .findFirstByWinner_UserIdAndOrderIsNullOrderByClosedAtDesc(dto.getBuyerId())
+                .orElseThrow(() -> new IllegalArgumentException("유효한 경매 결과가 없습니다."));
+
+        order.setResult(result);
+        result.setOrder(order);
+
 
         OrderEntity saved = orderRepository.save(order);
 

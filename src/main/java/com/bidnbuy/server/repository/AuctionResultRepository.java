@@ -29,4 +29,8 @@ public interface AuctionResultRepository extends JpaRepository<AuctionResultEnti
 
     // 유저프로필 판매완료 건수
     long countByAuction_User_UserIdAndResultStatus(Long userId, ResultStatus resultStatus);
+
+    // winnerId로 조회하되 아직 order가 안 매핑된 가장 최근 결과 1개만
+    Optional<AuctionResultEntity> findFirstByWinner_UserIdAndOrderIsNullOrderByClosedAtDesc(Long userId);
+
 }
