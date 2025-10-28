@@ -44,4 +44,11 @@ public class NotificationController {
         userNotificationService.deleteAllNotifications(userId);
         return Map.of("message", "전체 알림이 삭제되었습니다");
     }
+
+    // 전체 유저에게 공지사항
+    @PostMapping
+    public ResponseEntity<?> sendNoticeToAll(@RequestBody String content) {
+        userNotificationService.createNoticeForAll(content);
+        return ResponseEntity.ok("전체 공지 발송 완료");
+    }
 }
