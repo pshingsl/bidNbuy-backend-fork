@@ -20,7 +20,7 @@ import java.util.List;
 @Setter
 @Entity
 @Table(name = "User", uniqueConstraints = {
-        @UniqueConstraint(name = "UC_EmailAndDeletedAt", columnNames = {"email", "deleted_at"})
+        @UniqueConstraint(name = "UC_EmailAndDeletedAt", columnNames = {"email", "deleted_at"}),
 })
 @SQLDelete(sql = "UPDATE user SET deleted_at = CURRENT_TIMESTAMP WHERE user_id = ?")
 @SQLRestriction("deleted_at IS NULL")

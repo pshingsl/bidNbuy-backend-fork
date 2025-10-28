@@ -46,8 +46,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 || path.startsWith("/auth/naver")|| path.equals("/auth/reissue")|| path.startsWith("/auth/email")|| path.startsWith("/auth/password")
                 || path.startsWith("/chat_test")|| path.startsWith("/ws/bid") 
                 // ✅ 여기에 추가 - test용
-                || path.startsWith("/orders")
-                || path.startsWith("/payments")){
+//                || path.startsWith("/orders")
+//                || path.startsWith("/payments")
+        ){
             return true;
         }//인증 필터링 건너뛰기
         return false;

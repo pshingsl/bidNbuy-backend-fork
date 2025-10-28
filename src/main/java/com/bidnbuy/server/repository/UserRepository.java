@@ -17,6 +17,8 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
     Optional<UserEntity> findByNickname(String nickname);
 
+    UserEntity findByEmailAndDeletedAtIsNull(String email);
+
     // 관리자용
     // 모든 사용자 조회 (강퇴 포함)
     @Query(value = "SELECT * FROM user ORDER BY created_at DESC", nativeQuery = true)
