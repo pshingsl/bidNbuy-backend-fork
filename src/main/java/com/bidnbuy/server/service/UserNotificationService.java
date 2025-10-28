@@ -119,22 +119,6 @@ public class UserNotificationService {
         });
     }
 
-    // 특정 유저에게 공지사항 알림 발송
-    public NotificationEntity createNotice(Long userId, String content) {
-        UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자"));
-
-        NotificationEntity noti = NotificationEntity.builder()
-                .user(user)
-                .type(NotificationType.NOTICE)  // 공지사항 고정
-                .content(content)
-                .isRead(false)
-                .createdAt(LocalDateTime.now())
-                .build();
-
-        return notificationRepository.save(noti);
-    }
-
     // 전체 유저에게 공지사항 알림 발송
     public void createNoticeForAll(String content) {
         userRepository.findAll().forEach(user -> {
@@ -149,5 +133,26 @@ public class UserNotificationService {
             notificationRepository.save(noti);
         });
     }
+
+
+    // 특정 유저에게 경고 알림 발송
+    @Transactional
+    public NotificationEntity createWarning(Long userId, String content) {
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자"));
+
+        NotificationEntity noti = NotificationEntity.builder()
+                .user(user)
+                .type(NotificationType.WARN)   // 🚨 경고 고정
+                .content(content)
+                .isRead(false)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        NotificationEntity saved = notificationRepository.save(noti);
+        return saved;
+    }
+
+
 
 }
