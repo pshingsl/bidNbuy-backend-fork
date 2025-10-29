@@ -31,7 +31,7 @@ public class AuctionProductsController {
     @Autowired
     private AuctionProductsService auctionProductsService;
 
-    @Operation(summary = "상품 등록", description = "상품 등록시 사용되는 API")
+    @Operation(summary = "상품 등록 API", description = "상품 등록")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "등록 성공",
                     content = @Content(schema = @Schema(implementation = AuctionCreationResponseDto.class))),
@@ -63,8 +63,8 @@ public class AuctionProductsController {
     }
 
     // 전체 조회 하나로 통일
-    @Operation(summary = "상품 조회",
-            description = "상품 조회시 사용되는 API",
+    @Operation(summary = "상품 조회 API",
+            description = "상품 조회",
             parameters = {
                     @Parameter(name = "page", description = "상품 페이지", required = false),
                     @Parameter(name = "size", description = "상품 개수", required = false),
@@ -123,7 +123,7 @@ public class AuctionProductsController {
         return ResponseEntity.ok(list);
     }
 
-    @Operation(summary = "사용자 상품 상세조회", description = "사용자 상품 상세조회 API")
+    @Operation(summary = "사용자 상품 상세 조회 API", description = "사용자 상품 상세 조회")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "상세조회 성공"),
             @ApiResponse(responseCode = "401", description = "상세조회 실패")
@@ -138,7 +138,7 @@ public class AuctionProductsController {
         return ResponseEntity.ok(find);
     }
 
-    @Operation(summary = "사용자 상품 삭제", description = "사용자 상품삭제 API")
+    @Operation(summary = "사용자 상품 삭제 API", description = "사용자 상품 삭제")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "삭제 성공 (No Content)"),
             @ApiResponse(responseCode = "400", description = "경매 진행 상태(판매 중 등)로 인해 삭제 불가",
@@ -171,7 +171,7 @@ public class AuctionProductsController {
     }
 
     // 관리자용 경매 삭제
-    @Operation(summary = "관리자용 경매 상품 강제 삭제", description = "관리자 상품 삭제API")
+    @Operation(summary = "관리자용 경매 상품 강제 삭제 API", description = "관리자 상품 삭제")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "삭제 성공 (No Content)"),
             @ApiResponse(responseCode = "401", description = "인증 실패 (로그인이 필요함)"),

@@ -5,6 +5,12 @@ import com.bidnbuy.server.entity.UserEntity;
 import com.bidnbuy.server.exception.CustomAuthenticationException;
 import com.bidnbuy.server.security.JwtProvider;
 import com.bidnbuy.server.service.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +30,7 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
+@Tag(name = "유저 API", description = "유저 기능 제공")
 @Slf4j
 @RestController
 @RequestMapping("/auth")
@@ -250,6 +257,12 @@ public class   UserController {
     }
 
     // 프로필 이미지 업로드
+    @Operation(summary = "유저프로필 이미지 수정 API", description = "유저프로필 이미지 수정")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "수정 성공",
+                    content = @Content(schema = @Schema(implementation = UserImageDto.class))),
+            @ApiResponse(responseCode = "401", description = "인증 실패")
+    })
     @PutMapping("/{userId}/profile")
     public ResponseEntity<?> uploadProfileImage(@AuthenticationPrincipal Long userId,
                                                 @RequestPart("images") MultipartFile imageFile ) {
@@ -263,6 +276,12 @@ public class   UserController {
     }
 
     // 프로필 이미지 조회
+    @Operation(summary = "유저프로필 이미지 조회 API", description = "유저프로필 이미지 조회")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공",
+                    content = @Content(schema = @Schema(implementation = UserImageDto.class))),
+            @ApiResponse(responseCode = "401", description = "인증 실패")
+    })
     @GetMapping("/{userId}/profile")
     public ResponseEntity<?> getProfileImage(@AuthenticationPrincipal Long userId) {
 
@@ -275,7 +294,13 @@ public class   UserController {
         return ResponseEntity.ok(response);
     }
 
-    // 닉네임 업데이트
+    // 닉네임 조회
+    @Operation(summary = "유저 닉네임 조회 API", description = "유저 닉네임 조회")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공",
+                    content = @Content(schema = @Schema(implementation = UserNickNameDto.class))),
+            @ApiResponse(responseCode = "401", description = "인증 실패")
+    })
     @GetMapping("/{userId}/nickname")
     public ResponseEntity<?> updateNickName(@AuthenticationPrincipal Long userId) {
 
@@ -287,7 +312,13 @@ public class   UserController {
         return  ResponseEntity.ok(response);
     }
 
-    // 닉네임 조회
+    // 닉네임 업데이트
+    @Operation(summary = "유저 닉네임 수정 API", description = "유저 닉네임 수정")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공",
+                    content = @Content(schema = @Schema(implementation = UserNickNameDto.class))),
+            @ApiResponse(responseCode = "401", description = "인증 실패")
+    })
     @PutMapping("/{userId}/nickname")
     public ResponseEntity<?> updateNickname(@AuthenticationPrincipal Long userId, @RequestBody UserNickNameDto dto) {
         String nickname = userService.updateNickName(userId, dto.getNickname());
@@ -300,6 +331,12 @@ public class   UserController {
     }
 
     // 다른 유저 프로필 조회
+    @Operation(summary = "다른 유저 프로필 조회 API", description = "다른 유저 프로필 조회")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공",
+                    content = @Content(schema = @Schema(implementation = UserProfileSummaryDto.class))),
+            @ApiResponse(responseCode = "401", description = "인증 실패")
+    })
     @GetMapping("/other/{targetId}")
     public ResponseEntity<UserProfileSummaryDto> getUserProfile(@AuthenticationPrincipal Long userId, @PathVariable Long targetId) {
 
