@@ -23,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
+@Tag(name = "경매상품 API", description = "경매상품 기능 제공")
 @RestController
 @RequestMapping("/auctions")
 public class AuctionProductsController {
