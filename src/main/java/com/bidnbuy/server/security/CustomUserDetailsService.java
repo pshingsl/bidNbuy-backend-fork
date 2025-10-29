@@ -4,6 +4,8 @@ import com.bidnbuy.server.entity.UserEntity;
 import com.bidnbuy.server.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.DependsOn;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -11,8 +13,10 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.util.Collection;
 import java.util.Collections;
 
+@DependsOn("entityManagerFactory")
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -38,4 +42,13 @@ public class CustomUserDetailsService implements UserDetailsService {
             throw new UsernameNotFoundException("유효하지 않은 사용자 ID 형식입니다: " + userIdStr);
         }
     }
+
+
+    private Collection<? extends GrantedAuthority> getAuthorities(String role) {
+        String roleName = "ROLE_" + role.toUpperCase();
+        return Collections.singletonList(new SimpleGrantedAuthority(roleName));
+    }
+
+
+
 }

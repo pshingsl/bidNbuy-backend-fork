@@ -1,5 +1,8 @@
 package com.bidnbuy.server.enums;
 
+import lombok.Getter;
+
+@Getter
 public class paymentStatus {
 
     public enum PaymentMethod {

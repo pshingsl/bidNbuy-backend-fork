@@ -20,7 +20,7 @@ import java.util.List;
 @Setter
 @Entity
 @Table(name = "User", uniqueConstraints = {
-        @UniqueConstraint(name = "UC_EmailAndDeletedAt", columnNames = {"email", "deleted_at"})
+        @UniqueConstraint(name = "UC_EmailAndDeletedAt", columnNames = {"email", "deleted_at"}),
 })
 @SQLDelete(sql = "UPDATE user SET deleted_at = CURRENT_TIMESTAMP WHERE user_id = ?")
 @SQLRestriction("deleted_at IS NULL")
@@ -89,8 +89,9 @@ public class UserEntity {
     private String profileImageUrl;
 
     // 유저 온도 (별점 평균 × 10)
-    @Column(name = "user_temperature", nullable = true)
-    private Double userTemperature;
+    @Builder.Default
+    @Column(name = "user_temperature", nullable = false, columnDefinition = "double default 0.0")
+    private Double userTemperature = 0.0;
 
     // 페널티 (누적 점수)
     @Column(name = "penalty_points", nullable = false)

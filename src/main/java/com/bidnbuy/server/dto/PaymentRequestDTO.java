@@ -12,4 +12,5 @@ public class PaymentRequestDTO {
     private String paymentKey;  // 토스에서 발급해준 결제 키
     private String orderId;     //  = merchantOrderId (우리가 만든 주문번호)
     private Integer amount;     // 결제 금액
+    private Long auctionId;
 }

@@ -1,5 +1,6 @@
 package com.bidnbuy.server.controller;
 
+import com.bidnbuy.server.dto.AdminNotificationRequest;
 import com.bidnbuy.server.dto.NotificationResponse;
 import com.bidnbuy.server.entity.NotificationEntity;
 import com.bidnbuy.server.service.UserNotificationService;
@@ -43,5 +44,22 @@ public class NotificationController {
     public Map<String, String> deleteAllNotifications(@AuthenticationPrincipal Long userId) {
         userNotificationService.deleteAllNotifications(userId);
         return Map.of("message", "전체 알림이 삭제되었습니다");
+    }
+
+    // userId == null 이면 전체공지, 아니면 경고 발송
+    @PostMapping
+    public ResponseEntity<?> sendNotification(@RequestBody AdminNotificationRequest request) {
+        if (request.getUserId() == null) {
+            // 전체 공지
+            userNotificationService.createNoticeForAll(request.getContent());
+            return ResponseEntity.ok("📢 전체 공지 발송 완료");
+        } else {
+            // 특정 유저 경고
+            NotificationEntity saved = userNotificationService.createWarning(
+                    request.getUserId(),
+                    request.getContent()
+            );
+            return ResponseEntity.ok("⚠️ 경고 발송 완료 (id=" + saved.getNotificationId() + ")");
+        }
     }
 }

@@ -1,6 +1,6 @@
-create database bidnbuy default character set utf8 default collate utf8_general_ci;
+--create database bidnbuy default character set utf8 default collate utf8_general_ci;
 
---use bidnbuy;
+use bidnbuy;
 
 create table Admin(
     admin_id BIGINT auto_increment not null PRIMARY KEY,

@@ -3,8 +3,9 @@ package com.bidnbuy.server.service;
 import com.bidnbuy.server.config.TossPaymentClient;
 import com.bidnbuy.server.dto.*;
 import com.bidnbuy.server.entity.*;
+import com.bidnbuy.server.enums.AuctionStatus;
 import com.bidnbuy.server.enums.ResultStatus;
-import com.bidnbuy.server.enums.SettlementStatus;
+import com.bidnbuy.server.enums.SellingStatus;
 import com.bidnbuy.server.enums.paymentStatus;
 import com.bidnbuy.server.repository.*;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -33,7 +34,9 @@ public class PaymentService {
     private final ObjectMapper objectMapper;
     private final OrderRepository orderRepository;
     private final AuctionResultRepository auctionResultRepository;
-    private final SettlementRepository settlementRepository;
+    private final AuctionProductsRepository auctionProductsRepository;
+    private final AuctionHistoryRepository auctionHistoryRepository;
+    private final SettlementService settlementService;
 
 
     // 자동 취소 (스케줄러가 호출)
@@ -129,8 +132,6 @@ public class PaymentService {
     }
 
 
-
-
     /**
      * merchantOrderId로 Payment 조회
      */
@@ -188,7 +189,8 @@ public class PaymentService {
 
         PaymentEntity savedPayment = paymentRepository.save(payment);
 
-        if(newStatus == paymentStatus.PaymentStatus.SUCCESS) {
+        // 결제진행 완료
+        if (newStatus == paymentStatus.PaymentStatus.SUCCESS) {
             OrderEntity order = savedPayment.getOrder();
             if (order == null) {
                 throw new IllegalStateException("Payment에 연결된 Order를 찾을 수 없습니다.");
@@ -199,48 +201,144 @@ public class PaymentService {
                 System.err.println("경고: 이미 결제 완료된 주문을 다시 PAID로 시도함. Order ID: " + orderId);
                 return savedPayment;
             }
+            // 주문 상태 갱신
             order.setOrderStatus("PAID");
             order.setUpdatedAt(LocalDateTime.now());
             orderRepository.save(order);
 
-            System.out.println("주문 상태 PAID로 변경 완료: Order ID " + orderId);
-
-            // 정산 생성
-            SettlementEntity settlement = SettlementEntity.builder()
-                    .order(order)
-                    .seller(order.getSeller())
-                    .payoutAmount(savedPayment.getTotalAmount())
-                    .payoutStatus(SettlementStatus.WAITING)
-                    .build();
-            settlementRepository.save(settlement);
-
-
-            // 경매 결과 상태 변경
+            // 경매 결과 조회
             List<AuctionResultEntity> results = auctionResultRepository.findByOrder_OrderId(orderId);
 
-            if(!results.isEmpty()) {
+            // 있으면 상태만 변경 없으면 결과 생성
+            if (!results.isEmpty()) {
+                // 기존 결과 업데이트
                 AuctionResultEntity result = results.get(0);
-
                 result.setResultStatus(ResultStatus.SUCCESS_PAID);
                 auctionResultRepository.save(result);
+            } else {
+                // 새로운 결과 생성
+                Long auctionId = dto.getAuctionId();  // 프론트에서 받아온 auctionId
+                if (auctionId == null) {
+                    throw new IllegalArgumentException("결제 승인에 필요한 auctionId가 없습니다.");
+                }
 
-                System.out.println("경매 결과 상태 SUCCESS_PAID로 변경 완료: AuctionResult ID " + result.getResultId());
+                AuctionProductsEntity auction = auctionProductsRepository.findById(auctionId)
+                        .orElseThrow(() -> new IllegalArgumentException("경매를 찾을 수 없습니다. auctionId=" + auctionId));
+
+// history 생성
+                AuctionHistoryEntity history = AuctionHistoryEntity.builder()
+                        .auctionProduct(auction)
+                        .previousStatus(AuctionStatus.PAYMENT_PENDING) // 기존 상태
+                        .newStatus(AuctionStatus.PAYMENT_COMPLETED) // 결제 완료
+                        .bidTime(LocalDateTime.now())
+                        .build();
+
+                auctionHistoryRepository.save(history);
+
+// result 생성
+                AuctionResultEntity result = AuctionResultEntity.builder()
+                        .auction(auction)
+                        .winner(order.getBuyer())
+                        .resultStatus(ResultStatus.SUCCESS_PAID) // ResultStatus는 SUCCESS_PAID
+                        .finalPrice(savedPayment.getTotalAmount())
+                        .history(history) // 방금 만든 history 연결
+                        .order(order)
+                        .closedAt(LocalDateTime.now())
+                        .build();
+
+                auctionResultRepository.save(result);
+
+                // Order와 Result 연결
+                order.setResult(result);
+                orderRepository.save(order);
+                
+                // Settlement 생성 (정산 정보)
+                settlementService.createSettlement(order, savedPayment.getTotalAmount());
             }
         }
 
-        // 4. Toss 응답 상태가 COMPLETED일 경우 (최종 거래 완료 상태)
-        if ("COMPLETED".equalsIgnoreCase(dto.getStatus())) {
+        // 2. Toss 응답 상태가 COMPLETED일 경우 (최종 거래 완료 상태)
+        if (newStatus == paymentStatus.PaymentStatus.SUCCESS && "COMPLETED".equalsIgnoreCase(dto.getStatus())) {
 
-            List<AuctionResultEntity> results = auctionResultRepository.findByOrder_OrderId(savedPayment.getOrder().getOrderId());
+            // order 상태 변경
+            OrderEntity order = savedPayment.getOrder();
+            if (order != null) {
+                order.setOrderStatus("COMPLETED");
+                order.setUpdatedAt(LocalDateTime.now());
+                orderRepository.save(order);
+            }
+
+            // auctionResult 상태 변경 or 생성
+            List<AuctionResultEntity> results =
+                    auctionResultRepository.findByOrder_OrderId(savedPayment.getOrder().getOrderId());
 
             if (!results.isEmpty()) {
                 AuctionResultEntity result = results.get(0);
-
                 result.setResultStatus(ResultStatus.SUCCESS_COMPLETED); // 최종 거래 완료 상태
                 auctionResultRepository.save(result);
+            } else {
+                // 새로운 결과 생성
+                Long auctionId = dto.getAuctionId();  // 프론트에서 받아온 auctionId
+                if (auctionId == null) {
+                    throw new IllegalArgumentException("결제 승인에 필요한 auctionId가 없습니다.");
+                }
 
-                System.out.println("거래 완료 상태로 변경 완료: AuctionResult ID " + result.getResultId());
+                AuctionProductsEntity auction = auctionProductsRepository.findById(auctionId)
+                        .orElseThrow(() -> new IllegalArgumentException("경매를 찾을 수 없습니다. auctionId=" + auctionId));
+
+                // 1) 결제 성공 시 (PAID)
+
+// history 생성
+                AuctionHistoryEntity history = AuctionHistoryEntity.builder()
+                        .auctionProduct(auction)
+                        .previousStatus(AuctionStatus.PAYMENT_PENDING) // 기존 상태
+                        .newStatus(AuctionStatus.PAYMENT_COMPLETED) // 결제 완료
+                        .bidTime(LocalDateTime.now())
+                        .build();
+
+                auctionHistoryRepository.save(history);
+
+// result 생성
+                AuctionResultEntity result = AuctionResultEntity.builder()
+                        .auction(auction)
+                        .winner(order.getBuyer())
+                        .resultStatus(ResultStatus.SUCCESS_PAID) // ResultStatus는 SUCCESS_PAID
+                        .finalPrice(savedPayment.getTotalAmount())
+                        .history(history) // 방금 만든 history 연결
+                        .order(order)
+                        .closedAt(LocalDateTime.now())
+                        .build();
+
+                auctionResultRepository.save(result);
+
+                // Order와 Result 연결
+                order.setResult(result);
+                orderRepository.save(order);
             }
+
+            // 정산처리 나중에
+        }
+
+        // 3. 결제 취소/실패 처리
+        if (newStatus == paymentStatus.PaymentStatus.FAIL || newStatus == paymentStatus.PaymentStatus.CANCEL) {
+            OrderEntity order = savedPayment.getOrder();
+            if (order != null) {
+                order.setOrderStatus("CANCELLED");
+                order.setUpdatedAt(LocalDateTime.now());
+                orderRepository.save(order);
+            }
+
+            PaymentCancelEntity cancelEntity = new PaymentCancelEntity();
+            cancelEntity.setPayment(savedPayment);
+            cancelEntity.setTransactionKey(dto.getPaymentKey()); // Toss 결제키를 트랜잭션키로 저장
+            cancelEntity.setCancelReason("승인 응답에서 취소/실패 처리"); // 필요 시 dto에서 사유 가져오기
+            cancelEntity.setCancelAmount(savedPayment.getTotalAmount()); // 전액 취소 기준
+            cancelEntity.setCancelStatus(dto.getStatus()); // Toss 응답 상태 그대로
+            cancelEntity.setCanceledAt(LocalDateTime.now()); // Toss 응답 canceledAt 있으면 파싱해서 넣기
+            cancelEntity.setCreatedAt(LocalDateTime.now());
+
+            paymentCancelRepository.save(cancelEntity);
+
         }
         return paymentRepository.save(payment);
     }

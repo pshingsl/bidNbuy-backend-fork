@@ -35,6 +35,13 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoomEntity, Long> 
 
     List<ChatRoomEntity> findByBuyerIdOrSellerIdAndDeletedAtIsNullOrderByLastMessageTime(UserEntity buyer, UserEntity seller);
 
+    //구매자, 판매자, 경매상품으로 채팅방 찾기
+    Optional<ChatRoomEntity> findByBuyerId_UserIdAndSellerId_UserIdAndAuctionId_AuctionId(
+        Long buyerId,
+        Long sellerId,
+        Long auctionProductId
+    );
+
 //    @Modifying
 //    @Query("update ChatRoomEntity cr set cr.deletedAt = :deletedAt where cr.chatroomId= :chatroomId")
 //    int softDelete(@Param("chatroomId")Long chatroomId, @Param("deletedAt")LocalDateTime deletedAt);

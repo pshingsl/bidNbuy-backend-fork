@@ -8,5 +8,6 @@ import lombok.Setter;
 public class OrderRequestDto {
     private Long sellerId;
     private Long buyerId;
-    private String type; // 거래 타입 (예: ESCROW)
+    private String type;
+    private Long auctionId;// 거래 타입 (예: ESCROW)
 }

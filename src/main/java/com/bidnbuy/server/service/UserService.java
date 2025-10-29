@@ -84,7 +84,14 @@ public class UserService {
             if(existingUser.getUserStatus() == UserStatus.Y && existingUser.getDeletedAt() == null){
                 log.warn("email already exists and is active:{}", email);
                 throw new RuntimeException("이미 사용 중인 이메일입니다.");
-            }else{
+            }
+            // 강퇴 계정은 재가입 차단
+            else if(existingUser.getBanCount() > 0){
+                log.warn("강퇴 계정 재가입 시도: email={}, banCount={}", email, existingUser.getBanCount());
+                throw new RuntimeException("강퇴 계정은 재가입할 수 없습니다.");
+            }
+            // 일반 탈퇴 계정은 재가입 가능
+            else{
                 //삭제된 계정
                 existingUser.setDeletedAt(null);
                 existingUser.setUserStatus(UserStatus.Y);
@@ -115,6 +122,14 @@ public class UserService {
         //사용자 존재 여부 확인
         if (ogUser == null) {
             log.warn("User not found for email:{}", email);
+            
+            // 강퇴 계정 체크
+            Optional<UserEntity> deletedUserOptional = repository.findByEmailWithDeleted(email);
+            if(deletedUserOptional.isPresent() && deletedUserOptional.get().getBanCount() > 0) {
+                log.warn("강퇴 계정 로그인 시도: email={}, banCount={}", email, deletedUserOptional.get().getBanCount());
+                throw new CustomAuthenticationException("강퇴 계정입니다.");
+            }
+            
             return null;
         }
 
@@ -155,15 +170,37 @@ public class UserService {
 
     @Transactional
     public UserEntity findOrCreateUser(String email, String nickname) {
-        return repository.findByEmail(email).orElseGet(() -> {
-            UserEntity newUser = UserEntity.builder()
-                    .email(email)
-                    .nickname(nickname)
-                    .password(passwordEncoder.encode(UUID.randomUUID().toString())) //소셜로그인 비번을 채우기 위한 더미
-                    .role("ROLE_USER")
-                    .build();
-            return repository.save(newUser);
-        });
+        // 삭제 계정 포함 조회 (강퇴 회원 체크용)
+        Optional<UserEntity> existingUserOptional = repository.findByEmailWithDeleted(email);
+        
+        if(existingUserOptional.isPresent()) {
+            UserEntity existingUser = existingUserOptional.get();
+            
+            // 강퇴 계정 재가입 차단
+            if(existingUser.getBanCount() > 0) {
+                log.warn("강퇴 계정 소셜 로그인 시도: email={}, banCount={}", email, existingUser.getBanCount());
+                throw new CustomAuthenticationException("강퇴 계정입니다.");
+            }
+            
+            // 일반 탈퇴 계정 재가입 허용
+            if(existingUser.getDeletedAt() != null) {
+                existingUser.setDeletedAt(null);
+                existingUser.setUserStatus(UserStatus.Y);
+                existingUser.setAuthStatus(AuthStatus.Y);
+                return repository.save(existingUser);
+            }
+            
+            return existingUser;
+        }
+        
+        // 신규 계정
+        UserEntity newUser = UserEntity.builder()
+                .email(email)
+                .nickname(nickname)
+                .password(passwordEncoder.encode(UUID.randomUUID().toString())) //소셜로그인 비번을 채우기 위한 더미
+                .role("ROLE_USER")
+                .build();
+        return repository.save(newUser);
     }
 
     //임시비번 생성, 저장

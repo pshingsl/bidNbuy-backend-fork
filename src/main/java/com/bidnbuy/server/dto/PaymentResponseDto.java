@@ -16,4 +16,5 @@ public class PaymentResponseDto {
     private String status;
     private String requestedAt;
     private String approvedAt;
+    private Long auctionId;
 }

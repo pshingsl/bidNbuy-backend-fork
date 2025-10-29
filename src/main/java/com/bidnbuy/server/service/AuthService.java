@@ -16,6 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -33,8 +34,20 @@ public class AuthService {
 
     public AuthResponseDto login(String email, String password) {
         //사용자 인증 시도
-        UserEntity loginUser = userService.findByEmail(email)
-                .orElseThrow(()->new RuntimeException("이메일 또는 비밀번호가 일치하지 않습니다."));
+        UserEntity loginUser = userService.findByEmail(email).orElse(null);
+        
+        // 강퇴 계정 체크
+        if(loginUser == null) {
+            log.warn("User not found for email:{}", email);
+            
+            Optional<UserEntity> deletedUserOptional = userRepository.findByEmailWithDeleted(email);
+            if(deletedUserOptional.isPresent() && deletedUserOptional.get().getBanCount() > 0) {
+                log.warn("강퇴 계정 로그인 시도: email={}, banCount={}", email, deletedUserOptional.get().getBanCount());
+                throw new CustomAuthenticationException("강퇴 계정입니다.");
+            }
+            
+            throw new RuntimeException("이메일 또는 비밀번호가 일치하지 않습니다.");
+        }
 
         //비번검증
         if(!passwordEncoder.matches(password, loginUser.getPassword())){

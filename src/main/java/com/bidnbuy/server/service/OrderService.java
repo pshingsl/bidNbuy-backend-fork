@@ -2,12 +2,15 @@ package com.bidnbuy.server.service;
 
 import com.bidnbuy.server.dto.*;
 import com.bidnbuy.server.entity.AuctionResultEntity;
+import com.bidnbuy.server.entity.ChatRoomEntity;
 import com.bidnbuy.server.entity.OrderEntity;
 import com.bidnbuy.server.entity.UserEntity;
 import com.bidnbuy.server.enums.ResultStatus;
 import com.bidnbuy.server.repository.AuctionResultRepository;
+import com.bidnbuy.server.repository.ChatRoomRepository;
 import com.bidnbuy.server.repository.OrderRepository;
 import com.bidnbuy.server.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,6 +28,8 @@ public class OrderService {
     private final UserRepository userRepository;
     private final PaymentService paymentService;
     private final AuctionResultRepository auctionResultRepository;
+    private final ChatMessageService chatMessageService;
+    private final ChatRoomRepository chatRoomRepository;
 
     // 볍점 부여
     @Transactional
@@ -97,10 +102,39 @@ public class OrderService {
 
                 System.out.println("거래 완료 상태로 변경 완료: AuctionResult ID " + result.getResultId());
             }
+
+            Long chatroomId = findChatRoomIdForOrder(order);
+
+            String autoMessage = String.format(
+                    //자동 메세지 고정 내용
+                    "결제가 완료되었습니다. 주문번호 : %d 거래가 성공적으로 마무리되었습니다.", orderId
+            );
+            chatMessageService.sendAutoMessage(chatroomId, autoMessage);
         }
 
         // (reason은 로그용으로만 사용하거나, 별도 테이블에 기록 가능)
         return new OrderUpdateResponseDto(order.getOrderId(), "주문 상태가 변경되었습니다.");
+    }
+
+    //채팅방 아이디 찾기
+    private Long findChatRoomIdForOrder(OrderEntity order){
+        Long buyerId = order.getBuyer().getUserId();
+        Long sellerId = order.getSeller().getUserId();
+
+        //경매 아이디 추출
+        AuctionResultEntity result = order.getResult();
+        if(result == null || result.getAuction() == null){
+            throw new IllegalArgumentException("주문 id "+order.getOrderId()+"에 경매결과 누락");
+        }
+        Long auctionProductId = result.getAuction().getAuctionId();
+
+        ChatRoomEntity chatRoom = chatRoomRepository
+                .findByBuyerId_UserIdAndSellerId_UserIdAndAuctionId_AuctionId(
+                        buyerId,
+                        sellerId,
+                        auctionProductId
+                ).orElseThrow(()->new EntityNotFoundException("주문 id"+order.getOrderId()+"와 관련된 채팅방을 찾을 수 없음"));
+        return chatRoom.getChatroomId();
     }
 
 
@@ -211,6 +245,7 @@ public class OrderService {
 
         UserEntity buyer = userRepository.findById(dto.getBuyerId())
                 .orElseThrow(() -> new IllegalArgumentException("Buyer not found: " + dto.getBuyerId()));
+
 
         OrderEntity order = new OrderEntity();
         order.setSeller(seller);

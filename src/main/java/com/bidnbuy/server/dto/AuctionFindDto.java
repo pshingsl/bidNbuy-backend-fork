@@ -53,13 +53,12 @@ public class AuctionFindDto {
     private Integer wishCount;
     private Boolean liked;
 
-
     public AuctionFindDto(AuctionProductsEntity entity) {
         this.auctionId = entity.getAuctionId();
         this.title = entity.getTitle();
         this.description = entity.getDescription();
 
-        // 💡 카테고리 정보 매핑 (CategoryEntity에 Main/Sub 필드가 없다고 가정)
+        // 카테고리 정보 매핑 (CategoryEntity에 Main/Sub 필드가 없다고 가정)
         this.categoryId = entity.getCategory().getCategoryId();
         String fullCategoryName = entity.getCategory().getCategoryName();
 
