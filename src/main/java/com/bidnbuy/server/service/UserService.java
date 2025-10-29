@@ -366,19 +366,24 @@ public class UserService {
 
     // 다른 유저 프로필조회
     @Transactional(readOnly = true)
-    public UserProfileSummaryDto getOtherUserProfile(Long userId) {
+    public UserProfileSummaryDto getOtherUserProfile(Long userId, Long targetId) {
         // 대상 사용자 정보 조회
-        UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("대상 사용자를 찾을 수 없습니다. ID: " + userId));
+        UserEntity user = userRepository.findById(targetId)
+                .orElseThrow(() -> new EntityNotFoundException("대상 사용자를 찾을 수 없습니다. ID: " + targetId));
+
+        if(userId.equals(user.getUserId())){
+            throw new IllegalArgumentException("다른 유저 프로필 조회시 자기자신을 조회할 수 없습니다!");
+        }
 
         // 통계(구매, 판매)
-        long totalProductsCount = auctionProductsRepository.countByUser_UserIdAndDeletedAtIsNull(userId);
+        long totalProductsCount = auctionProductsRepository.countByUser_UserIdAndDeletedAtIsNull(targetId);
         long salesCompletedCount = auctionResultRepository.countByAuction_User_UserIdAndResultStatus(
-                userId,
+                targetId,
                 ResultStatus.SUCCESS_COMPLETED
         );
 
         return UserProfileSummaryDto.builder()
+                .userId(targetId)
                 .nickname(user.getNickname())
                 .temperature(user.getUserTemperature())
                 .profileImageUrl(user.getProfileImageUrl())

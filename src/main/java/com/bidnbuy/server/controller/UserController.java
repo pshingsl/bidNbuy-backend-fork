@@ -300,11 +300,11 @@ public class   UserController {
     }
 
     // 다른 유저 프로필 조회
-    @GetMapping("/other/{userId}")
-    public ResponseEntity<UserProfileSummaryDto> getUserProfile(@AuthenticationPrincipal Long userId) {
+    @GetMapping("/other/{targetId}")
+    public ResponseEntity<UserProfileSummaryDto> getUserProfile(@AuthenticationPrincipal Long userId, @PathVariable Long targetId) {
 
         // AuctionResultService를 사용하여 다른 사용자의 프로필 요약 정보를 가져옵니다.
-        UserProfileSummaryDto profile = userService.getOtherUserProfile(userId);
+        UserProfileSummaryDto profile = userService.getOtherUserProfile(userId, targetId);
 
         return ResponseEntity.ok(profile);
     }

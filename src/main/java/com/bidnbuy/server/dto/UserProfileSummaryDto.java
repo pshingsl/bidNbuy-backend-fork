@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserProfileSummaryDto {
+    private Long userId;
     private String nickname;
     private Double temperature;
     private String profileImageUrl;
