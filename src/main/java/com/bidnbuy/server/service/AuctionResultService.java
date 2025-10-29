@@ -60,7 +60,7 @@ public class AuctionResultService {
     private List<AuctionPurchaseHistoryDto> getRecentPurchases(Long userId) {
 
         List<AuctionResultEntity> recentResults =
-                auctionResultRepository.findTop3ByWinner_UserIdOrderByAuction_EndTimeDesc(userId);
+                auctionResultRepository.findTop3ByWinnerOrderByOrderUpdatedAtDesc(userId);
 
         // DTO로 변환하여 반환
         return recentResults.stream()

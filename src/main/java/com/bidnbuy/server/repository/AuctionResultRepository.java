@@ -26,7 +26,7 @@ public interface AuctionResultRepository extends JpaRepository<AuctionResultEnti
     List<AuctionResultEntity> findByOrder_OrderId(Long orderId);
 
     // 마이페이지 최근 구매내역
-    List<AuctionResultEntity> findTop3ByWinner_UserIdOrderByAuction_EndTimeDesc(Long userId);
+    // List<AuctionResultEntity> findTop3ByWinner_UserIdOrderByAuction_EndTimeDesc(Long userId);
 
     // 유저프로필 판매완료 건수
     long countByAuction_User_UserIdAndResultStatus(Long userId, ResultStatus resultStatus);
@@ -40,4 +40,14 @@ public interface AuctionResultRepository extends JpaRepository<AuctionResultEnti
     // auctionId로 orderId 조회 - 강기병
     @Query("SELECT r.order.orderId FROM AuctionResultEntity r WHERE r.auction.auctionId = :auctionId")
     Long findOrderIdByAuctionId(@Param("auctionId") Long auctionId);
+
+    // 결재완료 시간 순서
+    @Query("""
+            SELECT r FROM AuctionResultEntity r
+            JOIN r.order o
+            WHERE r.winner.userId = :userId
+            AND o.orderStatus = 'PAID'
+            ORDER BY o.updatedAt DESC
+            """)
+    List<AuctionResultEntity> findTop3ByWinnerOrderByOrderUpdatedAtDesc(@Param("userId") Long userId);
 }
