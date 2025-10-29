@@ -7,7 +7,6 @@ import com.bidnbuy.server.enums.ImageType;
 import com.bidnbuy.server.enums.NotificationType;
 import com.bidnbuy.server.enums.SellingStatus;
 import com.bidnbuy.server.repository.*;
-import com.sun.tools.jconsole.JConsoleContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
@@ -231,10 +230,6 @@ public class AuctionProductsService {
 
         }
 
-        boolean liked = false;
-        if (userId != null) {
-            liked = wishlistRepository.existsByUser_UserIdAndAuction_AuctionId(userId, products.getAuctionId());
-        }
 
         // 최종 DTO 빌드 및 반환
         return AuctionFindDto.builder()
@@ -321,7 +316,7 @@ public class AuctionProductsService {
 
         boolean liked = false;
         if (userId != null) {
-            liked = wishlistRepository.existsByUser_UserIdAndAuction_AuctionId(userId, product.getAuctionId())
+            liked = wishlistRepository.existsByUser_UserIdAndAuction_AuctionId(userId, product.getAuctionId());
         }
 
         return AuctionListResponseDto.builder()
