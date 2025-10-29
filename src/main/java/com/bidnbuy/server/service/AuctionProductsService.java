@@ -312,9 +312,9 @@ public class AuctionProductsService {
         };
     }
 
-    // DTO 매핑 유틸리티 (목록용) - 이 메서드는 실제 엔티티를 DTO로 변환하는 상세 로직이 필요합니다.
+    // DTO 매핑 유틸리티 (목록용) - 이 메서드는 실제 엔티티를 DTO로 변환
     private AuctionListResponseDto mapToAuctionListResponseDto(AuctionProductsEntity product, Long userId) {
-        // 이 부분은 기존에 구현했던 AuctionListResponseDto 매핑 로직을 사용해야 합니다.
+        // 이 부분은 기존에 구현했던 AuctionListResponseDto 매핑 로직
         Integer wishCount = wishlistRepository.countByAuction(product);
         String mainImageUrl = imageRepository.findFirstImageUrlByAuctionId(product.getAuctionId())
                 .orElse("default_product.png");
