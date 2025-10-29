@@ -34,11 +34,9 @@ public class AuctionSchedulerService {
                 SellingStatus.FINISH
         );
 
-        System.out.println("!!!!!!!");
         if (finishedAuctions.isEmpty()) {
             return;
         }
-        System.out.println("?????????????????????");
 
         log.info("마감 시간이 된 경매 상품 수: {}", finishedAuctions.size());
 
@@ -94,12 +92,7 @@ public class AuctionSchedulerService {
                 .closedAt(LocalDateTime.now())
                 .build();
 
-        AuctionResultEntity savedResult = auctionResultRepository.save(result);
-
-        if (orderEntity != null) {
-            //     orderEntity.setResult(savedResult);
-            //     orderRepository.save(orderEntity);
-        }
+       // AuctionResultEntity savedResult = auctionResultRepository.save(result);
 
         // 2. AuctionProductsEntity 상태 FINISH로 업데이트
         auction.setSellingStatus(SellingStatus.FINISH);
