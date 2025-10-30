@@ -13,6 +13,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
+import org.springframework.security.web.util.matcher.IpAddressMatcher;
+import java.net.Inet6Address;
+import java.net.InetAddress;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -31,6 +37,9 @@ public class AdminAuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
     private final RefreshTokenService refreshTokenService;
+    @Autowired private Environment environment;
+    @Value("${admin.trusted-proxies:}")
+    private String trustedProxiesProp;
     
     private static final String PASSWORD_REGEX = "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,}$";
 
@@ -49,7 +58,7 @@ public class AdminAuthService {
 
         // 비밀번호 검증
         if (!password.matches(PASSWORD_REGEX)) {
-            log.warn("password does not meet conditions: {}", password);
+            log.warn("password does not meet conditions");
             throw new CustomAuthenticationException("비밀번호는 영문과 숫자를 포함해 8자리 이상이어야 합니다.");
         }
 
@@ -123,72 +132,70 @@ public class AdminAuthService {
         AdminEntity admin = adminRepository.findById(adminId)
                 .orElseThrow(() -> new CustomAuthenticationException("관리자 정보를 찾을 수 없습니다."));
         
-        // 요청 ip랑 새 ip 일치하는지 확인
+        // ip 정규화/검증
         String currentRequestIp = getClientIpAddress(request);
-        if (!currentRequestIp.equals(updateIpDto.getNewIpAddress())) {
+        String normalizedCurrent = normalizeIpToken(currentRequestIp);
+        String requestedNewIpRaw = updateIpDto.getNewIpAddress();
+        String normalizedNew = normalizeIpToken(requestedNewIpRaw);
+
+        if (!isValidIp(normalizedNew)) {
+            throw new CustomAuthenticationException("유효하지 않은 IP 형식입니다.");
+        }
+
+        // 비교, 정규화
+        boolean same;
+        if (normalizedCurrent.equals(normalizedNew)) {
+            same = true;
+        } else {
+            try {
+                InetAddress a = InetAddress.getByName(normalizedCurrent);
+                InetAddress b = InetAddress.getByName(normalizedNew);
+                same = a.equals(b);
+            } catch (Exception e) {
+                same = false;
+            }
+        }
+        if (!same) {
             throw new CustomAuthenticationException("요청 IP와 새 IP가 일치하지 않습니다.");
         }
-        
+
         // ip 업데이트
-        admin.setIpAddress(updateIpDto.getNewIpAddress());
+        admin.setIpAddress(normalizedNew);
         adminRepository.save(admin);
         
-        log.info("Admin IP updated - AdminId: {}, New IP: {}", adminId, updateIpDto.getNewIpAddress());
+        log.info("Admin IP updated - AdminId: {}, New IP: {}", adminId, normalizedNew);
     }
 
     private String getClientIpAddress(HttpServletRequest request) {
-        // 여러 헤더에서 ip 추출 시도
-        String[] headerNames = {
-            "X-Forwarded-For",
-            "X-Real-IP", 
-            "X-Forwarded",
-            "Forwarded-For",
-            "Forwarded",
-            "CF-Connecting-IP",
-            "True-Client-IP"
-        };
-        
-        for (String headerName : headerNames) {
-            String headerValue = request.getHeader(headerName);
-            if (headerValue != null && !headerValue.isEmpty() && !"unknown".equalsIgnoreCase(headerValue)) {
-                // 여러 ip 있을 경우 첫 번째 ip 사용
-                String ip = headerValue.split(",")[0].trim();
-                if (isValidIp(ip)) {
-                    log.info("IP extracted from header {}: {}", headerName, ip);
-                    return ip;
+        // 신뢰 프록시에서 온 요청일 때만 헤더 신뢰
+        if (fromTrustedProxy(request)) {
+            String[] headerNames = {
+                "X-Forwarded-For",
+                "X-Real-IP",
+                "CF-Connecting-IP",
+                "True-Client-IP",
+                "X-Forwarded",
+                "Forwarded-For",
+                "Forwarded"
+            };
+            for (String headerName : headerNames) {
+                String headerValue = request.getHeader(headerName);
+                if (headerValue != null && !headerValue.isEmpty() && !"unknown".equalsIgnoreCase(headerValue)) {
+                    // XFF 계열 처리
+                    String candidate = extractClientIpFromXff(headerValue, getTrustedCidrs());
+                    if (candidate != null && isValidIp(candidate)) {
+                        String normalized = normalizeIpToken(candidate);
+                        log.info("IP extracted from header {}: {}", headerName, normalized);
+                        return normalized;
+                    }
                 }
             }
         }
-        
-        // 헤더에서 못 찾은 경우 직접 연결 ip 사용
+
+        // 직접 연결 ip
         String directIp = request.getRemoteAddr();
         log.info("Using direct connection IP: {}", directIp);
         return directIp;
-    }
-
-    // ip 유효성 검증
-    private boolean isValidIp(String ip) {
-        if (ip == null || ip.isEmpty()) {
-            return false;
-        }
-        
-        // IPv4 패턴 체크
-        String ipv4Pattern = "^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$";
-        if (ip.matches(ipv4Pattern)) {
-            return true;
-        }
-        
-        // IPv6 패턴 체크 (간단 버전)
-        if (ip.contains(":")) {
-            return true;
-        }
-        
-        // localhost 체크
-        if ("localhost".equalsIgnoreCase(ip)) {
-            return true;
-        }
-        
-        return false;
     }
 
     /**
@@ -201,20 +208,111 @@ public class AdminAuthService {
         if (clientIp == null || allowedIp == null) {
             return false;
         }
-        
-        // 일치하는 경우
-        if (clientIp.equals(allowedIp)) {
+        // 정규화 + InetAddress 비교
+        String normClient = normalizeIpToken(clientIp);
+        String normAllowed = normalizeIpToken(allowedIp);
+        if (normClient.equals(normAllowed)) return true;
+        try {
+            InetAddress a = InetAddress.getByName(normClient);
+            InetAddress b = InetAddress.getByName(normAllowed);
+            if (a.equals(b)) return true;
+        } catch (Exception ignored) {}
+
+        // 개발 프로파일에서만 로컬/사설망 허용
+        if (isDev() && isLocalDevelopmentIp(normClient)) {
             return true;
         }
         
-        // 로컬 개발 환경 허용 (127.0.0.1, localhost)
-        if (isLocalDevelopmentIp(clientIp)) {
-            return true;
-        }
-        
-        // 향후 확장 - CIDR 표기법 지원, 여러 IP 허용 등
+        // 향후 확장?
 
         return false;
+    }
+
+    private boolean isDev() {
+        try {
+            String[] profiles = environment.getActiveProfiles();
+            if (profiles == null) return false;
+            for (String p : profiles) {
+                if ("dev".equalsIgnoreCase(p)) return true;
+            }
+        } catch (Exception ignored) {}
+        return false;
+    }
+
+    private boolean fromTrustedProxy(HttpServletRequest request) {
+        if (trustedProxiesProp == null || trustedProxiesProp.isEmpty()) return false;
+        String remote = request.getRemoteAddr();
+        for (String cidr : getTrustedCidrs()) {
+            if (new IpAddressMatcher(cidr).matches(remote)) return true;
+        }
+        return false;
+    }
+
+    private java.util.List<String> getTrustedCidrs() {
+        java.util.List<String> list = new java.util.ArrayList<>();
+        if (trustedProxiesProp == null || trustedProxiesProp.isEmpty()) return list;
+        for (String token : trustedProxiesProp.split(",")) {
+            String t = token.trim();
+            if (!t.isEmpty()) list.add(t);
+        }
+        return list;
+    }
+
+    private String extractClientIpFromXff(String xff, java.util.List<String> trustedCidrs) {
+        if (xff == null || xff.isEmpty()) return null;
+        String[] parts = xff.split(",");
+        for (int i = parts.length - 1; i >= 0; i--) {
+            String ip = normalizeIpToken(parts[i]);
+            if (ip.isEmpty()) continue;
+            // 신뢰 프록시 대역이면 스킵
+            if (isTrusted(ip, trustedCidrs)) continue;
+            return ip;
+        }
+        return null;
+    }
+
+    private boolean isTrusted(String ip, java.util.List<String> trustedCidrs) {
+        if (ip == null) return false;
+        String norm = normalizeIpToken(ip);
+        for (String cidr : trustedCidrs) {
+            if (new IpAddressMatcher(cidr).matches(norm)) return true;
+        }
+        return false;
+    }
+
+    // IPv4/IPv6 검증
+    private boolean isValidIp(String ip) {
+        if (ip == null || ip.isBlank()) return false;
+        if ("localhost".equalsIgnoreCase(ip)) return true;
+        String norm = normalizeIpToken(ip);
+        String ipv4 = "^((25[0-5]|2[0-4]\\d|[01]?\\d\\d?)\\.){3}(25[0-5]|2[0-4]\\d|[01]?\\d\\d?)$";
+        if (norm.matches(ipv4)) return true;
+        if (norm.indexOf(':') >= 0 && norm.matches("^[0-9A-Fa-f:]+$")) {
+            try {
+                InetAddress addr = InetAddress.getByName(norm);
+                return (addr instanceof Inet6Address);
+            } catch (Exception ignored) {}
+        }
+        return false;
+    }
+
+    // 공통 정규화
+    private String normalizeIpToken(String token) {
+        if (token == null) return "";
+        String s = token.trim();
+        if (s.length() >= 2 && ((s.startsWith("\"") && s.endsWith("\"")) || (s.startsWith("'") && s.endsWith("'")))) {
+            s = s.substring(1, s.length() - 1).trim();
+        }
+        if (s.startsWith("[") && s.contains("]")) {
+            int end = s.indexOf(']');
+            if (end > 0) s = s.substring(1, end);
+        }
+        int colonCount = 0;
+        for (int i = 0; i < s.length(); i++) if (s.charAt(i) == ':') colonCount++;
+        if (colonCount == 1 && s.matches("^((25[0-5]|2[0-4]\\d|[01]?\\d\\d?)\\.){3}(25[0-5]|2[0-4]\\d|[01]?\\d\\d?)\\:[0-9]+$")) {
+            s = s.substring(0, s.lastIndexOf(':'));
+        }
+        return s.trim();
     }
 
     // 로컬 개발 환경 ip 체크
