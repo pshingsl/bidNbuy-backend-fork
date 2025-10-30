@@ -135,12 +135,15 @@ public class AdminUserService {
 
     // 활동 상태 계산
     private String getActivityStatus(UserEntity user) {
-        if (user.getDeletedAt() != null) {
+        if (user.getBanCount() > 0) {
             return "강퇴";
-        } else if (user.isSuspended()) {
-            return "정지";
-        } else {
-            return "활동";
         }
+        if (user.getDeletedAt() != null) {
+            return "탈퇴";
+        }
+        if (user.isSuspended()) {
+            return "정지";
+        }
+        return "활동";
     }
 }
