@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.security.Principal;
 
+@Tag(name="채팅 메시지 API", description = "채팅 메시지 관련 기능 제공")
 @Slf4j
 @Controller
 @RequiredArgsConstructor
@@ -65,6 +67,28 @@ public class ChatController {
         log.info("메세지 브로드캐스트 : destination={}", destination);
     }
 
+    @Operation(
+        summary = "채팅 메세지 읽음 처리",
+        description = "특정 채팅방 접속 시 모든 메세지를 확인한 것으로 표시",
+        tags={"채팅 메시지 API"}
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "읽음 처리 요청 성공",
+            content=@Content(schema = @Schema(implementation = Void.class))
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "인증 정보 없음(Principal null)",
+            content = @Content(schema = @Schema(example = "인증되지않은 사용자"))
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = " 올바르지 않은 사용자 id 형식(NumberFormatException)",
+            content=@Content(schema = @Schema(example = "올바르지 않은 사용자 id"))
+        )
+    })
     @PutMapping("/chat/{chatroomId}/read")
     public ResponseEntity<?> markMessageAsRead(@PathVariable Long chatroomId, Principal principal){
         if(principal == null){
