@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.units.qual.A;
 import org.checkerframework.checker.units.qual.C;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -99,6 +100,16 @@ public class   UserController {
             return ResponseEntity.status(401).body(responseDto);
         }
     }
+
+    @Operation(summary = "토큰 재발급", description = "만료된 Access Token을 Refresh Token으로 재발급", tags = {"유저 API"})
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "토크 재발급 성공",
+            content = @Content(schema = @Schema(implementation = AuthResponseDto.class))),
+        @ApiResponse(responseCode = "401", description = "인증 실패(유효하지 않거나 만료된 Refresh Token 토큰)",
+            content = @Content(schema = @Schema(implementation = ResponseDto.class, example = "유효하지 않거나 만료된 Refresh Token 토큰"))),
+        @ApiResponse(responseCode = "500", description = "서버 오류 발생",
+            content = @Content(schema = @Schema(implementation = ResponseDto.class, example = "서버 내부 오류 발생")))
+    })
 
     //토큰 재발급
     @PostMapping("/reissue")
