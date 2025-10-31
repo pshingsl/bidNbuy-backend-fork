@@ -79,20 +79,52 @@ public class ChatRoomService {
     }
 
     private ChatRoomListDto  convertToChatRoomListDto(ChatRoomEntity chatRoom, Long currentUserId){
-        boolean isCurrentUserBuyer = Objects.equals(chatRoom.getBuyerId().getUserId(), currentUserId);
+        Long buyerUserIdSafe = null;
+        Long sellerUserIdSafe = null;
+        try {
+            buyerUserIdSafe = chatRoom.getBuyerId() != null ? chatRoom.getBuyerId().getUserId() : null;
+        } catch (Exception e) {
+            log.warn("buyer reference not available (possibly deleted): chatroomId={}", chatRoom.getChatroomId());
+        }
+        try {
+            sellerUserIdSafe = chatRoom.getSellerId() != null ? chatRoom.getSellerId().getUserId() : null;
+        } catch (Exception e) {
+            log.warn("seller reference not available (possibly deleted): chatroomId={}", chatRoom.getChatroomId());
+        }
 
+        boolean isCurrentUserBuyer = Objects.equals(buyerUserIdSafe, currentUserId);
         UserEntity counterpartUser = isCurrentUserBuyer ? chatRoom.getSellerId():chatRoom.getBuyerId();
         AuctionProductsEntity auctionProducts = chatRoom.getAuctionId();
 
         Long unreadCount = chatMessageService.getUnreadMessageCount(chatRoom.getChatroomId(), currentUserId);
 
+        Long counterpartIdSafe = null;
+        String counterpartNicknameSafe = "탈퇴회원";
+        String counterpartProfileImageUrlSafe = null;
+        try {
+            if (counterpartUser != null) {
+                counterpartIdSafe = counterpartUser.getUserId();
+                counterpartNicknameSafe = counterpartUser.getNickname();
+                counterpartProfileImageUrlSafe = counterpartUser.getProfileImageUrl();
+            }
+        } catch (Exception e) {
+            log.warn("counterpart user not available (possibly deleted): chatroomId={}", chatRoom.getChatroomId());
+        }
+
+        String auctionTitleSafe = null;
+        try {
+            auctionTitleSafe = auctionProducts != null ? auctionProducts.getTitle() : null;
+        } catch (Exception e) {
+            log.warn("auction reference not available (possibly deleted): chatroomId={}", chatRoom.getChatroomId());
+        }
+
         return ChatRoomListDto.builder()
                 .chatroomId(chatRoom.getChatroomId())
-                .auctionId(auctionProducts.getAuctionId())
-                .counterpartId(counterpartUser.getUserId())
-                .counterpartNickname(counterpartUser.getNickname())
-                .counterpartProfileImageUrl(counterpartUser.getProfileImageUrl())
-                .auctionTitle(auctionProducts.getTitle())
+                .auctionId(auctionProducts != null ? auctionProducts.getAuctionId() : null)
+                .counterpartId(counterpartIdSafe)
+                .counterpartNickname(counterpartNicknameSafe)
+                .counterpartProfileImageUrl(counterpartProfileImageUrlSafe)
+                .auctionTitle(auctionTitleSafe)
                 .auctionImageUrl(null)
                 .lastMessagePreview(chatRoom.getLastMessagePreview())
                 .lastMessageTime(chatRoom.getLastMessageTime())

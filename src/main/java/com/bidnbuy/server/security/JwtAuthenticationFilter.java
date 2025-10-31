@@ -42,13 +42,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String path = request.getRequestURI().substring(contextPath.length());
         log.info("###################3shouldNotFilter path: {}", path);
 //        if(path.startsWith("/auth")){
-        if(path.startsWith("/auth/signup") || path.equals("/auth/login") || path.equals("/favicon.ico") || path.startsWith("/auth/kakao")
-                || path.startsWith("/auth/naver")|| path.equals("/auth/reissue")|| path.startsWith("/auth/email")|| path.startsWith("/auth/password")
-                || path.startsWith("/chat_test")|| path.startsWith("/ws/bid") 
-                // ✅ 여기에 추가 - test용
-//                || path.startsWith("/orders")
-//                || path.startsWith("/payments")
-        ){
+        // auth, admin auth 전체 경로 필터 스킵 (authorization 헤더 유무 무관)
+        if (path.startsWith("/auth/") || path.equals("/auth") || path.startsWith("/admin/auth/") || path.equals("/admin/auth")) {
+            return true;
+        }
+        // 공개 리소스 스킵
+        if (path.equals("/favicon.ico") || path.startsWith("/chat_test") || path.startsWith("/ws/bid")) {
             return true;
         }//인증 필터링 건너뛰기
         return false;
@@ -65,11 +64,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String token = parseBearerToken(request);
             log.info("filter is running for request:{}", request.getRequestURI());
 
-            if(token !=null){
+            if(StringUtils.hasText(token)){
                 //토큰 검증, 사용자id 추출
                 String userIdStr = jwtProvider.validateAndGetUserId(token);
                 //유효한 토큰
-                if(userIdStr !=null){
+                if(StringUtils.hasText(userIdStr)){
                     Long userId = Long.valueOf(userIdStr);
                     log.info("Authenticated user Id : {}", userId);
                     
@@ -111,10 +110,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private String parseBearerToken(HttpServletRequest request){
         String bearerToken = request.getHeader("Authorization");
         log.info("%%%%%%%%%%%%%%5Authorization Header: {}", bearerToken);
-        if(StringUtils.hasText(bearerToken)&& bearerToken.startsWith("Bearer ")){
-            //순수 토큰 값 반환
-            return bearerToken.substring(7);
+        if(!StringUtils.hasText(bearerToken)){
+            return null;
         }
-        return null;
+        if(!bearerToken.startsWith("Bearer ")){
+            return null;
+        }
+        String token = bearerToken.substring(7);
+        return StringUtils.hasText(token) ? token : null;
     }
 }

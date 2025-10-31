@@ -138,6 +138,9 @@ public class JwtProvider {
     //jwt토큰 검증, 파싱
     public String validateAndGetUserId(String token){
         try{
+            if(token == null || token.isBlank()){
+                return null;
+            }
             Claims claims = getParser()
                     .parseSignedClaims(token)
                     .getPayload();
@@ -150,7 +153,7 @@ public class JwtProvider {
         } catch (UnsupportedJwtException e) {
             log.error("Unsupported JWT token: {}", e.getMessage());
         } catch (IllegalArgumentException e) {
-            log.error("JWT claims string is empty: {}", e.getMessage());
+            log.error("JWT claims string is empty or invalid: {}", e.getMessage());
         }
         log.warn("토큰 검증 실패 (validateToken: false)");
         return null;
