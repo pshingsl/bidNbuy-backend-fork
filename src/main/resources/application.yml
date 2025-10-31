@@ -1,4 +1,4 @@
-# application.yml
+# application.yml (공통 설정)
 file:
   upload-dir: C:/temp/bidnbuy_uploads/auction-products
 
@@ -8,8 +8,7 @@ fcm:
     account:
       file: bid-n-buy-service-key.json
 
-# RDS 설정
-
+# RDS 설정 (프로파일 설정)
 spring:
   profiles:
     active: local   # 기본 실행은 local (EC2에서는 prod로 override)
@@ -18,7 +17,7 @@ spring:
       prod: prod
 
 ---
-# 로컬 테스트용
+# 로컬 테스트용 (local 프로파일)
 spring:
   config:
     activate:
@@ -26,10 +25,10 @@ spring:
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/bidnbuy?useUnicode=yes&characterEncoding=UTF-8&allowMultiQueries=true&serverTimezone=Asia/Seoul
-    username: root
-#    각자 비밀번호(로컬 테스토용)
-    password: 1234
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    # 각자 비밀번호(로컬 테스토용)
+    password: ${SPRING_DATASOURCE_PASSWORD}
 
 
   jpa:
@@ -44,7 +43,7 @@ server:
   port: 8080
 
 ---
-# 도커 + EC2를 이용한 배포 버전
+# 도커 + EC2를 이용한 배포 버전 (prod 프로파일)
 spring:
   config:
     activate:
