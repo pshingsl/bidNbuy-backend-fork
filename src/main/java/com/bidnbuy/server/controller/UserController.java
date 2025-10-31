@@ -6,6 +6,7 @@ import com.bidnbuy.server.exception.CustomAuthenticationException;
 import com.bidnbuy.server.security.JwtProvider;
 import com.bidnbuy.server.service.*;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -14,6 +15,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.units.qual.A;
 import org.checkerframework.checker.units.qual.C;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -80,6 +82,13 @@ public class   UserController {
         }
     }
 
+    @Operation(summary = "로그인", description = "로그인 후 토큰 발급", tags = {"유저 API"})
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "로그인 성공, 인증 정보 반환, 토큰 발급",
+            content = @Content(schema = @Schema(implementation = AuthResponseDto.class))),
+        @ApiResponse(responseCode = "401", description = "인증 실패(이메일, 비밀번호 불일치",
+            content = @Content(schema = @Schema(implementation = ResponseDto.class, example ="로그인 실패")))
+    })
     @PostMapping("/login")
     public ResponseEntity<?> loginUser(@RequestBody UserDto userDto){
         try {
@@ -93,6 +102,15 @@ public class   UserController {
         }
     }
 
+    @Operation(summary = "토큰 재발급", description = "만료된 Access Token을 Refresh Token으로 재발급", tags = {"유저 API"})
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "토크 재발급 성공",
+            content = @Content(schema = @Schema(implementation = AuthResponseDto.class))),
+        @ApiResponse(responseCode = "401", description = "인증 실패(유효하지 않거나 만료된 Refresh Token 토큰)",
+            content = @Content(schema = @Schema(implementation = ResponseDto.class, example = "유효하지 않거나 만료된 Refresh Token 토큰"))),
+        @ApiResponse(responseCode = "500", description = "서버 오류 발생",
+            content = @Content(schema = @Schema(implementation = ResponseDto.class, example = "서버 내부 오류 발생")))
+    })
     //토큰 재발급
     @PostMapping("/reissue")
     public ResponseEntity<?> reissueToken(@RequestBody TokenReissueRequestDto requestDto){
@@ -113,6 +131,8 @@ public class   UserController {
 
     }
 
+    @Operation(summary = "카카오 로그인 콜백", description = "카카오 인증 후 리다이렉트 엔드포인트" , tags = {"유저 API"}, hidden = true)
+    @Parameter(name = "code", description = "카카오로에서 받은 인증 코드", required = true)
     @GetMapping("/kakao")
     public void kakaoLogin (@RequestParam("code") String code, HttpServletResponse response) throws IOException {
         try {
@@ -130,7 +150,7 @@ public class   UserController {
             response.sendRedirect(errorRedirectUrl);
         }
     }
-
+    @Operation(summary = "네이버 로그인", description = "네이버 인증 후 리다이렉트" , tags = {"유저 API"})
     @GetMapping("/naver/loginstart")
     public RedirectView redirectToNaver(HttpSession session){
         String state = jwtProvider.generateStateToken();
@@ -144,7 +164,9 @@ public class   UserController {
         //http://localhost:8080/auth/naver/loginstart
     }
 
-
+    @Operation(summary = "네이버 로그인 콜백", description = "네이버 인증 후 리다이렉트 엔드포인트" , tags = {"유저 API"}, hidden = true)
+    @Parameter(name = "code", description = "네이버에서 받은 인증 코드", required = true)
+    @Parameter(name = "state", description = "세션에 저장된 상태 토큰", required = true)
     @GetMapping("/naver")
     public void naverLogin (@RequestParam("code") String code, @RequestParam("state") String state,
                             HttpSession session, HttpServletResponse response) throws IOException{
