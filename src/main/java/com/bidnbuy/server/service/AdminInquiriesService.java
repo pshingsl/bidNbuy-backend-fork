@@ -98,6 +98,19 @@ public class AdminInquiriesService {
         InquiriesEntity inquiry = inquiriesRepository.findById(inquiryId)
                 .orElseThrow(() -> new IllegalArgumentException("문의를 찾을 수 없습니다: " + inquiryId));
         
+        Long userIdSafe = null;
+        String userEmailSafe = null;
+        String userNicknameSafe = "탈퇴회원";
+        try {
+            if (inquiry.getUser() != null) {
+                userIdSafe = inquiry.getUser().getUserId();
+                userEmailSafe = inquiry.getUser().getEmail();
+                userNicknameSafe = inquiry.getUser().getNickname();
+            }
+        } catch (Exception e) {
+            log.warn("Inquiry detail: user reference not available (possibly deleted). inquiryId={}", inquiryId);
+        }
+
         return AdminInquiryDetailDto.builder()
                 .inquiriesId(inquiry.getInquiriesId())
                 .title(inquiry.getTitle())
@@ -106,9 +119,9 @@ public class AdminInquiriesService {
                 .status(inquiry.getStatus())
                 .createdAt(inquiry.getCreatedAt())
                 .updateAt(inquiry.getUpdateAt())
-                .userId(inquiry.getUser().getUserId())
-                .userEmail(inquiry.getUser().getEmail())
-                .userNickname(inquiry.getUser().getNickname())
+                .userId(userIdSafe)
+                .userEmail(userEmailSafe)
+                .userNickname(userNicknameSafe)
                 .adminId(inquiry.getAdmin() != null ? inquiry.getAdmin().getAdminId() : null)
                 .requestTitle(inquiry.getRequestTitle())
                 .requestContent(inquiry.getRequestContent())
@@ -154,15 +167,28 @@ public class AdminInquiriesService {
 
     // InquiriesEntity -> AdminInquiryListDto
     private AdminInquiryListDto convertToInquiryListDto(InquiriesEntity inquiry) {
+        Long userIdSafe = null;
+        String userEmailSafe = null;
+        String userNicknameSafe = "탈퇴회원";
+        try {
+            if (inquiry.getUser() != null) {
+                userIdSafe = inquiry.getUser().getUserId();
+                userEmailSafe = inquiry.getUser().getEmail();
+                userNicknameSafe = inquiry.getUser().getNickname();
+            }
+        } catch (Exception e) {
+            log.warn("Inquiry list: user reference not available (possibly deleted). inquiryId={}", inquiry.getInquiriesId());
+        }
+
         return AdminInquiryListDto.builder()
                 .inquiriesId(inquiry.getInquiriesId())
                 .title(inquiry.getTitle())
                 .type(inquiry.getType())
                 .status(inquiry.getStatus())
                 .createdAt(inquiry.getCreatedAt())
-                .userId(inquiry.getUser().getUserId())
-                .userEmail(inquiry.getUser().getEmail())
-                .userNickname(inquiry.getUser().getNickname())
+                .userId(userIdSafe)
+                .userEmail(userEmailSafe)
+                .userNickname(userNicknameSafe)
                 .build();
     }
 }

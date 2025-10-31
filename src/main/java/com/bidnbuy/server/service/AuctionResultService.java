@@ -160,11 +160,20 @@ public class AuctionResultService {
         String imageUrl = imageRepository.findFirstImageUrlByAuctionId(auctionId)
                 .orElse("/images/default_product.png");
 
+        String sellerNicknameSafe = "탈퇴회원";
+        try {
+            if (result.getAuction() != null && result.getAuction().getUser() != null) {
+                sellerNicknameSafe = result.getAuction().getUser().getNickname();
+            }
+        } catch (Exception e) {
+            // ignore, use fallback
+        }
+
         return AuctionPurchaseHistoryDto.builder()
                 .auctionId(result.getAuction().getAuctionId())
                 .title(result.getAuction().getTitle())
                 .itemImageUrl(imageUrl)
-                .sellerNickname(result.getAuction().getUser().getNickname())
+                .sellerNickname(sellerNicknameSafe)
                 .endTime(result.getAuction().getEndTime())
                 .status(status)
                 .build();
@@ -179,8 +188,12 @@ public class AuctionResultService {
                 .orElse("/images/default_product.png");
 
         String winnerNickname = null;
-        if (result.getWinner() != null) {
-            winnerNickname = result.getWinner().getNickname();
+        try {
+            if (result.getWinner() != null) {
+                winnerNickname = result.getWinner().getNickname();
+            }
+        } catch (Exception e) {
+            // keep null
         }
 
         return AuctionSalesHistoryDto.builder()

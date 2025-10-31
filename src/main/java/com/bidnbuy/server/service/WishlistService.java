@@ -133,13 +133,22 @@ public class WishlistService {
 
                     String sellingStatus = auctionProductsService.calculateSellingStatus(product);
 
+                    String sellerNicknameSafe = "탈퇴회원";
+                    try {
+                        if (product.getUser() != null) {
+                            sellerNicknameSafe = product.getUser().getNickname();
+                        }
+                    } catch (Exception e) {
+                        // keep fallback
+                    }
+
                     return WishlistResponseDto.builder()
                             .auctionId(product.getAuctionId())
                             .title(product.getTitle())
                             .mainImageUrl(mainImageUrl)
                             .currentPrice(product.getCurrentPrice())
                             .endTime(product.getEndTime())
-                            .sellerNickname(product.getUser().getNickname()) // Fetch Join으로 User가 로드되어야 함
+                            .sellerNickname(sellerNicknameSafe)
                             .sellingStatus(sellingStatus)
                             .build();
                 })
