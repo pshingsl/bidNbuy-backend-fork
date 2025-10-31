@@ -132,7 +132,23 @@ public class ChatRoomController {
         return ResponseEntity.ok(chatList);
     }
 
-
+    @Operation(
+        summary = "특정 채팅방 안 읽은 메시지 수 조회",
+        description = "특정 채팅방의 읽지 않은 메시지 수를 조회(목록에서 보여주기 위한)",
+        tags={"체팅 방 관련 API"}
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode ="200",
+            description = "안 읽은 메시지 수 조회 성공",
+            content = @Content(schema = @Schema(type = "long", example = "1"))
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "인증 정보 없음",
+            content = @Content(schema = @Schema(type = "string", example = "인증되지 않은 사용자"))
+        )
+    })
     @GetMapping("/{chatroomId}/unreadcount")
     public ResponseEntity<Long> getUnreadCount(
             @PathVariable Long chatroomId,
