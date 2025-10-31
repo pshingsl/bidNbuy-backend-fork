@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.units.qual.C;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -60,12 +61,16 @@ public class   UserController {
     @Value("${naver.uri.redirect}")
     private String redirectUri;
 
+    @Operation(summary = "회원가입", description = "회원가입", tags = {"유저 API"})
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "회원가입 성공 및 사용자 생성",
+            content = @Content(schema = @Schema(implementation = UserEntity.class))),
+        @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터(중복 이메일, 유효성 검사 실패)",
+            content = @Content(schema = @Schema(type = "string", example = "이미 존재하는 이메일입니다.")))
+    })
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@RequestBody UserSignupRequestDto requestDto){
         log.info("회원가입 요청 DTO: {}", requestDto);
-//        if(requestDto.getEmail() == null || requestDto.getValidCode() == null){
-//            return ResponseEntity.badRequest().build();
-//        }
         try{
             UserEntity savedUser = userService.signup(requestDto);
             return ResponseEntity.status(HttpStatus.CREATED).body(savedUser);
@@ -240,20 +245,6 @@ public class   UserController {
         String inputPassword = requestDto.getPassword();
         userService.deleteUser(userId, inputPassword);
         return ResponseEntity.noContent().build();
-    }
-
-    //토큰 테스트를 위한 테스트 메서드
-    @GetMapping("/test")
-    public ResponseEntity<?> testAuth() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-//        log.info("@@@@@@@@@@@@@@@@@@@@2Authentication: {}", authentication);
-        Long userId = (Long) authentication.getPrincipal();
-
-        ResponseDto responseDto = ResponseDto.builder()
-                .message("Authenticated! userId: " + userId)
-                .build();
-
-        return ResponseEntity.ok().body(responseDto);
     }
 
     // 프로필 이미지 업로드
