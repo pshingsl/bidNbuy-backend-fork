@@ -71,9 +71,6 @@ public class   UserController {
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@RequestBody UserSignupRequestDto requestDto){
         log.info("회원가입 요청 DTO: {}", requestDto);
-//        if(requestDto.getEmail() == null || requestDto.getValidCode() == null){
-//            return ResponseEntity.badRequest().build();
-//        }
         try{
             UserEntity savedUser = userService.signup(requestDto);
             return ResponseEntity.status(HttpStatus.CREATED).body(savedUser);
@@ -248,20 +245,6 @@ public class   UserController {
         String inputPassword = requestDto.getPassword();
         userService.deleteUser(userId, inputPassword);
         return ResponseEntity.noContent().build();
-    }
-
-    //토큰 테스트를 위한 테스트 메서드
-    @GetMapping("/test")
-    public ResponseEntity<?> testAuth() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-//        log.info("@@@@@@@@@@@@@@@@@@@@2Authentication: {}", authentication);
-        Long userId = (Long) authentication.getPrincipal();
-
-        ResponseDto responseDto = ResponseDto.builder()
-                .message("Authenticated! userId: " + userId)
-                .build();
-
-        return ResponseEntity.ok().body(responseDto);
     }
 
     // 프로필 이미지 업로드
