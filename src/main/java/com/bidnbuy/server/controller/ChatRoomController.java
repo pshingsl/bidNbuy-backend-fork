@@ -48,18 +48,7 @@ public class ChatRoomController {
     public ResponseEntity<List<ChatMessageDto>> getChatMessages(
             @PathVariable("chatroomId") Long chatroomId,
             @AuthenticationPrincipal Long currentUserId){
-//        if (authentication == null) {
-//            throw new AccessDeniedException("인증되지 않은 사용자입니다.");
-//        }
-//        Object principal = authentication.getPrincipal();
-//        Long currentUserId;
-//
-//        if (principal instanceof Long) {
-//            currentUserId = (Long) principal;
-//        } else {
-//            log.error("인증 정보 Principal 타입 오류: {}", principal.getClass().getName());
-//            throw new AccessDeniedException("인증 정보가 올바르지 않습니다. (Principal 타입 오류)");
-//        }
+
         log.info("채팅방 메시지 조회 요청: chatroomId={}, userId={}", chatroomId, currentUserId);
 
         List<ChatMessageDto> messages = chatMessageService.getMessageByChatRoomId(chatroomId, currentUserId);
