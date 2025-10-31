@@ -8,3 +8,66 @@ fcm:
     account:
       file: bid-n-buy-service-key.json
 
+# RDS 설정
+
+spring:
+  profiles:
+    active: local   # 기본 실행은 local (EC2에서는 prod로 override)
+    group:
+      local: local
+      prod: prod
+
+---
+# 로컬 테스트용
+spring:
+  config:
+    activate:
+      on-profile: local
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/bidnbuy?useUnicode=yes&characterEncoding=UTF-8&allowMultiQueries=true&serverTimezone=Asia/Seoul
+    username: root
+#    각자 비밀번호(로컬 테스토용)
+    password: 1234
+
+
+  jpa:
+    hibernate:
+      ddl-auto: update   # 로컬에서는 테이블 자동 생성/갱신
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+server:
+  port: 8080
+
+---
+# 도커 + EC2를 이용한 배포 버전
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: update   # RDS에서도 자동 생성 (초기 배포용)
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+
+server:
+  port: 8080
+
+# 더미데이터 자동 삽입
+#  sql:
+#    init:
+#      mode: always   # data.sql 자동 실행 활성화
