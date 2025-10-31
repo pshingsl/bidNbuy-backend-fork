@@ -77,13 +77,13 @@ public class ChatRoomController {
 
     @Operation(
         summary ="채팅방의 메시지 목록 조회",
-        description = "특정 채팅방 메시지 목록 조회 + 읽음처리",
+        description = "특정 채팅방 메시지 목록 조회",
         tags={"체팅 방 관련 API"}
     )
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "200",
-            description = "메시지 목록 조회, 읽음 처리 성공",
+            description = "메시지 목록 조회",
             content = @Content(schema = @Schema(implementation = ChatMessageDto.class))
         ),
         @ApiResponse(
@@ -105,6 +105,23 @@ public class ChatRoomController {
         return ResponseEntity.ok(messages);
     }
 
+    @Operation(
+        summary = "참여 중인 채팅방 목록 조회",
+        description = "사용자가 참여한, 참여된 모든 채팅방 목록을 최신 메시지와 함께 조회",
+        tags={"체팅 방 관련 API"}
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "채팅방 목록 조회 성공",
+            content = @Content(schema = @Schema(implementation = ChatRoomListDto.class))
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "사용자 id 추출 실패",
+            content = @Content(schema = @Schema(type = "string", example = "사용자 인증에 필요한 정보 부족"))
+        )
+    })
     //채팅방 리스트 가져오기
     @GetMapping("/list")
     public ResponseEntity<List<ChatRoomListDto>> getChatList(@AuthenticationPrincipal Long userId){
