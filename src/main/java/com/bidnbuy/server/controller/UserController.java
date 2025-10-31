@@ -80,6 +80,13 @@ public class   UserController {
         }
     }
 
+    @Operation(summary = "로그인", description = "로그인 후 토큰 발급", tags = {"유저 API"})
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "로그인 성공, 인증 정보 반환, 토큰 발급",
+            content = @Content(schema = @Schema(implementation = AuthResponseDto.class))),
+        @ApiResponse(responseCode = "401", description = "인증 실패(이메일, 비밀번호 불일치",
+            content = @Content(schema = @Schema(implementation = ResponseDto.class, example ="로그인 실패")))
+    })
     @PostMapping("/login")
     public ResponseEntity<?> loginUser(@RequestBody UserDto userDto){
         try {
