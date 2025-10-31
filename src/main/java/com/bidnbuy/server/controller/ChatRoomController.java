@@ -75,6 +75,23 @@ public class ChatRoomController {
         }
     }
 
+    @Operation(
+        summary ="채팅방의 메시지 목록 조회",
+        description = "특정 채팅방 메시지 목록 조회 + 읽음처리",
+        tags={"체팅 방 관련 API"}
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "메시지 목록 조회, 읽음 처리 성공",
+            content = @Content(schema = @Schema(implementation = ChatMessageDto.class))
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "인증 정보 없음",
+            content = @Content(schema = @Schema(type = "string", example = "인증되지 않은 사용자"))
+        )
+    })
     //메세지 조회 + 읽음 처리
     @GetMapping("/{chatroomId}/message")
     public ResponseEntity<List<ChatMessageDto>> getChatMessages(
