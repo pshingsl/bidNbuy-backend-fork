@@ -38,7 +38,7 @@ public class KakaoApiService {
         //http엔티티
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
 
-        //resttemplet으로 post요청
+        //rest template으로 post요청
         ResponseEntity<KakaoTokenResponseDto> response = restTemplate.exchange(
                 KAKAO_TOKEN_URL,
                 HttpMethod.POST,
@@ -61,7 +61,7 @@ public class KakaoApiService {
         //HTTP 엔터티 생성 (헤더만)
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
-        // resttemplet으로 get요청
+        // rest template으로 get요청
         ResponseEntity<KakaoUserInfoResponseDto> response = restTemplate.exchange(
                 KAKAO_USER_INFO_URL,
                 HttpMethod.GET,

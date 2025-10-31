@@ -47,7 +47,7 @@ public class NaverApiService {
         //http엔티티
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
 
-        //resttemplet으로 post요청
+        //rest template으로 post요청
         ResponseEntity<NaverTokenResponseDto> response = restTemplate.exchange(
                 tokenUri,
                 HttpMethod.POST,
@@ -74,7 +74,7 @@ public class NaverApiService {
         //HTTP 엔터티 생성 (헤더만)
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
-        // resttemplet으로 get요청
+        // rest template으로 get요청
         ResponseEntity<NaverUserInfoResponseDto> response = restTemplate.exchange(
                 userInfoUri,
                 HttpMethod.GET,
