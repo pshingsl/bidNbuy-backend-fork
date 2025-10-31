@@ -7,6 +7,12 @@ import com.bidnbuy.server.dto.ChatRoomListDto;
 import com.bidnbuy.server.security.CustomUserDetailsService;
 import com.bidnbuy.server.service.ChatMessageService;
 import com.bidnbuy.server.service.ChatRoomService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -19,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "체팅 방 관련 API", description = "채팅 방 관련 기능 제공")
 @Slf4j
 @RequestMapping("/chatrooms")
 @RestController
@@ -27,6 +34,31 @@ public class ChatRoomController {
     private final ChatRoomService chatRoomService;
     private final ChatMessageService chatMessageService;
 
+    @Operation(
+        summary = "채팅방 생성",
+        description = "경매상품, 유저 아이디 기준으로 채팅방 생성",
+        tags={"체팅 방 관련 API"}
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "채팅방 생성 완료",
+            content=@Content(schema = @Schema(implementation = Void.class))
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "인증 정보 없음(Principal null)",
+            content = @Content(schema = @Schema(example = "인증되지않은 사용자"))
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "필수 엔티티 (경매상품)을 찾을 수 없음"
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "채팅방 생성 중 서버 오류 발생"
+        )
+    })
     @PostMapping("/{auctionId}")
     public ResponseEntity<ChatRoomDto> createChatRoom(@PathVariable Long auctionId,
                                                       @AuthenticationPrincipal Long userId,
