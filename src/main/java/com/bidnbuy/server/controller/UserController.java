@@ -150,6 +150,7 @@ public class   UserController {
             response.sendRedirect(errorRedirectUrl);
         }
     }
+
     @Operation(summary = "네이버 로그인", description = "네이버 인증 후 리다이렉트" , tags = {"유저 API"})
     @GetMapping("/naver/loginstart")
     public RedirectView redirectToNaver(HttpSession session){
@@ -197,6 +198,14 @@ public class   UserController {
         }
     }
 
+    @Operation(summary = "임시 비밀번호 요청", description = "이메일로 임시 비밀번호 발급, 발송 요청", tags = {"유저 API"})
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "임시 비밀번호 발송 성공"),
+        @ApiResponse(responseCode = "404",description = "사용자를 찾을 수 없음",
+            content = @Content(schema = @Schema(type = "string", example = "사용자를 찾을 수 없음"))),
+        @ApiResponse(responseCode = "500",description = "임시 비밀번호 생성 실패, 이메일 발송 오류",
+            content = @Content(schema = @Schema(type = "string", example = "임시 비밀번호 생성 실패, 이메일 발송 오류"))),
+    })
     @PostMapping("/password/request")
     public ResponseEntity<?> requestPasswordReset(@RequestBody PasswordResetRequestDto request){
         UserEntity user = userService.findByEmail(request.getEmail())
@@ -207,6 +216,17 @@ public class   UserController {
         return ResponseEntity.ok().build();
     }
 
+
+
+    @Operation(summary = "임시 비밀번호 확인", description = "사용자 입력 임시 비밀번호 유효한지 검증", tags = {"유저API"})
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "임시 비밀번호 확인 성공",
+            content = @Content(schema = @Schema(type = "string", example = "임시 비밀번호 확인. 새 비밀번호를 설정하세요"))),
+        @ApiResponse(responseCode = "400", description = "임시 비밀번호 불일치 또는 만료",
+            content = @Content(schema = @Schema(type = "string", example = "임시 비밀번호 불일치 또는 만료"))),
+        @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음",
+            content = @Content(schema = @Schema(type = "string", example = "사용자를 찾을 수 없음")))
+    })
     //임시비밀번호 검증
     @PostMapping("/password/verify")
     public ResponseEntity<?> confirmPasswordUpdate(@RequestBody PasswordConfirmRequestDto requestDto){
@@ -225,6 +245,13 @@ public class   UserController {
         }
     }
 
+    @Operation(summary = "비밀번호 재설정", description = "임시 비밀번호 확인 후 새 비밀번호로 최종 변경합니다.", tags = {"유저 API"})
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200",description = "비밀번호 재설정 성공",
+            content = @Content(schema = @Schema(type = "string", example = "새 비밀번호 성공적으로 설정 완료")) ),
+        @ApiResponse(responseCode = "400",description = "요청 오류 또는 재설정 조건 불일치",
+            content = @Content(schema = @Schema(type = "string", example = "알 수 없는 오류발생 다시 시도해주세요.")))
+    })
     //찐 비밀번호 재설정
     @PostMapping("/password/reset")
     public ResponseEntity<?> resetPassword(@RequestBody PasswordRequestDto requestDto){
@@ -239,6 +266,17 @@ public class   UserController {
         }
     }
 
+
+    @Operation(summary = "마이페이지 비밀번호 변경", description = "현재 비밀번호 확인 후 새 비밀번호로 변경합니다.", tags = {"유저 API"})
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",description = "비밀번호 변경 성공",
+            content = @Content(schema = @Schema(type = "string", example = "비밀번호가 성공적으로 변경되었습니다."))),
+        @ApiResponse(responseCode = "401",description = "인증 실패 (현재 비밀번호 불일치)"),
+        @ApiResponse(responseCode = "404",description = "사용자 정보를 찾을 수 없음",
+            content = @Content(schema = @Schema(type = "string", example = "사용자 정보를 찾을 수 없습니다."))),
+        @ApiResponse(responseCode = "500",description = "서버 오류")
+    })
     //마이페이지에서 비밀번호 재설정
     @PostMapping("/user/password/change")
     public ResponseEntity<?> changePassword(@RequestBody PasswordChangeRequestDto requestDto){
@@ -262,6 +300,12 @@ public class   UserController {
     }
 
     //회원탈퇴
+    @Operation(summary = "회원 탈퇴", description = "사용자 ID와 비밀번호를 확인하여 계정을 삭제합니다.", tags = {"유저 API"})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204",description = "회원 탈퇴 성공"),
+            @ApiResponse(responseCode = "401",description = "인증 실패 (비밀번호 불일치)"),
+            @ApiResponse(responseCode = "404",description = "사용자를 찾을 수 없음")
+    })
     @DeleteMapping("/user/{userId}")
     public ResponseEntity<?> deleteUser(@PathVariable Long userId, @RequestBody DeleteUserDto requestDto){
         String inputPassword = requestDto.getPassword();
