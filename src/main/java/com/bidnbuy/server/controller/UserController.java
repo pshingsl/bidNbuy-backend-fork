@@ -200,11 +200,11 @@ public class   UserController {
 
     @Operation(summary = "임시 비밀번호 요청", description = "이메일로 임시 비밀번호 발급, 발송 요청", tags = {"유저 API"})
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "임시 비밀번호 발송 성공"),
-            @ApiResponse(responseCode = "404",description = "사용자를 찾을 수 없음",
-                    content = @Content(schema = @Schema(type = "string", example = "사용자를 찾을 수 없음"))),
-            @ApiResponse(responseCode = "500",description = "임시 비밀번호 생성 실패, 이메일 발송 오류",
-                    content = @Content(schema = @Schema(type = "string", example = "임시 비밀번호 생성 실패, 이메일 발송 오류"))),
+        @ApiResponse(responseCode = "200", description = "임시 비밀번호 발송 성공"),
+        @ApiResponse(responseCode = "404",description = "사용자를 찾을 수 없음",
+            content = @Content(schema = @Schema(type = "string", example = "사용자를 찾을 수 없음"))),
+        @ApiResponse(responseCode = "500",description = "임시 비밀번호 생성 실패, 이메일 발송 오류",
+            content = @Content(schema = @Schema(type = "string", example = "임시 비밀번호 생성 실패, 이메일 발송 오류"))),
     })
     @PostMapping("/password/request")
     public ResponseEntity<?> requestPasswordReset(@RequestBody PasswordResetRequestDto request){
@@ -216,6 +216,17 @@ public class   UserController {
         return ResponseEntity.ok().build();
     }
 
+
+
+    @Operation(summary = "임시 비밀번호 확인", description = "사용자 입력 임시 비밀번호 유효한지 검증", tags = {"유저API"})
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "임시 비밀번호 확인 성공",
+            content = @Content(schema = @Schema(type = "string", example = "임시 비밀번호 확인. 새 비밀번호를 설정하세요"))),
+        @ApiResponse(responseCode = "400", description = "임시 비밀번호 불일치 또는 만료",
+            content = @Content(schema = @Schema(type = "string", example = "임시 비밀번호 불일치 또는 만료"))),
+        @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음",
+            content = @Content(schema = @Schema(type = "string", example = "사용자를 찾을 수 없음")))
+    })
     //임시비밀번호 검증
     @PostMapping("/password/verify")
     public ResponseEntity<?> confirmPasswordUpdate(@RequestBody PasswordConfirmRequestDto requestDto){
