@@ -7,15 +7,20 @@ import com.bidnbuy.server.entity.PaymentEntity;
 import com.bidnbuy.server.exception.PaymentErrorResponse;
 import com.bidnbuy.server.service.OrderService;
 import com.bidnbuy.server.service.PaymentService;
-import com.sun.tools.jconsole.JConsoleContext;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.http.HttpResponse;
 
+@Tag(name = "결재 API", description = "결재 기능 제공")
 @RequestMapping("/payments")
 @RestController
 @RequiredArgsConstructor
@@ -26,9 +31,16 @@ public class PaymentController {
     private final PaymentService paymentService;
     private final OrderService orderService;
 
-    /**
-     * 결제 준비 (PENDING 저장)
-     */
+    // 결제 준비 (PENDING 저장)
+    @Operation(summary = "결재 생성 ", description = "주문에 대한 결재 사용되는 API")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "결제 준비(PENDING) 성공", // 200으로 변경 및 설명 수정
+                    content = @Content(schema = @Schema(implementation = PaymentPendingResponseDto.class))),
+            @ApiResponse(responseCode = "400", description = "결제 준비 오류", // 400 명시
+                    content = @Content(schema = @Schema(implementation = PaymentErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "인증 실패"),
+            @ApiResponse(responseCode = "404", description = "주문 정보를 찾을 수 없음")
+    })
     @PostMapping("/saveAmount")
     public ResponseEntity<?> saveAmount(@RequestBody SaveAmountRequest request) {
         try {
@@ -52,9 +64,17 @@ public class PaymentController {
         }
     }
 
-    /**
-     * 결제 승인 처리
-     */
+    // 결제 승인 처리
+    @Operation(summary = "결재 승인 생성", description = "결재 생성 사용되는 API")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "결제 승인 성공", // 200으로 변경
+                    content = @Content(schema = @Schema(implementation = PaymentResponseDto.class))),
+            @ApiResponse(responseCode = "400", description = "토스 결제 오류 (예: 금액 불일치 등)", // 외부 API 오류 명시
+                    content = @Content(schema = @Schema(type = "string"))),
+            @ApiResponse(responseCode = "401", description = "인증 실패"),
+            @ApiResponse(responseCode = "500", description = "서버/DB 처리 오류", // 내부 오류 명시
+                    content = @Content(schema = @Schema(implementation = PaymentErrorResponse.class)))
+    })
     @PostMapping("/confirm")
     public ResponseEntity<?> confirmPayment(@RequestBody PaymentRequestDTO request) {
         try {
@@ -71,7 +91,7 @@ public class PaymentController {
 
             log.info("✅ 승인 성공: {}",
                     dto);
-            
+
             // auctionId 값 추가
             dto.setAuctionId(request.getAuctionId());
 
@@ -91,6 +111,14 @@ public class PaymentController {
     }
 
     //  사용자 취소 요청 (전액 취소)
+    @Operation(summary = "결재 취소", description = "주문에 대한 결재 취소 사용되는 API")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "결제 취소 성공", // 설명 수정
+                    content = @Content(schema = @Schema(implementation = PaymentCancelResponseDto.class))),
+            @ApiResponse(responseCode = "401", description = "인증 실패"),
+            @ApiResponse(responseCode = "404", description = "결제 정보를 찾을 수 없음"),
+            @ApiResponse(responseCode = "409", description = "취소 불가 상태 (이미 취소됨 등)") // 비즈니스 로직에 따라 추가 고려
+    })
     @PostMapping("/cancel")
     public ResponseEntity<PaymentCancelResponseDto> cancelPayment(@RequestBody PaymentCancelRequestDto requestDto) {
         PaymentCancelResponseDto result = paymentService.cancelPayment(requestDto);
