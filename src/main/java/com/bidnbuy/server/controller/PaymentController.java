@@ -32,7 +32,7 @@ public class PaymentController {
     private final OrderService orderService;
 
     // 결제 준비 (PENDING 저장)
-    @Operation(summary = "결재 생성", description = "주문에 대한 결재 사용되는 API")
+    @Operation(summary = "결재 생성 ", description = "주문에 대한 결재 사용되는 API")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "결제 준비(PENDING) 성공", // 200으로 변경 및 설명 수정
                     content = @Content(schema = @Schema(implementation = PaymentPendingResponseDto.class))),
