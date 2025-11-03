@@ -11,10 +11,13 @@ import com.bidnbuy.server.enums.UserStatus;
 import com.bidnbuy.server.exception.CustomAuthenticationException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.parameters.P;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.PostMapping;
+
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.NoSuchElementException;
@@ -71,10 +74,10 @@ public class UserService {
 //            throw new RuntimeException("email already exists");
 //        }
 
-        if (!emailVerificationService.isEmailVerified(email)) {
-            log.warn("email not verified for signup:{}:", email);
-            throw new CustomAuthenticationException("이메일 인증부터 해야 함");
-        }
+//        if (!emailVerificationService.isEmailVerified(email)) {
+//            log.warn("email not verified for signup:{}:", email);
+//            throw new CustomAuthenticationException("이메일 인증부터 해야 함");
+//        }
         //삭제된 계정 포함 이메일 조회
         Optional<UserEntity> existingUserOptional = repository.findByEmailWithDeleted(email);
         if(existingUserOptional.isPresent()){
@@ -412,4 +415,24 @@ public class UserService {
         // 5. 업데이트된 닉네임을 반환합니다.
         return user.getNickname();
     }
+
+//    //테스트 계정 생성용 메서드
+//    @Transactional
+//    public UserEntity createTestUser(String email, String password, String nickname){
+//        if(!password.matches(PASSWORD_REGEX)){
+//            throw new RuntimeException("비번 영문, 숫자 포함 8자리");
+//        }
+//        if(repository.existsByEmail(email)){
+//            throw new RuntimeException("이미 사용 중인 이메일");
+//        }
+//        UserEntity testUser = UserEntity.builder()
+//                .email(email)
+//                .nickname(nickname)
+//                .authStatus(AuthStatus.Y)
+//                .userStatus(UserStatus.Y)
+//                .role("ROLE_USER")
+//                .password(passwordEncoder.encode(password))
+//                .build();
+//        return repository.save(testUser);
+//    }
 }
