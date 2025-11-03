@@ -40,6 +40,8 @@ public class AdminAuthService {
     @Autowired private Environment environment;
     @Value("${admin.trusted-proxies:}")
     private String trustedProxiesProp;
+    @Value("${demo.admin.emails:}")
+    private String demoAdminEmailsProp;
     
     private static final String PASSWORD_REGEX = "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,}$";
 
@@ -99,16 +101,18 @@ public class AdminAuthService {
             throw new CustomAuthenticationException("이메일 또는 비밀번호를 확인해주세요.");
         }
 
-        // IP 검사 (화이트리스트 방식)
+        // IP 검사 (화이트리스트 방식, 데모 계정 예외)
+        boolean isDemoViewer = isDemoAdminEmail(email);
         String clientIp = getClientIpAddress(request);
-        if (!isAllowedIp(clientIp, admin.getIpAddress())) {
+        if (!isDemoViewer && !isAllowedIp(clientIp, admin.getIpAddress())) {
             log.error("Admin login blocked - IP not allowed. Expected: {}, Actual: {}", admin.getIpAddress(), clientIp);
             throw new CustomAuthenticationException("허용되지 않은 IP에서의 접근입니다.");
         }
 
-        // jwt 토큰 생성 -> role 포함
-        String accessToken = jwtProvider.createAccessToken(admin.getAdminId(), "ADMIN");
-        String refreshToken = jwtProvider.createRefreshToken(admin.getAdminId(), "ADMIN");
+        // jwt 토큰 생성 -> role 포함 (데모 뷰어는 ADMIN_VIEWER)
+        String roleForToken = isDemoViewer ? "ADMIN_VIEWER" : "ADMIN";
+        String accessToken = jwtProvider.createAccessToken(admin.getAdminId(), roleForToken);
+        String refreshToken = jwtProvider.createRefreshToken(admin.getAdminId(), roleForToken);
 
         // refresh token 저장 (관리자용 메서드로)
         Instant expiryDate = jwtProvider.getRefreshTokenExpiryDate();
@@ -122,6 +126,16 @@ public class AdminAuthService {
                 .grantType(jwtProvider.getGrantType())
                 .accessTokenExpiresIn(jwtProvider.getAccessTokenExpirationTime())
                 .build();
+    }
+
+    private boolean isDemoAdminEmail(String email) {
+        if (email == null || email.isBlank()) return false;
+        if (demoAdminEmailsProp == null || demoAdminEmailsProp.isBlank()) return false;
+        for (String token : demoAdminEmailsProp.split(",")) {
+            String t = token.trim();
+            if (!t.isEmpty() && t.equalsIgnoreCase(email.trim())) return true;
+        }
+        return false;
     }
 
     // ip 업데이트 (미확정)

@@ -104,6 +104,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     if ("ADMIN".equals(role)) {
                         authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
                         log.info("Admin role assigned to user: {}", userId);
+                    } else if ("ADMIN_VIEWER".equals(role)) {
+                        authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN_VIEWER"));
+                        log.info("Admin viewer role assigned to user: {}", userId);
                     }
                     // 모든 사용자 기본으로 ROLE_USER 권한
                     authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
