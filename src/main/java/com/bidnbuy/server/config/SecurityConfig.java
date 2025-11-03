@@ -91,6 +91,7 @@ public class SecurityConfig {
                         .requestMatchers("/orders/**", "/payments/**", "/inquiries/**", "/reports/**").permitAll()  // ✅ 테스트용 오픈 - 강기병
 
                         .requestMatchers("/admin/auth/signup", "/admin/auth/login", "/admin/auth/reissue", "/admin/auth/password/**").permitAll() // 관리자 회원가입, 로그인, 토큰재발급, 비번재발급 일단 허용
+                        .requestMatchers(HttpMethod.GET, "/admin/**").hasAnyRole("ADMIN", "ADMIN_VIEWER") // 관리자 읽기 전용 허용
                         .requestMatchers("/admin/**").hasRole("ADMIN") // 나머지 관리자
                         .anyRequest().authenticated()
                 ).csrf(csrf -> csrf.disable());
