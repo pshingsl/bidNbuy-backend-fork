@@ -64,6 +64,7 @@ public class AdminAuthService {
 
         // IP 수집 동의 체크
         if (ipConsentAgreed == null || !ipConsentAgreed) {
+            log.warn("IP consent not agreed");
             throw new CustomAuthenticationException("IP 수집 동의가 필요합니다.");
         }
 
@@ -79,7 +80,10 @@ public class AdminAuthService {
                 .ipAddress(clientIp)
                 .build();
 
-        return adminRepository.save(newAdmin);
+        AdminEntity savedAdmin = adminRepository.save(newAdmin);
+        log.info("Admin signup successful: adminId={}, email={}, IP={}", savedAdmin.getAdminId(), email, clientIp);
+        
+        return savedAdmin;
     }
 
     public TokenResponseDto login(AdminLoginRequestDto loginRequestDto, HttpServletRequest request) {
@@ -109,6 +113,8 @@ public class AdminAuthService {
         // refresh token 저장 (관리자용 메서드로)
         Instant expiryDate = jwtProvider.getRefreshTokenExpiryDate();
         refreshTokenService.saveOrUpdateForAdmin(admin, refreshToken, expiryDate);
+        
+        log.info("Admin login successful: adminId={}, email={}, IP={}", admin.getAdminId(), email, clientIp);
         
         return TokenResponseDto.builder()
                 .accessToken(accessToken)
@@ -364,6 +370,8 @@ public class AdminAuthService {
         // db에 새 토큰 갱신
         refreshTokenService.saveOrUpdateForAdmin(admin, newRefreshToken, newExpiryDate);
 
+        log.info("Admin token reissued successfully: adminId={}", adminId);
+
         return TokenResponseDto.builder()
                 .grantType(jwtProvider.getGrantType())
                 .accessToken(newAccessToken)
@@ -382,6 +390,9 @@ public class AdminAuthService {
         admin.setTempPasswordExpiryDate(LocalDateTime.now().plusMinutes(10));
         
         adminRepository.save(admin);
+        
+        log.info("Admin temp password generated: adminId={}, email={}, expiry={}", 
+                admin.getAdminId(), admin.getEmail(), admin.getTempPasswordExpiryDate());
         
         return tempPassword;
     }
@@ -404,8 +415,11 @@ public class AdminAuthService {
                 .orElseThrow(() -> new CustomAuthenticationException("관리자를 찾을 수 없습니다."));
         
         if (!isTempPasswordValid(admin, tempPw)) {
+            log.warn("Admin temp password verification failed: email={}", email);
             throw new RuntimeException("임시 비밀번호가 일치하지 않거나 만료되었습니다.");
         }
+        
+        log.info("Admin temp password verified: adminId={}, email={}", admin.getAdminId(), email);
     }
 
     // 유효성
@@ -447,6 +461,8 @@ public class AdminAuthService {
         
         clearTempPassword(admin);
         updatePassword(admin, newPassword);
+        
+        log.info("Admin password reset completed: adminId={}, email={}", admin.getAdminId(), email);
     }
 
     // 조회
