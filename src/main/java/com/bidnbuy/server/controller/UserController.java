@@ -334,17 +334,17 @@ public class   UserController {
                     content = @Content(schema = @Schema(implementation = UserNickNameDto.class))),
             @ApiResponse(responseCode = "401", description = "인증 실패")
     })
-    @PutMapping("/{userId}/nickname")
-    public ResponseEntity<UserNickNameDto> updateNickname(
-            @PathVariable Long userId,
-            @AuthenticationPrincipal Long principalId,
-            @RequestBody @Valid UserNickNameDto dto
-    ) {
-        if (!userId.equals(principalId)) {
-            throw new AccessDeniedException("본인만 수정 가능합니다.");
-        }
-        String nickname = userService.updateNickName(principalId, dto.getNickname());
-        return ResponseEntity.ok(UserNickNameDto.builder().nickname(nickname).build());
+    @PutMapping("/nickname")
+
+    public ResponseEntity<?> updateNickname(@AuthenticationPrincipal Long userId, @RequestBody UserNickNameDto dto) {
+
+        String nickname = userService.updateNickName(userId, dto.getNickname());
+
+        UserNickNameDto response = UserNickNameDto.builder()
+                .nickname(nickname)
+                .build();
+
+        return  ResponseEntity.ok(response);
     }
 
     // 다른 유저 프로필 조회

@@ -406,22 +406,24 @@ public class UserService {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 사용자 존재하지 않습니다."));
 
+        // 1. 현재 닉네임과 동일하면 즉시 반환 (수정 불필요)
         if (user.getNickname().equals(newNickName)) {
             return user.getNickname();
         }
 
-
         Optional<UserEntity> existingUser = userRepository.findByNickname(newNickName);
 
         if (existingUser.isPresent()) {
+            // 기존 코드: throw new RuntimeException("이미 사용 중인 닉네임입니다.");
+
+            // 1. 예외 수정: 닉네임 중복 전용 커스텀 예외 사용
             throw new RuntimeException("이미 사용 중인 닉네임입니다.");
         }
 
-        // 4. 닉네임 업데이트 및 저장
+        // 2. 닉네임 업데이트 및 저장 (수정 불필요)
         user.setNickname(newNickName);
-        userRepository.save(user); // @Transactional이 붙어있으면 save 없이도 반영되지만 명시적으로 작성합니다.
+        userRepository.save(user);
 
-        // 5. 업데이트된 닉네임 반환
         return user.getNickname();
     }
 }
