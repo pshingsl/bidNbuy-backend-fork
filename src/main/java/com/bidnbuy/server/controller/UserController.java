@@ -378,7 +378,7 @@ public class   UserController {
                     content = @Content(schema = @Schema(implementation = UserNickNameDto.class))),
             @ApiResponse(responseCode = "401", description = "인증 실패")
     })
-    @PutMapping("/nickname")
+    @PutMapping("/{userId}/nickname")
 
     public ResponseEntity<?> updateNickname(@AuthenticationPrincipal Long userId, @RequestBody UserNickNameDto dto) {
 
