@@ -63,6 +63,11 @@ public class AuctionBidService {
             throw new RuntimeException("입찰 금액이 최소 입찰 단위(" + auctionProduct.getMinBidPrice() + "원)를 충족하지 못합니다. 최소 입찰 금액은 " + minBid + "원 이상입니다.");
         }
 
+        // 동시성 안전 최고가 체크
+        if (bidPrice <= auctionProduct.getCurrentPrice()) {
+            throw new RuntimeException("CURRENT_HIGHEST_BID_EXISTS, 이미 더 높은 입찰이 존재합니다.");
+        }
+
         // 3 DB에 저장
         AuctionBidsEntity newBid = AuctionBidsEntity.builder()
                 .user(user)
