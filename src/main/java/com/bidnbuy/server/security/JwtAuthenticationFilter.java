@@ -58,12 +58,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         ) {
             return true;
         }
-        // 퍼블릭 GET API 스킵
+        // 퍼블릭 GET API 스킵 (임시 우회 추가 - /api 프리픽스)
         if (HttpMethod.GET.matches(request.getMethod())) {
-            if (path.equals("/auctions") || path.startsWith("/auctions/")) {
+            if (path.equals("/auctions") || path.startsWith("/auctions/")
+                    || path.equals("/api/auctions") || path.startsWith("/api/auctions/")) {
                 return true;
             }
-            if (path.equals("/category") || path.startsWith("/category/")) {
+            if (path.equals("/category") || path.startsWith("/category/")
+                    || path.equals("/api/category") || path.startsWith("/api/category/")) {
                 return true;
             }
         }
@@ -161,7 +163,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String contextPath = request.getContextPath();
         String path = request.getRequestURI().substring(contextPath.length());
         return path.equals("/auctions") || path.startsWith("/auctions/")
+                || path.equals("/api/auctions") || path.startsWith("/api/auctions/")
                 || path.equals("/category") || path.startsWith("/category/")
-                || path.equals("/category/top");
+                || path.equals("/api/category") || path.startsWith("/api/category/")
+                || path.equals("/category/top") || path.equals("/api/category/top");
     }
 }

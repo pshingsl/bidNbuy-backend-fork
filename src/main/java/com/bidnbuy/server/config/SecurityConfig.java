@@ -79,9 +79,9 @@ public class SecurityConfig {
                         .requestMatchers("/swagger", "/swagger-ui.html", "/swagger-ui/**", "/api-docs", "/api-docs/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // 비로그인 조회 허용
-                        .requestMatchers(HttpMethod.GET, "/auctions/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/category/**").permitAll()
+                        // 비로그인 조회 허용 (임시 우회 추가 - /api 프리픽스)
+                        .requestMatchers(HttpMethod.GET, "/auctions/**", "/api/auctions/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/category/**", "/api/category/**").permitAll()
 
                         .requestMatchers("/auth/signup", "/auth/login", "/auth/kakao", "/favicon.ico", "/auth/naver", "/auth/reissue"
                                 , "/auth/naver/loginstart", "/auth/email/**", "/auth/password/**", "/chat_test.html**", "/ws/bid/**", "/images/**").permitAll()
