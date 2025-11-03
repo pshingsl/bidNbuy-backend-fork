@@ -173,34 +173,41 @@ public class AdminAuthService {
     }
 
     private String getClientIpAddress(HttpServletRequest request) {
-        // 신뢰 프록시에서 온 요청일 때만 헤더 신뢰
-        if (fromTrustedProxy(request)) {
-            String[] headerNames = {
-                "X-Forwarded-For",
-                "X-Real-IP",
-                "CF-Connecting-IP",
-                "True-Client-IP",
-                "X-Forwarded",
-                "Forwarded-For",
-                "Forwarded"
-            };
-            for (String headerName : headerNames) {
-                String headerValue = request.getHeader(headerName);
-                if (headerValue != null && !headerValue.isEmpty() && !"unknown".equalsIgnoreCase(headerValue)) {
-                    // XFF 계열 처리
-                    String candidate = extractClientIpFromXff(headerValue, getTrustedCidrs());
-                    if (candidate != null && isValidIp(candidate)) {
-                        String normalized = normalizeIpToken(candidate);
-                        log.info("IP extracted from header {}: {}", headerName, normalized);
-                        return normalized;
-                    }
-                }
+        // 우선순위 수정
+        // 1. CloudFront-Viewer-Address(콜론 앞)
+        String cfViewer = request.getHeader("CloudFront-Viewer-Address");
+        if (cfViewer != null && !cfViewer.isBlank()) {
+            int idx = cfViewer.indexOf(':');
+            String ip = (idx > 0 ? cfViewer.substring(0, idx) : cfViewer).trim();
+            if (isValidIp(ip)) {
+                String normalized = normalizeIpToken(ip);
+                log.info("IP extracted from CloudFront-Viewer-Address: {}", normalized);
+                return normalized;
             }
         }
 
-        // 직접 연결 ip
+        // 2. X-Forwarded-For(첫 IP)
+        String xff = request.getHeader("X-Forwarded-For");
+        if (xff != null && !xff.isBlank()) {
+            String first = xff.split(",")[0].trim();
+            if (!first.isEmpty() && isValidIp(first)) {
+                String normalized = normalizeIpToken(first);
+                log.info("IP extracted from X-Forwarded-For: {}", normalized);
+                return normalized;
+            }
+        }
+
+        // 3. X-Real-IP
+        String xRealIp = request.getHeader("X-Real-IP");
+        if (xRealIp != null && !xRealIp.isBlank() && isValidIp(xRealIp)) {
+            String normalized = normalizeIpToken(xRealIp);
+            log.info("IP extracted from X-Real-IP: {}", normalized);
+            return normalized;
+        }
+
+        // 4. 직접 연결 IP (프록시 IP일 수 있음)
         String directIp = request.getRemoteAddr();
-        log.info("Using direct connection IP: {}", directIp);
+        log.info("Using direct connection IP (fallback): {}", directIp);
         return directIp;
     }
 
