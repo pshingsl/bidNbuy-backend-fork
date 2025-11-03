@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.units.qual.A;
 import org.checkerframework.checker.units.qual.C;
@@ -21,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -315,7 +317,7 @@ public class   UserController {
             @ApiResponse(responseCode = "401", description = "인증 실패")
     })
     @GetMapping("/{userId}/nickname")
-    public ResponseEntity<?> updateNickName(@AuthenticationPrincipal Long userId) {
+    public ResponseEntity<?> geteNickName(@AuthenticationPrincipal Long userId) {
 
         String nickname = userService.getNickName(userId);
 
@@ -333,14 +335,16 @@ public class   UserController {
             @ApiResponse(responseCode = "401", description = "인증 실패")
     })
     @PutMapping("/{userId}/nickname")
-    public ResponseEntity<?> updateNickname(@AuthenticationPrincipal Long userId, @RequestBody UserNickNameDto dto) {
-        String nickname = userService.updateNickName(userId, dto.getNickname());
-
-        UserNickNameDto response = UserNickNameDto.builder()
-                .nickname(nickname)
-                .build();
-
-        return  ResponseEntity.ok(response);
+    public ResponseEntity<UserNickNameDto> updateNickname(
+            @PathVariable Long userId,
+            @AuthenticationPrincipal Long principalId,
+            @RequestBody @Valid UserNickNameDto dto
+    ) {
+        if (!userId.equals(principalId)) {
+            throw new AccessDeniedException("본인만 수정 가능합니다.");
+        }
+        String nickname = userService.updateNickName(principalId, dto.getNickname());
+        return ResponseEntity.ok(UserNickNameDto.builder().nickname(nickname).build());
     }
 
     // 다른 유저 프로필 조회

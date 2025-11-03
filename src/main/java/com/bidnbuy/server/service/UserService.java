@@ -402,14 +402,29 @@ public class UserService {
 
     // 유저 닉네임 업데이트
     public String updateNickName(Long userId, String newNickName) {
+        // 1. 해당 사용자(수정 주체)가 존재하는지 확인
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 사용자 존재하지 않습니다."));
 
+        // 2. 새로운 닉네임이 현재 닉네임과 동일하면 불필요한 DB 접근을 피하고 즉시 반환
+        if (user.getNickname().equals(newNickName)) {
+            return user.getNickname();
+        }
+
+        // 3. 새로운 닉네임의 중복 검증
+        // (이미 존재하는 닉네임인지 확인)
+        Optional<UserEntity> existingUser = userRepository.findByNickname(newNickName);
+
+        if (existingUser.isPresent()) {
+            // 중복된 닉네임을 사용하려는 경우 예외 발생
+            throw new RuntimeException("이미 사용 중인 닉네임입니다.");
+        }
+
+        // 4. 닉네임 업데이트 및 저장
         user.setNickname(newNickName);
+        userRepository.save(user); // @Transactional이 붙어있으면 save 없이도 반영되지만 명시적으로 작성합니다.
 
-        userRepository.save(user);
-
-        // 5. 업데이트된 닉네임을 반환합니다.
+        // 5. 업데이트된 닉네임 반환
         return user.getNickname();
     }
 }
