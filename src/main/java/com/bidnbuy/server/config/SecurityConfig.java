@@ -76,7 +76,6 @@ public class SecurityConfig {
 
                 //인증 경로 설정
                 .authorizeHttpRequests(authorize -> authorize
-//                        .requestMatchers( "/auth/test/signup").permitAll()
 
                         .requestMatchers("/swagger", "/swagger-ui.html", "/swagger-ui/**", "/api-docs", "/api-docs/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()

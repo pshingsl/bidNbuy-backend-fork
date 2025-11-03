@@ -74,10 +74,10 @@ public class UserService {
 //            throw new RuntimeException("email already exists");
 //        }
 
-//        if (!emailVerificationService.isEmailVerified(email)) {
-//            log.warn("email not verified for signup:{}:", email);
-//            throw new CustomAuthenticationException("이메일 인증부터 해야 함");
-//        }
+        if (!emailVerificationService.isEmailVerified(email)) {
+            log.warn("email not verified for signup:{}:", email);
+            throw new CustomAuthenticationException("이메일 인증부터 해야 함");
+        }
         //삭제된 계정 포함 이메일 조회
         Optional<UserEntity> existingUserOptional = repository.findByEmailWithDeleted(email);
         if(existingUserOptional.isPresent()){
@@ -430,23 +430,4 @@ public class UserService {
         return user.getNickname();
     }
 
-//    //테스트 계정 생성용 메서드
-//    @Transactional
-//    public UserEntity createTestUser(String email, String password, String nickname){
-//        if(!password.matches(PASSWORD_REGEX)){
-//            throw new RuntimeException("비번 영문, 숫자 포함 8자리");
-//        }
-//        if(repository.existsByEmail(email)){
-//            throw new RuntimeException("이미 사용 중인 이메일");
-//        }
-//        UserEntity testUser = UserEntity.builder()
-//                .email(email)
-//                .nickname(nickname)
-//                .authStatus(AuthStatus.Y)
-//                .userStatus(UserStatus.Y)
-//                .role("ROLE_USER")
-//                .password(passwordEncoder.encode(password))
-//                .build();
-//        return repository.save(testUser);
-//    }
 }
