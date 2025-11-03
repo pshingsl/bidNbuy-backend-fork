@@ -432,4 +432,14 @@ public class   UserController {
 
         return ResponseEntity.ok().build();
     }
+
+//    @PostMapping("/test/signup")
+//    public ResponseEntity<UserEntity> createTestUser(@RequestBody TestUserSignupDto request){
+//        UserEntity savedUser = userService.createTestUser(
+//                request.getEmail(),
+//                request.getPassword(),
+//                request.getNickname()
+//        );
+//        return ResponseEntity.ok(savedUser);
+//    }
 }

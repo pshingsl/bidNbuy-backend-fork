@@ -55,7 +55,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 path.startsWith("/auth/naver") ||
                 path.startsWith("/auth/email") ||
                 path.startsWith("/auth/password")
+//                        || path.equals("/auth/test/signup")
         ) {
+            log.warn("### 필터 스킵 TRUE (Auth 공개): {}", path);
             return true;
         }
         // 퍼블릭 GET API 스킵 (임시 우회 추가 - /api 프리픽스)
