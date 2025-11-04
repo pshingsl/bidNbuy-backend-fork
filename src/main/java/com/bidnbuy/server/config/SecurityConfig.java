@@ -91,6 +91,8 @@ public class SecurityConfig {
                             "/api/auth/**",
                             "/auth/kakao/**",
                             "/api/auth/kakao/**",
+                            "/auth/kakao/loginstart",
+                            "/api/auth/kakao/loginstart",
                             "/auth/naver/**",
                             "/api/auth/naver/**",
                             "/auth/naver/loginstart",
