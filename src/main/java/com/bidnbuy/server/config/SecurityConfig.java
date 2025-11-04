@@ -83,7 +83,7 @@ public class SecurityConfig {
                         // 비로그인 조회 허용 (임시 우회 추가 - /api 프리픽스)
                         .requestMatchers(HttpMethod.GET, "/auctions/**", "/api/auctions/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/category/**", "/api/category/**").permitAll()
-
+                        .requestMatchers("/auth/**", "/api/auth/**").permitAll()
                         .requestMatchers("/auth/signup", "/auth/login", "/auth/kakao/**", "/favicon.ico", "/auth/naver", "/auth/reissue"
                                 , "/auth/naver/loginstart", "/auth/email/**", "/auth/password/**", "/chat_test.html**", "/ws/bid/**", "/images/**").permitAll()
                         .requestMatchers("/chatrooms/**").authenticated()
