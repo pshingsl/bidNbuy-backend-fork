@@ -84,7 +84,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/auctions/**", "/api/auctions/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/category/**", "/api/category/**").permitAll()
                         .requestMatchers("/auth/**", "/api/auth/**").permitAll()
-                        .requestMatchers("/auth/signup", "/auth/login", "/auth/kakao/**", "/favicon.ico", "/auth/naver", "/auth/reissue"
+                        .requestMatchers("/auth/signup", "/auth/login", "/auth/kakao/**",  "/api/auth/kakao/**", "/favicon.ico", "/auth/naver", "/auth/reissue"
                                 , "/auth/naver/loginstart", "/auth/email/**", "/auth/password/**", "/chat_test.html**", "/ws/bid/**", "/images/**").permitAll()
                         .requestMatchers("/chatrooms/**").authenticated()
                         .requestMatchers("/notifications/token/**").authenticated() //기타 알림 API는 인증 필요 여부에 따라 결정
