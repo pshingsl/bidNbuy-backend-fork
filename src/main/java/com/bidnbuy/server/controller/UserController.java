@@ -163,7 +163,7 @@ public class   UserController {
         }
     }
 
-    @GetMapping("/auth/kakao/loginstart")
+    @GetMapping("/kakao/loginstart")
     public RedirectView redirectToKakao() {
         String kakaoAuthUrl = "https://kauth.kakao.com/oauth/authorize" +
                 "?client_id=" + clientId +
