@@ -16,6 +16,9 @@ import com.bidnbuy.server.repository.ImageRepository;
 import com.bidnbuy.server.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,7 +42,7 @@ public class AuctionResultService {
 
         // 마이페이지 최근 구매
         List<AuctionPurchaseHistoryDto> recentPurchases = getRecentPurchases(userId); // 구매
-        
+
         // 마이페이지 최근 판매
         List<AuctionSalesHistoryDto> recentSales = getRecentSales(userId); // 판매
 
@@ -119,7 +122,7 @@ public class AuctionResultService {
                     .map(this::toActiveSalesDto)
                     .collect(Collectors.toList());
 
-            if(filterStatus == TradeFilterStatus.ONGOING) {
+            if (filterStatus == TradeFilterStatus.ONGOING) {
                 return activeSales;
             }
             salesHistory.addAll(activeSales);
@@ -220,12 +223,10 @@ public class AuctionResultService {
                     resultStatus == ResultStatus.SUCCESS_PENDING_PAYMENT || resultStatus == ResultStatus.SUCCESS_PAID;
 
             // 완료: 거래 완료 상태만 해당
-            case COMPLETED ->
-                    resultStatus == ResultStatus.SUCCESS_COMPLETED;
+            case COMPLETED -> resultStatus == ResultStatus.SUCCESS_COMPLETED;
 
             // 취소/실패: 유찰 또는 거래 취소 상태만 해당
-            case CANCELLED ->
-                    resultStatus == ResultStatus.FAILURE || resultStatus == ResultStatus.CANCELED;
+            case CANCELLED -> resultStatus == ResultStatus.FAILURE || resultStatus == ResultStatus.CANCELED;
 
             default -> false; // 정의되지 않은 상태
         };
@@ -269,5 +270,27 @@ public class AuctionResultService {
         }
 
         return "상태 정보 없음";
+    }
+
+
+    @Transactional(readOnly = true)
+    public List<AuctionSalesHistoryDto> getSalesHistoryBySeller(
+            Long sellerId, TradeFilterStatus filter, int page, int size, String sort
+    ) {
+        Pageable pageable = PageRequest.of(page, size,
+                "start".equalsIgnoreCase(sort)
+                        ? Sort.by("startTime").descending()
+                        : Sort.by("endTime").descending());
+
+        return switch (filter) {
+            case COMPLETED -> auctionResultRepository.findCompletedBySellerId(sellerId, pageable);
+            case ONGOING -> auctionProductsRepository.findOngoingBySellerId(sellerId, pageable);
+            default -> {
+                List<AuctionSalesHistoryDto> ongoing = auctionProductsRepository.findOngoingBySellerId(sellerId, pageable);
+                List<AuctionSalesHistoryDto> completed = auctionResultRepository.findCompletedBySellerId(sellerId, pageable);
+                ongoing.addAll(completed);
+                yield ongoing;
+            }
+        };
     }
 }

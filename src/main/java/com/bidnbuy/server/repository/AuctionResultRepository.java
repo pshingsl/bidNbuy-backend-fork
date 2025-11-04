@@ -1,8 +1,10 @@
 package com.bidnbuy.server.repository;
 
+import com.bidnbuy.server.dto.AuctionSalesHistoryDto;
 import com.bidnbuy.server.entity.AuctionResultEntity;
 import com.bidnbuy.server.entity.OrderEntity;
 import com.bidnbuy.server.enums.ResultStatus;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -50,4 +52,25 @@ public interface AuctionResultRepository extends JpaRepository<AuctionResultEnti
             ORDER BY o.updatedAt DESC
             """)
     List<AuctionResultEntity> findTop3ByWinnerOrderByOrderUpdatedAtDesc(@Param("userId") Long userId);
+
+    @Query("""
+        SELECT new com.bidnbuy.server.dto.AuctionSalesHistoryDto(
+            p.id,                    -- 경매 ID
+            p.title,                 -- 상품 제목
+            i.url,                   -- 상품 대표 이미지 URL
+            r.endTime,               -- 경매 종료 시간
+            r.finalPrice,            -- 낙찰가
+            r.winnerNickname,        -- 낙찰자 닉네임
+            '거래 완료'              -- 상태 텍스트
+        )
+        FROM AuctionResultEntity r
+        JOIN r.product p
+        LEFT JOIN p.mainImage i
+        WHERE p.seller.userId = :sellerId
+          AND r.resultStatus = com.bidnbuy.server.enums.ResultStatus.SUCCESS_COMPLETED
+    """)
+    List<AuctionSalesHistoryDto> findCompletedBySellerId(
+            @Param("sellerId") Long sellerId,
+            Pageable pageable
+    );
 }

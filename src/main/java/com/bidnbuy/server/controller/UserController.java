@@ -2,6 +2,7 @@ package com.bidnbuy.server.controller;
 
 import com.bidnbuy.server.dto.*;
 import com.bidnbuy.server.entity.UserEntity;
+import com.bidnbuy.server.enums.TradeFilterStatus;
 import com.bidnbuy.server.exception.CustomAuthenticationException;
 import com.bidnbuy.server.security.JwtProvider;
 import com.bidnbuy.server.service.*;
@@ -34,6 +35,7 @@ import org.springframework.web.servlet.view.RedirectView;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 @Tag(name = "유저 API", description = "유저 기능 제공")
 @Slf4j
@@ -49,14 +51,16 @@ public class   UserController {
     private final JwtProvider jwtProvider;
     private final EmailService emailService;
     private final ImageService imageService;
+    private final AuctionResultService auctionResultService;
 
     @Autowired
-    public UserController(UserService userService, AuthService authService, JwtProvider jwtProvider, EmailService emailService, ImageService imageService){
+    public UserController(UserService userService, AuthService authService, JwtProvider jwtProvider, EmailService emailService, ImageService imageService, AuctionResultService auctionResultService){
         this.userService = userService;
         this.authService = authService;
         this.jwtProvider = jwtProvider;
         this.emailService = emailService;
         this.imageService = imageService;
+        this.auctionResultService = auctionResultService;
     }
 
     @Value("${naver.client.id}")
@@ -361,6 +365,26 @@ public class   UserController {
         UserProfileSummaryDto profile = userService.getOtherUserProfile(userId, targetId);
 
         return ResponseEntity.ok(profile);
+    }
+
+    @GetMapping("/users/{targetUserId}/sales")
+    public ResponseEntity<?> getUserSales(
+            @PathVariable Long targetUserId,
+            @RequestParam(defaultValue = "all") String status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "end") String sort
+    ) {
+        TradeFilterStatus filter = switch (status.toLowerCase()) {
+            case "completed" -> TradeFilterStatus.COMPLETED;
+            case "ongoing"   -> TradeFilterStatus.ONGOING;
+            default           -> TradeFilterStatus.ALL;
+        };
+
+        List<AuctionSalesHistoryDto> history =
+                auctionResultService.getSalesHistoryBySeller(targetUserId, filter, page, size, sort);
+
+        return ResponseEntity.ok(history);
     }
 
     //로그아웃
