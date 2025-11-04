@@ -22,7 +22,6 @@ public class ChatMessageDto {
 //    private long sellerId;
     private String imageUrl; //s3사용
     private ChatMessageEntity.MessageType messageType;
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", timezone = "UTC")
     private LocalDateTime createdAt;
     private boolean isRead;
 }
