@@ -303,26 +303,4 @@ public interface AuctionProductsRepository extends JpaRepository<AuctionProducts
             nativeQuery = true)
     java.util.Optional<AuctionDetailProjection> findAuctionDetailNative(@Param("auctionId") Long auctionId);
 
-    @Query("""
-        SELECT new com.bidnbuy.server.dto.AuctionSalesHistoryDto(
-            p.id,                    -- 경매 ID
-            p.title,                 -- 상품 제목
-            i.url,                   -- 대표 이미지 URL
-            p.endTime,               -- 경매 종료 예정 시간
-            NULL,                    -- 낙찰가 없음
-            NULL,                    -- 낙찰자 없음
-            p.sellingStatus          -- 판매 상태
-        )
-        FROM AuctionProductsEntity p
-        LEFT JOIN p.mainImage i
-        WHERE p.seller.userId = :sellerId
-          AND p.sellingStatus IN (
-              com.bidnbuy.server.enums.SellingStatus.SALE,
-              com.bidnbuy.server.enums.SellingStatus.PROGRESS
-          )
-    """)
-    List<AuctionSalesHistoryDto> findOngoingBySellerId(
-            @Param("sellerId") Long sellerId,
-            Pageable pageable
-    );
 }

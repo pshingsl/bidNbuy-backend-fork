@@ -274,23 +274,30 @@ public class AuctionResultService {
 
 
     @Transactional(readOnly = true)
-    public List<AuctionSalesHistoryDto> getSalesHistoryBySeller(
-            Long sellerId, TradeFilterStatus filter, int page, int size, String sort
-    ) {
-        Pageable pageable = PageRequest.of(page, size,
-                "start".equalsIgnoreCase(sort)
-                        ? Sort.by("startTime").descending()
-                        : Sort.by("endTime").descending());
+    public List<AuctionSalesHistoryDto> getPurchaseHistoryByUser(Long userId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("endTime").descending());
+        List<AuctionSalesHistoryDto> history = auctionResultRepository.findPurchaseHistoryByUserId(userId, pageable);
 
-        return switch (filter) {
-            case COMPLETED -> auctionResultRepository.findCompletedBySellerId(sellerId, pageable);
-            case ONGOING -> auctionProductsRepository.findOngoingBySellerId(sellerId, pageable);
-            default -> {
-                List<AuctionSalesHistoryDto> ongoing = auctionProductsRepository.findOngoingBySellerId(sellerId, pageable);
-                List<AuctionSalesHistoryDto> completed = auctionResultRepository.findCompletedBySellerId(sellerId, pageable);
-                ongoing.addAll(completed);
-                yield ongoing;
-            }
+        // 상태 텍스트 가공
+        return history.stream()
+                .map(dto -> AuctionSalesHistoryDto.builder()
+                        .auctionId(dto.getAuctionId())
+                        .title(dto.getTitle())
+                        .itemImageUrl(dto.getItemImageUrl())
+                        .startTime(dto.getStartTime())
+                        .endTime(dto.getEndTime())
+                        .finalPrice(dto.getFinalPrice())
+                        .winnerNickname(dto.getWinnerNickname())
+                        .statusText(convertStatusToText(dto.getStatusText())) // 문자열 변환
+                        .build()
+                ).toList();
+    }
+
+    private String convertStatusToText(String resultStatus) {
+        return switch (resultStatus) {
+            case "SUCCESS" -> "낙찰 완료";
+            case "CANCELLED" -> "유찰";
+            default -> "진행중";
         };
     }
 }

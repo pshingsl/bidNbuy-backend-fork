@@ -367,25 +367,17 @@ public class   UserController {
         return ResponseEntity.ok(profile);
     }
 
-    @GetMapping("/users/{targetUserId}/sales")
-    public ResponseEntity<?> getUserSales(
-            @PathVariable Long targetUserId,
-            @RequestParam(defaultValue = "all") String status,
+    // 다른 유저 구매내역 확인
+    @GetMapping("/users/{userId}/purchases")
+    public ResponseEntity<List<AuctionSalesHistoryDto>> getUserPurchaseHistory(
+            @AuthenticationPrincipal Long userId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "end") String sort
+            @RequestParam(defaultValue = "10") int size
     ) {
-        TradeFilterStatus filter = switch (status.toLowerCase()) {
-            case "completed" -> TradeFilterStatus.COMPLETED;
-            case "ongoing"   -> TradeFilterStatus.ONGOING;
-            default           -> TradeFilterStatus.ALL;
-        };
-
-        List<AuctionSalesHistoryDto> history =
-                auctionResultService.getSalesHistoryBySeller(targetUserId, filter, page, size, sort);
-
+        List<AuctionSalesHistoryDto> history = auctionResultService.getPurchaseHistoryByUser(userId, page, size);
         return ResponseEntity.ok(history);
     }
+
 
     //로그아웃
     @PostMapping("/logout")

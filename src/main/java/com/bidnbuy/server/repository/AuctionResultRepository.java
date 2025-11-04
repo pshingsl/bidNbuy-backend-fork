@@ -54,23 +54,22 @@ public interface AuctionResultRepository extends JpaRepository<AuctionResultEnti
     List<AuctionResultEntity> findTop3ByWinnerOrderByOrderUpdatedAtDesc(@Param("userId") Long userId);
 
     @Query("""
-        SELECT new com.bidnbuy.server.dto.AuctionSalesHistoryDto(
-            p.id,                    -- 경매 ID
-            p.title,                 -- 상품 제목
-            i.url,                   -- 상품 대표 이미지 URL
-            r.endTime,               -- 경매 종료 시간
-            r.finalPrice,            -- 낙찰가
-            r.winnerNickname,        -- 낙찰자 닉네임
-            '거래 완료'              -- 상태 텍스트
-        )
-        FROM AuctionResultEntity r
-        JOIN r.product p
-        LEFT JOIN p.mainImage i
-        WHERE p.seller.userId = :sellerId
-          AND r.resultStatus = com.bidnbuy.server.enums.ResultStatus.SUCCESS_COMPLETED
-    """)
-    List<AuctionSalesHistoryDto> findCompletedBySellerId(
-            @Param("sellerId") Long sellerId,
-            Pageable pageable
-    );
+    SELECT new com.bidnbuy.server.dto.AuctionSalesHistoryDto(
+        a.auctionId,
+        a.title,
+    (SELECT i.imageUrl FROM ImageEntity i WHERE i.auctionProduct.auctionId = a.auctionId AND i.imageType = 'MAIN'),
+        a.startTime,
+        a.endTime,
+        r.finalPrice,
+        u.nickname,
+        r.resultStatus
+    )
+    FROM AuctionResultEntity r
+    JOIN r.auction a
+    JOIN r.winner u
+    WHERE r.winner.userId = :userId
+    ORDER BY a.endTime DESC
+""")
+    List<AuctionSalesHistoryDto> findPurchaseHistoryByUserId(@Param("userId") Long userId, Pageable pageable);
+
 }
