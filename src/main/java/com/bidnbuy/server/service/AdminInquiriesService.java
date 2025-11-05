@@ -7,6 +7,7 @@ import com.bidnbuy.server.dto.PagingResponseDto;
 import com.bidnbuy.server.entity.InquiriesEntity;
 import com.bidnbuy.server.entity.AdminEntity;
 import com.bidnbuy.server.enums.InquiryEnums;
+import com.bidnbuy.server.enums.NotificationType;
 import com.bidnbuy.server.repository.InquiriesRepository;
 import com.bidnbuy.server.repository.AdminRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,17 +26,18 @@ import java.util.stream.Collectors;
 @Slf4j
 @Transactional(readOnly = true)
 public class AdminInquiriesService {
-    
+
     private final InquiriesRepository inquiriesRepository;
     private final AdminRepository adminRepository;
+    private final UserNotificationService userNotificationService;
 
     // 문의 목록 조회
     public PagingResponseDto<AdminInquiryListDto> getInquiryList(Pageable pageable, InquiryEnums.InquiryType type, InquiryEnums.InquiryStatus status, String title, String userEmail) {
-        log.info("관리자 문의 목록 조회 요청: page={}, size={}, type={}, status={}, title={}, userEmail={}", 
+        log.info("관리자 문의 목록 조회 요청: page={}, size={}, type={}, status={}, title={}, userEmail={}",
                 pageable.getPageNumber(), pageable.getPageSize(), type, status, title, userEmail);
-        
+
         Page<InquiriesEntity> inquiries;
-        
+
         // 검색 조건 있는 경우
         if (title != null && !title.trim().isEmpty()) {
             // 제목 검색
@@ -75,11 +77,11 @@ public class AdminInquiriesService {
                 inquiries = inquiriesRepository.findAllByOrderByCreatedAtDesc(pageable);
             }
         }
-        
+
         List<AdminInquiryListDto> dtoList = inquiries.getContent().stream()
                 .map(this::convertToInquiryListDto)
                 .collect(Collectors.toList());
-        
+
         return PagingResponseDto.<AdminInquiryListDto>builder()
                 .data(dtoList)
                 .totalPages(inquiries.getTotalPages())
@@ -94,10 +96,10 @@ public class AdminInquiriesService {
     // 문의 상세 조회
     public AdminInquiryDetailDto getInquiryDetail(Long inquiryId) {
         log.info("관리자 문의 상세 조회 요청: inquiryId={}", inquiryId);
-        
+
         InquiriesEntity inquiry = inquiriesRepository.findById(inquiryId)
                 .orElseThrow(() -> new IllegalArgumentException("문의를 찾을 수 없습니다: " + inquiryId));
-        
+
         Long userIdSafe = null;
         String userEmailSafe = null;
         String userNicknameSafe = "탈퇴회원";
@@ -132,35 +134,44 @@ public class AdminInquiriesService {
     @Transactional
     public void replyToInquiry(Long inquiryId, AdminInquiryReplyRequestDto request, Long adminId) {
         log.info("관리자 문의 답변 작성: inquiryId={}, adminId={}", inquiryId, adminId);
-        
+
         InquiriesEntity inquiry = inquiriesRepository.findById(inquiryId)
                 .orElseThrow(() -> new IllegalArgumentException("문의를 찾을 수 없습니다: " + inquiryId));
-        
+
         // 관리자 set
         AdminEntity admin = adminRepository.findById(adminId)
                 .orElseThrow(() -> new IllegalArgumentException("관리자를 찾을 수 없습니다: " + adminId));
-        
+
         inquiry.setAdmin(admin);
         inquiry.setRequestTitle(request.getTitle());
         inquiry.setRequestContent(request.getContent());
         inquiry.setStatus(InquiryEnums.InquiryStatus.COMPLETE); // 답변 시 자동으로 완료 상태 변경
         inquiry.setUpdateAt(LocalDateTime.now());
-        
+
         inquiriesRepository.save(inquiry);
         log.info("문의 답변 작성 완료: inquiryId={}, adminId={}, 상태=COMPLETE", inquiryId, adminId);
+
+        // 문의 작성자에게 알림 발송
+        try {
+            String content = "문의하신 내용에 대한 답변이 등록되었습니다.";
+            userNotificationService.createNotification(inquiry.getUser().getUserId(), NotificationType.NOTICE, content);
+            log.info("✅ 문의 답변 알림 전송 완료: userId={}, inquiryId={}", inquiry.getUser().getUserId(), inquiryId);
+        } catch (Exception e) {
+            log.warn("⚠️ 문의 답변 알림 전송 실패: {}", e.getMessage());
+        }
     }
 
     // 문의 상태 변경
     @Transactional
     public void updateInquiryStatus(Long inquiryId, InquiryEnums.InquiryStatus status) {
         log.info("관리자 문의 상태 변경: inquiryId={}, status={}", inquiryId, status);
-        
+
         InquiriesEntity inquiry = inquiriesRepository.findById(inquiryId)
                 .orElseThrow(() -> new IllegalArgumentException("문의를 찾을 수 없습니다: " + inquiryId));
-        
+
         inquiry.setStatus(status);
         inquiry.setUpdateAt(LocalDateTime.now());
-        
+
         inquiriesRepository.save(inquiry);
         log.info("문의 상태 변경 완료: inquiryId={}, status={}", inquiryId, status);
     }

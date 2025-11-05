@@ -2,6 +2,7 @@ package com.bidnbuy.server.service;
 
 import com.bidnbuy.server.entity.PenaltyEntity;
 import com.bidnbuy.server.entity.UserEntity;
+import com.bidnbuy.server.enums.NotificationType;
 import com.bidnbuy.server.enums.PenaltyType;
 import com.bidnbuy.server.repository.PenaltyRepository;
 import com.bidnbuy.server.repository.UserRepository;
@@ -17,17 +18,18 @@ import java.time.LocalDateTime;
 @Slf4j
 @Transactional
 public class PenaltyService {
-    
+
     private final PenaltyRepository penaltyRepository;
     private final UserRepository userRepository;
+    private final UserNotificationService userNotificationService;
 
     // 페널티 부과
     public void applyPenalty(Long userId, PenaltyType type) {
         log.info("페널티 부과 시작: userId={}, type={}", userId, type);
-        
+
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + userId));
-        
+
         // 페널티 기록
         PenaltyEntity penalty = PenaltyEntity.builder()
                 .user(user)
@@ -35,16 +37,26 @@ public class PenaltyService {
                 .points(type.getPoints())
                 .build();
         penaltyRepository.save(penalty);
-        
+
         // 누적 업데이트
         int newTotalPoints = user.getPenaltyPoints() + type.getPoints();
         user.setPenaltyPoints(newTotalPoints);
-        
+
         log.info("누적 페널티 점수 업데이트: {} -> {}", user.getPenaltyPoints() - type.getPoints(), newTotalPoints);
-        
+
         // 제재 로직 실행
         checkAndApplySanctions(user, newTotalPoints);
-        
+
+        // 페널티 알림 전송
+        String penaltyMessage = "페널티 부과 안내";
+
+        try {
+            userNotificationService.createNotification(userId, NotificationType.WARN, penaltyMessage);
+            log.info("✅ 페널티 알림 전송 완료: userId={}, message={}", userId, penaltyMessage);
+        } catch (Exception e) {
+            log.warn("⚠️ 페널티 알림 전송 실패: {}", e.getMessage());
+        }
+
         userRepository.save(user);
         log.info("페널티 부과 완료: userId={}, totalPoints={}", userId, newTotalPoints);
     }
