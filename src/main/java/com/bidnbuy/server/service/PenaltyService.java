@@ -48,7 +48,9 @@ public class PenaltyService {
         checkAndApplySanctions(user, newTotalPoints);
 
         // 페널티 알림 전송
-        String penaltyMessage = "페널티 부과 안내";
+        String penaltyMessage = "페널티 부과 안내: 서비스의 정책사항을 위반한 행위로 "
+                + type.getPoints() + "점이 부과되었습니다.";
+
 
         try {
             userNotificationService.createNotification(userId, NotificationType.WARN, penaltyMessage);

@@ -2,6 +2,7 @@ package com.bidnbuy.server.service;
 
 import com.bidnbuy.server.dto.*;
 import com.bidnbuy.server.entity.*;
+import com.bidnbuy.server.enums.NotificationType;
 import com.bidnbuy.server.enums.ResultStatus;
 import com.bidnbuy.server.repository.*;
 import jakarta.persistence.EntityNotFoundException;
@@ -27,6 +28,7 @@ public class OrderService {
     private final ChatMessageService chatMessageService;
     private final ChatRoomRepository chatRoomRepository;
     private final AuctionProductsRepository auctionProductsRepository;
+    private final UserNotificationService notificationService;
 
     // 볍점 부여
     @Transactional
@@ -196,34 +198,71 @@ public class OrderService {
         List<OrderEntity> expiredOrders = orderRepository.findExpiredOrders(deadline);
 
         for (OrderEntity order : expiredOrders) {
-            // CASE A: 아직 결제 안 됨 → 주문만 취소
-            if (order.getPayment() == null) {
+            // CASE A: 아직 결제 안 됨 (PENDING)
+            if ("PENDING".equalsIgnoreCase(order.getOrderStatus())) {
                 order.setOrderStatus("CANCELED");
                 order.setUpdatedAt(LocalDateTime.now());
                 orderRepository.save(order);
+
+                try {
+                    // 자동 취소 알림 추가
+                    String cancelMessage = String.format(
+                            "결제 기한이 만료되어 주문이 자동 취소되었습니다. (주문번호: %d)",
+                            order.getOrderId()
+                    );
+
+                    Long buyerId = order.getBuyer().getUserId();
+
+                    notificationService.createNotificationforChat(
+                            buyerId,
+                            NotificationType.ALERT,   // 일반 알림 타입
+                            cancelMessage,
+                            order.getResult() != null ? order.getResult().getAuction().getAuctionId() : null,
+                            order.getSeller().getUserId()
+                    );
+
+                    log.info("🕒 [자동취소] PENDING 주문 자동취소 및 알림 전송 완료 - orderId={}", order.getOrderId());
+                } catch (Exception e) {
+                    log.error("⚠️ [자동취소] PENDING 주문 알림 실패 - orderId={}, error={}", order.getOrderId(), e.getMessage());
+                }
+
                 continue;
             }
 
-            // CASE B: 결제 완료된 주문 → Toss 취소 + 로그 남기기 + 주문 취소
-            try {
-                Integer cancelAmount = order.getPayment().getTotalAmount();
+            // CASE B: 결제 완료된 주문 (PAID)
+            if ("PAID".equalsIgnoreCase(order.getOrderStatus())) {
+                try {
+                    Integer cancelAmount = order.getPayment().getTotalAmount();
 
-                // paymentService의 cancelPayment() 재사용 (일반 취소 로직 그대로 활용)
-                PaymentCancelRequestDto dto = new PaymentCancelRequestDto(
-                        order.getPayment().getTossPaymentKey(),
-                        "결제 기한 초과 자동 취소",
-                        cancelAmount
-                );
-                paymentService.cancelPayment(dto);
+                    PaymentCancelRequestDto dto = new PaymentCancelRequestDto(
+                            order.getPayment().getTossPaymentKey(),
+                            "결제 기한 초과 자동 취소",
+                            cancelAmount
+                    );
+                    paymentService.cancelPayment(dto);
 
-                // 주문 취소 상태 반영
-                order.setOrderStatus("CANCELED");
-                order.setUpdatedAt(LocalDateTime.now());
-                orderRepository.save(order);
+                    order.setOrderStatus("CANCELED");
+                    order.setUpdatedAt(LocalDateTime.now());
+                    orderRepository.save(order);
 
-            } catch (Exception e) {
-                // 예외 발생 시 로그만 남기고 넘어가기 (스케줄 전체 멈추지 않게)
-                System.err.println("자동 취소 실패 (orderId=" + order.getOrderId() + "): " + e.getMessage());
+                    // 결제된 주문도 알림 전송 추가
+                    String paidCancelMessage = String.format(
+                            "결제 완료된 주문이 기한 초과로 자동 취소되었습니다. (주문번호: %d)",
+                            order.getOrderId()
+                    );
+
+                    notificationService.createNotificationforChat(
+                            order.getBuyer().getUserId(),
+                            NotificationType.ALERT,
+                            paidCancelMessage,
+                            order.getResult() != null ? order.getResult().getAuction().getAuctionId() : null,
+                            order.getSeller().getUserId()
+                    );
+
+                    log.info("💳 [자동취소] PAID 주문 자동취소 및 알림 전송 완료 - orderId={}", order.getOrderId());
+                } catch (Exception e) {
+                    log.error("자동 취소 실패 (orderId={}): {}", order.getOrderId(), e.getMessage());
+                }
             }
         }
     }
