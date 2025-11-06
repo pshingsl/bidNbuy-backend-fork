@@ -30,7 +30,7 @@ Bid&Buy는 이런 간극을 해소하기 위해 중고거래에 경매 방식을
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
 ![React](https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=black)
 ![Axios](https://img.shields.io/badge/Axios-5A29E4?style=for-the-badge&logo=axios&logoColor=white)
-![JuiceStand](https://img.shields.io/badge/JuiceStand-FF7F50?style=for-the-badge&logo=apple&logoColor=white)
+![Zustand](https://img.shields.io/badge/Zustand-000000?style=for-the-badge&logo=Zustand&logoColor=white)
 
 
 ### Backend
