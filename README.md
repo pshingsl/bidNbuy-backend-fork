@@ -16,9 +16,9 @@ Bid&Buy는 이런 간극을 해소하기 위해 중고거래에 경매 방식을
 
 ---
 ## 🗓️ 프로젝트 개요
-- **개발 기간:** 2025.09.24 ~ 2025.10
+- **개발 기간:** 2025.09.24 ~ 2025.11.05
 - **참여 인원:** 6명
-- **주요 기능:** 사용자 인증, 실시간 입찰, 채팅, 상품 등록/조회, 결제, 관리자 페이지
+- **주요 기능:** 사용자 인증, 상품 등록/조회, 실시간 입찰, 채팅, 결제, 관리자 페이지
 
 ---
 
@@ -42,17 +42,18 @@ Bid&Buy는 이런 간극을 해소하기 위해 중고거래에 경매 방식을
 ![WebSocket](https://img.shields.io/badge/WebSocket-FF6C37?style=for-the-badge&logo=socket.io&logoColor=white)
 ![STOMP](https://img.shields.io/badge/STOMP-CC0000?style=for-the-badge&logo=stomp&logoColor=white)
 ![FCM](https://img.shields.io/badge/FCM-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)
-![Socket.io](https://img.shields.io/badge/Socket.io-010101?style=for-the-badge&logo=socketdotio&logoColor=white)
 
 
 ### Infra & Tools
 ![AWS EC2](https://img.shields.io/badge/AWS%20EC2-FF9900?style=for-the-badge&logo=amazon-ec2&logoColor=white)
 ![AWS S3](https://img.shields.io/badge/AWS%20S3-569A31?style=for-the-badge&logo=amazon-s3&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 ![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)
 ![Notion](https://img.shields.io/badge/Notion-000000?style=for-the-badge&logo=notion&logoColor=white)
 ![Figma](https://img.shields.io/badge/Figma-F24E1E?style=for-the-badge&logo=figma&logoColor=white)
 ![Discord](https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white)
 ![Slack](https://img.shields.io/badge/Slack-4A154B?style=for-the-badge&logo=slack&logoColor=white)
+
 ---
 
 ## 👥 팀원 소개
@@ -68,8 +69,8 @@ Bid&Buy는 이런 간극을 해소하기 위해 중고거래에 경매 방식을
 ## 🚀 주요 기능
 - 🧑‍💻 **회원가입 / 로그인 (Spring Security, STOMP, JWT 인증)**
 - 📦 **상품 등록 / 조회**
-- ⚡ **실시간 입찰 (Socket.io 기반)**
-- 💬 **채팅 (Socket.io 기반)**
+- ⚡ **실시간 입찰**
+- 💬 **채팅 (WebSocket, STOMP 기반)**
 - 💳 **결제 및 거래 내역 관리**
 - 🛠️ **관리자 페이지 (상품 및 사용자 관리)**
 
@@ -77,3 +78,20 @@ Bid&Buy는 이런 간극을 해소하기 위해 중고거래에 경매 방식을
 ## 💻 배포 주소
 @@@
 
+---
+## 🔧 개선 방안
+
+---
+## 👀 실제 동작 화면
+
+---
+### 🛠️ 기능 추가 및 보완
+- 관리자 내 통계 기능 및 단어 필터링 기능 추가
+- 채팅 주소 입력 모달 구현
+- 탈퇴 회원 접근 방지 처리 (가드 추가)
+- 판매 상태 관리 로직 개선
+
+### 📊 테스트 및 성능
+- 부하 테스트 진행
+- 성능 최적화 (쿼리, 렌더링 등)
+- Redis 확장 및 운영 관리
