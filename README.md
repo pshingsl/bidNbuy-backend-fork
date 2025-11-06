@@ -30,6 +30,7 @@ Bid&Buy는 이런 간극을 해소하기 위해 중고거래에 경매 방식을
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
 ![React](https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=black)
 ![Axios](https://img.shields.io/badge/Axios-5A29E4?style=for-the-badge&logo=axios&logoColor=white)
+![JuiceStand](https://img.shields.io/badge/JuiceStand-FF7F50?style=for-the-badge&logo=apple&logoColor=white)
 
 
 ### Backend
@@ -79,12 +80,10 @@ Bid&Buy는 이런 간극을 해소하기 위해 중고거래에 경매 방식을
 @@@
 
 ---
-## 🔧 개선 방안
-
----
 ## 👀 실제 동작 화면
 
 ---
+## 🔧 개선 방안
 ### 🛠️ 기능 추가 및 보완
 - 관리자 내 통계 기능 및 단어 필터링 기능 추가
 - 채팅 주소 입력 모달 구현
