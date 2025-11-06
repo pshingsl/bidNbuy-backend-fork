@@ -10,6 +10,7 @@ import software.amazon.awssdk.services.s3.model.ObjectCannedACL;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -23,11 +24,24 @@ public class S3UploadService {
     @Value("${SPRING_AWS_REGION}")
     private String region;
 
+    // 이미지 보안 검사 추가
+    private static final List<String> ALLOWED_CONTENT_TYPE = List.of(
+            "image/jpeg",
+            "image/png",
+            "image/gif",
+            "image/webp" // 필요한 경우 추가
+    );
+
     public S3UploadService(S3Client s3Client) {
         this.s3Client = s3Client;
     }
 
     public String uploadFile(MultipartFile multipartFile, String directory) throws IOException {
+
+        String mimeType = multipartFile.getContentType();
+        if(mimeType == null || !ALLOWED_CONTENT_TYPE.contains(mimeType.toLowerCase())) {
+            throw new IllegalArgumentException("허용되지 않는 파일 형식입니다." + mimeType);
+        }
 
         // 파일 이름 생성
         String originalFileName = multipartFile.getOriginalFilename();
@@ -63,4 +77,5 @@ public class S3UploadService {
             System.err.println("S3 파일 삭제 실패: " + e.getMessage());
         }
     }
+
 }
