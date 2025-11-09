@@ -74,7 +74,8 @@ public class AdminUserService {
     public AdminUserDetailDto getUserDetail(Long userId) {
         log.info("회원 상세 조회 요청: userId={}", userId);
         
-        UserEntity user = userRepository.findById(userId)
+        // 삭제 회원 포함 조회
+        UserEntity user = userRepository.findByIdIncludingDeleted(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + userId));
         
         List<PenaltyEntity> penaltyEntities = penaltyRepository.findByUserOrderByCreatedAtDesc(user);

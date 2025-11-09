@@ -22,13 +22,17 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
     UserEntity findByEmailAndDeletedAtIsNull(String email);
 
     // 관리자용
-    // 모든 사용자 조회 (강퇴 포함)
+    // 모든 사용자 조회 (삭제 포함)
     @Query(value = "SELECT * FROM user ORDER BY created_at DESC", nativeQuery = true)
     java.util.List<UserEntity> findAllIncludingDeleted();
 
-    // 이메일 검색 (강퇴 포함)
+    // 이메일 검색 (삭제 포함)
     @Query(value = "SELECT * FROM user WHERE email LIKE CONCAT('%', :email, '%') ORDER BY created_at DESC", nativeQuery = true)
     java.util.List<UserEntity> findByEmailContainingIgnoreCaseIncludingDeleted(String email);
+
+    // 삭제 유저 포함 상세
+    @Query(value = "SELECT * FROM user WHERE user_id = :userId", nativeQuery = true)
+    Optional<UserEntity> findByIdIncludingDeleted(Long userId);
 
     // 정지된 사용자 조회 (스케줄러용)
     List<UserEntity> findByIsSuspendedTrue();
@@ -39,7 +43,7 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
     // 정지 해제된 사용자 조회
     @Query("SELECT u FROM UserEntity u WHERE u.isSuspended = true AND u.suspendedUntil < CURRENT_TIMESTAMP")
     List<UserEntity> findExpiredSuspensions();
-    
+
     // 락 메서드 - 페널티 부과 관련 동시성 제어 위해
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT u FROM UserEntity u WHERE u.userId = :userId")
