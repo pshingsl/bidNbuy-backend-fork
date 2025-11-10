@@ -100,8 +100,8 @@ public class ChatMessageService {
         UserEntity currentUser = userRepository.findById(currentUserId)
                 .orElseThrow(()-> new EntityNotFoundException("유저를 찾을 수 없습니다."));
 
-        Long buyerId = chatRoom.getBuyerId().getUserId();
-        Long sellerId = chatRoom.getSellerId().getUserId();
+        Long buyerId = chatRoom.getBuyerId() != null ? chatRoom.getBuyerId().getUserId():null;
+        Long sellerId = chatRoom.getSellerId() != null ? chatRoom.getSellerId().getUserId():null;
 
         if(currentUserId.equals(buyerId)||currentUserId.equals(sellerId)){
             markMessagesAsRead(chatRoom, currentUser);
@@ -117,10 +117,12 @@ public class ChatMessageService {
     }
 
     public ChatMessageDto convertToDto(ChatMessageEntity entity){
+        Long senderUserId = entity.getSenderId() != null ? entity.getSenderId().getUserId() : null;
+
         return ChatMessageDto.builder()
                 .chatmessageId(entity.getChatmessageId())
                 .chatroomId(entity.getChatroomId().getChatroomId())
-                .senderId(entity.getSenderId().getUserId())
+                .senderId(senderUserId)
                 .message(entity.getMessage())
                 .imageUrl(entity.getImageUrl())
                 .messageType(entity.getMessageType())
@@ -136,12 +138,16 @@ public class ChatMessageService {
                 .orElseThrow(()-> new EntityNotFoundException("채팅방을 찾을 수 없음"));
         UserEntity reader = userRepository.findById(currentUserId)
                 .orElseThrow(()-> new EntityNotFoundException("유저를 찾을 수 없습니다."));
-        Long buyerId = chatRoom.getBuyerId().getUserId();
-        Long sellerId = chatRoom.getSellerId().getUserId();
-        if(!currentUserId.equals(buyerId)&& !currentUserId.equals(sellerId)){
+
+        Long buyerId = chatRoom.getBuyerId() != null? chatRoom.getBuyerId().getUserId():null;
+        Long sellerId = chatRoom.getSellerId() != null? chatRoom.getSellerId().getUserId():null;
+
+        if((buyerId != null && currentUserId.equals(buyerId))||
+            (sellerId != null && currentUserId.equals(sellerId))){
+            markMessagesAsRead(chatRoom, reader);
+        }else{
             throw new AccessDeniedException("접근 권한이 없습니다.");
         }
-        markMessagesAsRead(chatRoom, reader);
     }
 
     //메세지 읽음 처리하기(실시간 반영)
@@ -176,15 +182,17 @@ public class ChatMessageService {
                 .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없습니다."));
 
         //권한 확인
-        Long buyerId = chatRoom.getBuyerId().getUserId();
-        Long sellerId = chatRoom.getSellerId().getUserId();
-        if(!currentUserId.equals(buyerId)&& !currentUserId.equals(sellerId)){
+        Long buyerId = chatRoom.getBuyerId() != null? chatRoom.getBuyerId().getUserId():null;
+        Long sellerId = chatRoom.getSellerId() != null? chatRoom.getSellerId().getUserId():null;
+
+        if((buyerId != null && currentUserId.equals(buyerId)) ||
+                (sellerId != null && currentUserId.equals(sellerId))){
+            return chatMessageRepository.countByChatroomIdAndSenderIdNotAndIsRead(
+                    chatRoom,
+                    currentUser,
+                    false );
+        }else{
             throw new AccessDeniedException("접근 권한이 없습니다.");
         }
-        return chatMessageRepository.countByChatroomIdAndSenderIdNotAndIsRead(
-                chatRoom,
-                currentUser,
-                false
-        );
     }
 }
