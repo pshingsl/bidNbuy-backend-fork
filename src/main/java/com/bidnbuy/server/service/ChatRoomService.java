@@ -164,8 +164,8 @@ public class ChatRoomService {
         ChatRoomEntity chatRoom = chatRoomRepository.findById(chatroomId)
                 .orElseThrow(()-> new EntityNotFoundException("채팅방을 찾을 수 없습니다."));
 
-        Long buyerId = chatRoom.getBuyerId().getUserId();
-        Long sellerId = chatRoom.getSellerId().getUserId();
+        Long buyerId = chatRoom.getBuyerId() != null? chatRoom.getBuyerId().getUserId():null;
+        Long sellerId = chatRoom.getSellerId() != null? chatRoom.getSellerId().getUserId():null;
 
         if(!currentUserId.equals(buyerId) && !currentUserId.equals(sellerId)){
             throw new AccessDeniedException("채팅방 삭제 권한이 없습니다.");
