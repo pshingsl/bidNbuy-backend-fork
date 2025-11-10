@@ -43,7 +43,12 @@ public class AuctionSchedulerService {
         log.info("마감 시간이 된 경매 상품 수: {}", finishedAuctions.size());
 
         for (AuctionProductsEntity auction : finishedAuctions) {
-            processAuctionClosing(auction);
+            // 11/10 기존 코드에서 try=catch 추가
+            try {
+                processAuctionClosing((auction));
+            }catch (Exception e) {
+                log.error("❌ 경매 마감 처리 중 예외 발생: Auction ID {} - {}", auction.getAuctionId(), e.getMessage(), e);
+            }
         }
     }
 
