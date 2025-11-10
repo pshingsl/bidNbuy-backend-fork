@@ -105,24 +105,32 @@ public class AuctionBidService {
     @Transactional(readOnly = true) // ⭐️ 조회 전용 트랜잭션으로 설정
     public List<AuctionBidDto> getBidsByAuction(Long auctionId) {
 
-        // 1. 입찰기록 최고가 순으로 조화
+        // 입찰기록 최고가 순으로 조화
         List<AuctionBidsEntity> bids = auctionBidRepository.findByAuction_AuctionIdOrderByBidPriceDesc(auctionId);
 
-        // 2. 조회된 Entity 리스트를 DTO 리스트로 변환
+        // 조회된 Entity 리스트를 DTO 리스트로 변환
         if (bids.isEmpty()) {
             // 입찰 기록이 없는 경우 빈 리스트 반환
             return Collections.emptyList();
         }
 
-        // 3. Stream을 사용하여 Entity를 DTO로 매핑
+        //  Stream을 사용하여 Entity를 DTO로 매핑
         return bids.stream()
-                .map(bid -> AuctionBidDto.builder()
-                        .bidId(bid.getBidId())
-                        .userId(bid.getUser().getUserId()) // User Entity에서 ID 추출
-                        .auctionId(auctionId)
-                        .bidPrice(bid.getBidPrice())
-                        .bidTime(bid.getBidTime())
-                        .build())
+                .map(bid -> {
+                    Long userIdSafe = null;
+
+                    if(bid.getUser() != null){
+                        userIdSafe = bid.getUser().getUserId();
+                    }
+                    return AuctionBidDto.builder()
+                            .bidId(bid.getBidId())
+                            // 안전하게 가져온 userIdSafe 사용
+                            .userId(userIdSafe)
+                            .auctionId(auctionId)
+                            .bidPrice(bid.getBidPrice())
+                            .bidTime(bid.getBidTime())
+                            .build();
+                })
                 .collect(Collectors.toList());
     }
 }
