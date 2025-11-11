@@ -126,6 +126,7 @@ public class SecurityConfig {
                     ).permitAll()
                     .requestMatchers(HttpMethod.GET, "/admin/**").hasAnyRole("ADMIN", "ADMIN_VIEWER")
                     .requestMatchers("/admin/**").hasRole("ADMIN")
+                    .requestMatchers("/auctions/admin/**").hasRole("ADMIN")
 
                     .anyRequest().authenticated()
                 )
