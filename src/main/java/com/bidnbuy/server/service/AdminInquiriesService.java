@@ -9,9 +9,11 @@ import com.bidnbuy.server.entity.AdminEntity;
 import com.bidnbuy.server.entity.UserEntity;
 import com.bidnbuy.server.enums.InquiryEnums;
 import com.bidnbuy.server.enums.NotificationType;
+import com.bidnbuy.server.enums.UserStatus;
 import com.bidnbuy.server.repository.InquiriesRepository;
 import com.bidnbuy.server.repository.AdminRepository;
 import com.bidnbuy.server.repository.UserRepository;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -33,6 +35,8 @@ public class AdminInquiriesService {
     private final AdminRepository adminRepository;
     private final UserNotificationService userNotificationService;
     private final UserRepository userRepository;
+
+    private final EntityManager entityManager;
 
     // 삭제 유저 것도 포함시킴
 
@@ -84,7 +88,11 @@ public class AdminInquiriesService {
         }
 
         List<AdminInquiryListDto> dtoList = inquiries.getContent().stream()
-                .map(this::convertToInquiryListDto)
+                .map(inquiry -> {
+                    // 네이티브쿼리 결과 detach, jpa 자동 로딩 및 더티체킹 방지
+                    entityManager.detach(inquiry);
+                    return convertToInquiryListDto(inquiry);
+                })
                 .collect(Collectors.toList());
 
         return PagingResponseDto.<AdminInquiryListDto>builder()
@@ -104,6 +112,9 @@ public class AdminInquiriesService {
 
         InquiriesEntity inquiry = inquiriesRepository.findByIdIncludingDeletedUser(inquiryId)
                 .orElseThrow(() -> new IllegalArgumentException("문의를 찾을 수 없습니다: " + inquiryId));
+        
+        // 네이티브쿼리 결과 detach..
+        entityManager.detach(inquiry);
 
         Long userIdSafe = null;
         String userEmailSafe = null;
@@ -123,6 +134,14 @@ public class AdminInquiriesService {
             log.warn("Inquiry detail: user information retrieval failed. inquiryId={}, error={}", inquiryId, e.getMessage());
         }
 
+        // adminId조회
+        Long adminIdSafe = null;
+        try {
+            adminIdSafe = inquiriesRepository.findAdminIdByInquiryIdNative(inquiryId);
+        } catch (Exception e) {
+            log.warn("Inquiry detail: admin information retrieval failed. inquiryId={}, error={}", inquiryId, e.getMessage());
+        }
+
         return AdminInquiryDetailDto.builder()
                 .inquiriesId(inquiry.getInquiriesId())
                 .title(inquiry.getTitle())
@@ -134,7 +153,7 @@ public class AdminInquiriesService {
                 .userId(userIdSafe)
                 .userEmail(userEmailSafe)
                 .userNickname(userNicknameSafe)
-                .adminId(inquiry.getAdmin() != null ? inquiry.getAdmin().getAdminId() : null)
+                .adminId(adminIdSafe)
                 .requestTitle(inquiry.getRequestTitle())
                 .requestContent(inquiry.getRequestContent())
                 .build();
@@ -148,21 +167,23 @@ public class AdminInquiriesService {
         InquiriesEntity inquiry = inquiriesRepository.findByIdIncludingDeletedUser(inquiryId)
                 .orElseThrow(() -> new IllegalArgumentException("문의를 찾을 수 없습니다: " + inquiryId));
 
-        // 삭제 유저 문의는 답변 불가
-        try {
-            Long userIdFromDb = inquiriesRepository.findUserIdByInquiryIdNative(inquiryId);
-            if (userIdFromDb != null) {
-                UserEntity user = userRepository.findByIdIncludingDeleted(userIdFromDb).orElse(null);
-                if (user != null && user.getDeletedAt() != null) {
-                    throw new IllegalArgumentException("탈퇴한 회원의 문의에는 답변할 수 없습니다.");
-                }
-            }
-        } catch (IllegalArgumentException e) {
-            throw e; // 답변 불가 예외는 그대로 전달
-        } catch (Exception e) {
-            log.warn("문의 답변: 유저 정보 조회 실패. inquiryId={}, error={}", inquiryId, e.getMessage());
-            // 유저 정보 조회 실패 시에도 답변은 가능하도록 진행 (안전장치)
+        Long userIdFromDb = inquiriesRepository.findUserIdByInquiryIdNative(inquiryId);
+        if (userIdFromDb == null) {
+            throw new IllegalArgumentException("문의 작성자 정보를 찾을 수 없습니다: " + inquiryId);
         }
+        
+        UserEntity user = userRepository.findByIdIncludingDeleted(userIdFromDb).orElse(null);
+        if (user == null) {
+            throw new IllegalArgumentException("문의 작성자 정보를 찾을 수 없습니다: " + inquiryId);
+        }
+
+        // 삭제 유저 문의는 답변 불가
+        if (user.getDeletedAt() != null || user.getUserStatus() == UserStatus.B || user.getBanCount() > 0) {
+            throw new IllegalArgumentException("삭제된 사용자 문의에는 답변할 수 없습니다.");
+        }
+        
+        // 수정 작업 위해 user 필드 복원
+        inquiry.setUser(user);
 
         // 관리자 set
         AdminEntity admin = adminRepository.findById(adminId)
@@ -179,17 +200,9 @@ public class AdminInquiriesService {
 
         // 문의 작성자에게 알림 발송 (탈퇴 회원인 경우x)
         try {
-            Long userIdFromDb = inquiriesRepository.findUserIdByInquiryIdNative(inquiryId);
-            if (userIdFromDb != null) {
-                UserEntity user = userRepository.findByIdIncludingDeleted(userIdFromDb).orElse(null);
-                if (user != null && user.getDeletedAt() == null) {
-                    String content = "문의하신 내용에 대한 답변이 등록되었습니다.";
-                    userNotificationService.createNotification(user.getUserId(), NotificationType.NOTICE, content);
-                    log.info("문의 답변 알림 전송 완료: userId={}, inquiryId={}", user.getUserId(), inquiryId);
-                } else {
-                    log.warn("문의 답변 알림 전송 건너뜀: 탈퇴 회원 (inquiryId={})", inquiryId);
-                }
-            }
+            String content = "문의하신 내용에 대한 답변이 등록되었습니다.";
+            userNotificationService.createNotification(user.getUserId(), NotificationType.NOTICE, content);
+            log.info("문의 답변 알림 전송 완료: userId={}, inquiryId={}", user.getUserId(), inquiryId);
         } catch (Exception e) {
             log.warn("문의 답변 알림 전송 실패: {}", e.getMessage());
         }
@@ -200,13 +213,12 @@ public class AdminInquiriesService {
     public void updateInquiryStatus(Long inquiryId, InquiryEnums.InquiryStatus status) {
         log.info("관리자 문의 상태 변경: inquiryId={}, status={}", inquiryId, status);
 
-        InquiriesEntity inquiry = inquiriesRepository.findByIdIncludingDeletedUser(inquiryId)
-                .orElseThrow(() -> new IllegalArgumentException("문의를 찾을 수 없습니다: " + inquiryId));
-
-        inquiry.setStatus(status);
-        inquiry.setUpdateAt(LocalDateTime.now());
-
-        inquiriesRepository.save(inquiry);
+        // 부분 업데이트로 상태 변경
+        int changed = inquiriesRepository.updateStatusOnly(inquiryId, status, LocalDateTime.now());
+        if (changed == 0) {
+            throw new IllegalArgumentException("문의를 찾을 수 없습니다: " + inquiryId);
+        }
+        
         log.info("문의 상태 변경 완료: inquiryId={}, status={}", inquiryId, status);
     }
 
