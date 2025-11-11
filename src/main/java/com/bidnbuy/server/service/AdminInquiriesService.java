@@ -6,10 +6,12 @@ import com.bidnbuy.server.dto.AdminInquiryReplyRequestDto;
 import com.bidnbuy.server.dto.PagingResponseDto;
 import com.bidnbuy.server.entity.InquiriesEntity;
 import com.bidnbuy.server.entity.AdminEntity;
+import com.bidnbuy.server.entity.UserEntity;
 import com.bidnbuy.server.enums.InquiryEnums;
 import com.bidnbuy.server.enums.NotificationType;
 import com.bidnbuy.server.repository.InquiriesRepository;
 import com.bidnbuy.server.repository.AdminRepository;
+import com.bidnbuy.server.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -30,6 +32,9 @@ public class AdminInquiriesService {
     private final InquiriesRepository inquiriesRepository;
     private final AdminRepository adminRepository;
     private final UserNotificationService userNotificationService;
+    private final UserRepository userRepository;
+
+    // 삭제 유저 것도 포함시킴
 
     // 문의 목록 조회
     public PagingResponseDto<AdminInquiryListDto> getInquiryList(Pageable pageable, InquiryEnums.InquiryType type, InquiryEnums.InquiryStatus status, String title, String userEmail) {
@@ -42,22 +47,22 @@ public class AdminInquiriesService {
         if (title != null && !title.trim().isEmpty()) {
             // 제목 검색
             if (type != null && status != null) {
-                inquiries = inquiriesRepository.findByTitleContainingIgnoreCaseAndTypeAndStatusOrderByCreatedAtDesc(title, type, status, pageable);
+                inquiries = inquiriesRepository.findByTitleContainingIgnoreCaseAndTypeAndStatusOrderByCreatedAtDesc(title, type.name(), status.name(), pageable);
             } else if (type != null) {
-                inquiries = inquiriesRepository.findByTitleContainingIgnoreCaseAndTypeOrderByCreatedAtDesc(title, type, pageable);
+                inquiries = inquiriesRepository.findByTitleContainingIgnoreCaseAndTypeOrderByCreatedAtDesc(title, type.name(), pageable);
             } else if (status != null) {
-                inquiries = inquiriesRepository.findByTitleContainingIgnoreCaseAndStatusOrderByCreatedAtDesc(title, status, pageable);
+                inquiries = inquiriesRepository.findByTitleContainingIgnoreCaseAndStatusOrderByCreatedAtDesc(title, status.name(), pageable);
             } else {
                 inquiries = inquiriesRepository.findByTitleContainingIgnoreCaseOrderByCreatedAtDesc(title, pageable);
             }
         } else if (userEmail != null && !userEmail.trim().isEmpty()) {
             // 작성자(이메일) 검색
             if (type != null && status != null) {
-                inquiries = inquiriesRepository.findByUserEmailContainingIgnoreCaseAndTypeAndStatusOrderByCreatedAtDesc(userEmail, type, status, pageable);
+                inquiries = inquiriesRepository.findByUserEmailContainingIgnoreCaseAndTypeAndStatusOrderByCreatedAtDesc(userEmail, type.name(), status.name(), pageable);
             } else if (type != null) {
-                inquiries = inquiriesRepository.findByUserEmailContainingIgnoreCaseAndTypeOrderByCreatedAtDesc(userEmail, type, pageable);
+                inquiries = inquiriesRepository.findByUserEmailContainingIgnoreCaseAndTypeOrderByCreatedAtDesc(userEmail, type.name(), pageable);
             } else if (status != null) {
-                inquiries = inquiriesRepository.findByUserEmailContainingIgnoreCaseAndStatusOrderByCreatedAtDesc(userEmail, status, pageable);
+                inquiries = inquiriesRepository.findByUserEmailContainingIgnoreCaseAndStatusOrderByCreatedAtDesc(userEmail, status.name(), pageable);
             } else {
                 inquiries = inquiriesRepository.findByUserEmailContainingIgnoreCaseOrderByCreatedAtDesc(userEmail, pageable);
             }
@@ -65,13 +70,13 @@ public class AdminInquiriesService {
             // 검색 조건 없는 경우
             if (type != null && status != null) {
                 // 타입+상태 필터링
-                inquiries = inquiriesRepository.findByTypeAndStatusOrderByCreatedAtDesc(type, status, pageable);
+                inquiries = inquiriesRepository.findByTypeAndStatusOrderByCreatedAtDesc(type.name(), status.name(), pageable);
             } else if (type != null) {
                 // 타입
-                inquiries = inquiriesRepository.findByTypeOrderByCreatedAtDesc(type, pageable);
+                inquiries = inquiriesRepository.findByTypeOrderByCreatedAtDesc(type.name(), pageable);
             } else if (status != null) {
                 // 상태
-                inquiries = inquiriesRepository.findByStatusOrderByCreatedAtDesc(status, pageable);
+                inquiries = inquiriesRepository.findByStatusOrderByCreatedAtDesc(status.name(), pageable);
             } else {
                 // 전체 조회
                 inquiries = inquiriesRepository.findAllByOrderByCreatedAtDesc(pageable);
@@ -97,20 +102,25 @@ public class AdminInquiriesService {
     public AdminInquiryDetailDto getInquiryDetail(Long inquiryId) {
         log.info("관리자 문의 상세 조회 요청: inquiryId={}", inquiryId);
 
-        InquiriesEntity inquiry = inquiriesRepository.findById(inquiryId)
+        InquiriesEntity inquiry = inquiriesRepository.findByIdIncludingDeletedUser(inquiryId)
                 .orElseThrow(() -> new IllegalArgumentException("문의를 찾을 수 없습니다: " + inquiryId));
 
         Long userIdSafe = null;
         String userEmailSafe = null;
-        String userNicknameSafe = "탈퇴회원";
+        String userNicknameSafe = null;
         try {
-            if (inquiry.getUser() != null) {
-                userIdSafe = inquiry.getUser().getUserId();
-                userEmailSafe = inquiry.getUser().getEmail();
-                userNicknameSafe = inquiry.getUser().getNickname();
+            Long userIdFromDb = inquiriesRepository.findUserIdByInquiryIdNative(inquiryId);
+            if (userIdFromDb != null) {
+                UserEntity user = userRepository.findByIdIncludingDeleted(userIdFromDb).orElse(null);
+                if (user != null) {
+                    userIdSafe = user.getUserId();
+                    userEmailSafe = user.getEmail();
+                    // 삭제 유저면 "탈퇴회원" 표시
+                    userNicknameSafe = (user.getDeletedAt() != null) ? "탈퇴회원" : user.getNickname();
+                }
             }
         } catch (Exception e) {
-            log.warn("Inquiry detail: user reference not available (possibly deleted). inquiryId={}", inquiryId);
+            log.warn("Inquiry detail: user information retrieval failed. inquiryId={}, error={}", inquiryId, e.getMessage());
         }
 
         return AdminInquiryDetailDto.builder()
@@ -135,8 +145,24 @@ public class AdminInquiriesService {
     public void replyToInquiry(Long inquiryId, AdminInquiryReplyRequestDto request, Long adminId) {
         log.info("관리자 문의 답변 작성: inquiryId={}, adminId={}", inquiryId, adminId);
 
-        InquiriesEntity inquiry = inquiriesRepository.findById(inquiryId)
+        InquiriesEntity inquiry = inquiriesRepository.findByIdIncludingDeletedUser(inquiryId)
                 .orElseThrow(() -> new IllegalArgumentException("문의를 찾을 수 없습니다: " + inquiryId));
+
+        // 삭제 유저 문의는 답변 불가
+        try {
+            Long userIdFromDb = inquiriesRepository.findUserIdByInquiryIdNative(inquiryId);
+            if (userIdFromDb != null) {
+                UserEntity user = userRepository.findByIdIncludingDeleted(userIdFromDb).orElse(null);
+                if (user != null && user.getDeletedAt() != null) {
+                    throw new IllegalArgumentException("탈퇴한 회원의 문의에는 답변할 수 없습니다.");
+                }
+            }
+        } catch (IllegalArgumentException e) {
+            throw e; // 답변 불가 예외는 그대로 전달
+        } catch (Exception e) {
+            log.warn("문의 답변: 유저 정보 조회 실패. inquiryId={}, error={}", inquiryId, e.getMessage());
+            // 유저 정보 조회 실패 시에도 답변은 가능하도록 진행 (안전장치)
+        }
 
         // 관리자 set
         AdminEntity admin = adminRepository.findById(adminId)
@@ -153,12 +179,16 @@ public class AdminInquiriesService {
 
         // 문의 작성자에게 알림 발송 (탈퇴 회원인 경우x)
         try {
-            if (inquiry.getUser() != null) {
-                String content = "문의하신 내용에 대한 답변이 등록되었습니다.";
-                userNotificationService.createNotification(inquiry.getUser().getUserId(), NotificationType.NOTICE, content);
-                log.info("문의 답변 알림 전송 완료: userId={}, inquiryId={}", inquiry.getUser().getUserId(), inquiryId);
-            } else {
-                log.warn("문의 답변 알림 전송 건너뜀: 탈퇴 회원 (inquiryId={})", inquiryId);
+            Long userIdFromDb = inquiriesRepository.findUserIdByInquiryIdNative(inquiryId);
+            if (userIdFromDb != null) {
+                UserEntity user = userRepository.findByIdIncludingDeleted(userIdFromDb).orElse(null);
+                if (user != null && user.getDeletedAt() == null) {
+                    String content = "문의하신 내용에 대한 답변이 등록되었습니다.";
+                    userNotificationService.createNotification(user.getUserId(), NotificationType.NOTICE, content);
+                    log.info("문의 답변 알림 전송 완료: userId={}, inquiryId={}", user.getUserId(), inquiryId);
+                } else {
+                    log.warn("문의 답변 알림 전송 건너뜀: 탈퇴 회원 (inquiryId={})", inquiryId);
+                }
             }
         } catch (Exception e) {
             log.warn("문의 답변 알림 전송 실패: {}", e.getMessage());
@@ -170,7 +200,7 @@ public class AdminInquiriesService {
     public void updateInquiryStatus(Long inquiryId, InquiryEnums.InquiryStatus status) {
         log.info("관리자 문의 상태 변경: inquiryId={}, status={}", inquiryId, status);
 
-        InquiriesEntity inquiry = inquiriesRepository.findById(inquiryId)
+        InquiriesEntity inquiry = inquiriesRepository.findByIdIncludingDeletedUser(inquiryId)
                 .orElseThrow(() -> new IllegalArgumentException("문의를 찾을 수 없습니다: " + inquiryId));
 
         inquiry.setStatus(status);
@@ -184,15 +214,19 @@ public class AdminInquiriesService {
     private AdminInquiryListDto convertToInquiryListDto(InquiriesEntity inquiry) {
         Long userIdSafe = null;
         String userEmailSafe = null;
-        String userNicknameSafe = "탈퇴회원";
+        String userNicknameSafe = null;
         try {
-            if (inquiry.getUser() != null) {
-                userIdSafe = inquiry.getUser().getUserId();
-                userEmailSafe = inquiry.getUser().getEmail();
-                userNicknameSafe = inquiry.getUser().getNickname();
+            Long userIdFromDb = inquiriesRepository.findUserIdByInquiryIdNative(inquiry.getInquiriesId());
+            if (userIdFromDb != null) {
+                UserEntity user = userRepository.findByIdIncludingDeleted(userIdFromDb).orElse(null);
+                if (user != null) {
+                    userIdSafe = user.getUserId();
+                    userEmailSafe = user.getEmail();
+                    userNicknameSafe = (user.getDeletedAt() != null) ? "탈퇴회원" : user.getNickname();
+                }
             }
         } catch (Exception e) {
-            log.warn("Inquiry list: user reference not available (possibly deleted). inquiryId={}", inquiry.getInquiriesId());
+            log.warn("Inquiry list: user information retrieval failed. inquiryId={}, error={}", inquiry.getInquiriesId(), e.getMessage());
         }
 
         return AdminInquiryListDto.builder()
