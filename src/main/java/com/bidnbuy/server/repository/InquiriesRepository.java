@@ -31,44 +31,85 @@ public interface InquiriesRepository extends JpaRepository<InquiriesEntity, Long
     // 상세 조회(신고)
     Optional<InquiriesEntity> findByInquiriesIdAndType(Long inquiriesId, InquiryEnums.InquiryType type);
 
-    // 관리자용 추가 - 최신순
+    // 관리자용 추가 - 최신순, 삭제 유저 포함
     // 전체 조회
+    @Query(value = "SELECT i.* FROM inquiries i LEFT JOIN user u ON u.user_id = i.user_id ORDER BY i.created_at DESC",
+           countQuery = "SELECT COUNT(*) FROM inquiries i LEFT JOIN user u ON u.user_id = i.user_id",
+           nativeQuery = true)
     Page<InquiriesEntity> findAllByOrderByCreatedAtDesc(Pageable pageable);
     
     // 타입별
-    Page<InquiriesEntity> findByTypeOrderByCreatedAtDesc(InquiryEnums.InquiryType type, Pageable pageable);
+    @Query(value = "SELECT i.* FROM inquiries i LEFT JOIN user u ON u.user_id = i.user_id WHERE i.type = :type ORDER BY i.created_at DESC",
+           countQuery = "SELECT COUNT(*) FROM inquiries i LEFT JOIN user u ON u.user_id = i.user_id WHERE i.type = :type",
+           nativeQuery = true)
+    Page<InquiriesEntity> findByTypeOrderByCreatedAtDesc(@Param("type") String type, Pageable pageable);
     
     // 상태별
-    Page<InquiriesEntity> findByStatusOrderByCreatedAtDesc(InquiryEnums.InquiryStatus status, Pageable pageable);
+    @Query(value = "SELECT i.* FROM inquiries i LEFT JOIN user u ON u.user_id = i.user_id WHERE i.status = :status ORDER BY i.created_at DESC",
+           countQuery = "SELECT COUNT(*) FROM inquiries i LEFT JOIN user u ON u.user_id = i.user_id WHERE i.status = :status",
+           nativeQuery = true)
+    Page<InquiriesEntity> findByStatusOrderByCreatedAtDesc(@Param("status") String status, Pageable pageable);
     
     // 타입과 상태별
-    Page<InquiriesEntity> findByTypeAndStatusOrderByCreatedAtDesc(InquiryEnums.InquiryType type, InquiryEnums.InquiryStatus status, Pageable pageable);
+    @Query(value = "SELECT i.* FROM inquiries i LEFT JOIN user u ON u.user_id = i.user_id WHERE i.type = :type AND i.status = :status ORDER BY i.created_at DESC",
+           countQuery = "SELECT COUNT(*) FROM inquiries i LEFT JOIN user u ON u.user_id = i.user_id WHERE i.type = :type AND i.status = :status",
+           nativeQuery = true)
+    Page<InquiriesEntity> findByTypeAndStatusOrderByCreatedAtDesc(@Param("type") String type, @Param("status") String status, Pageable pageable);
     
     // 제목으로 검색
-    Page<InquiriesEntity> findByTitleContainingIgnoreCaseOrderByCreatedAtDesc(String title, Pageable pageable);
+    @Query(value = "SELECT i.* FROM inquiries i LEFT JOIN user u ON u.user_id = i.user_id WHERE i.title LIKE CONCAT('%', :title, '%') ORDER BY i.created_at DESC",
+           countQuery = "SELECT COUNT(*) FROM inquiries i LEFT JOIN user u ON u.user_id = i.user_id WHERE i.title LIKE CONCAT('%', :title, '%')",
+           nativeQuery = true)
+    Page<InquiriesEntity> findByTitleContainingIgnoreCaseOrderByCreatedAtDesc(@Param("title") String title, Pageable pageable);
     
     // 작성자(이메일)로 검색
-    @Query("SELECT i FROM InquiriesEntity i JOIN i.user u WHERE u.email LIKE %:email% ORDER BY i.createdAt DESC")
+    @Query(value = "SELECT i.* FROM inquiries i LEFT JOIN user u ON u.user_id = i.user_id WHERE u.email LIKE CONCAT('%', :email, '%') ORDER BY i.created_at DESC", 
+           countQuery = "SELECT COUNT(*) FROM inquiries i LEFT JOIN user u ON u.user_id = i.user_id WHERE u.email LIKE CONCAT('%', :email, '%')",
+           nativeQuery = true)
     Page<InquiriesEntity> findByUserEmailContainingIgnoreCaseOrderByCreatedAtDesc(@Param("email") String email, Pageable pageable);
     
     // 제목+타입
-    Page<InquiriesEntity> findByTitleContainingIgnoreCaseAndTypeOrderByCreatedAtDesc(String title, InquiryEnums.InquiryType type, Pageable pageable);
+    @Query(value = "SELECT i.* FROM inquiries i LEFT JOIN user u ON u.user_id = i.user_id WHERE i.title LIKE CONCAT('%', :title, '%') AND i.type = :type ORDER BY i.created_at DESC",
+           countQuery = "SELECT COUNT(*) FROM inquiries i LEFT JOIN user u ON u.user_id = i.user_id WHERE i.title LIKE CONCAT('%', :title, '%') AND i.type = :type",
+           nativeQuery = true)
+    Page<InquiriesEntity> findByTitleContainingIgnoreCaseAndTypeOrderByCreatedAtDesc(@Param("title") String title, @Param("type") String type, Pageable pageable);
     
     // 제목+상태
-    Page<InquiriesEntity> findByTitleContainingIgnoreCaseAndStatusOrderByCreatedAtDesc(String title, InquiryEnums.InquiryStatus status, Pageable pageable);
+    @Query(value = "SELECT i.* FROM inquiries i LEFT JOIN user u ON u.user_id = i.user_id WHERE i.title LIKE CONCAT('%', :title, '%') AND i.status = :status ORDER BY i.created_at DESC",
+           countQuery = "SELECT COUNT(*) FROM inquiries i LEFT JOIN user u ON u.user_id = i.user_id WHERE i.title LIKE CONCAT('%', :title, '%') AND i.status = :status",
+           nativeQuery = true)
+    Page<InquiriesEntity> findByTitleContainingIgnoreCaseAndStatusOrderByCreatedAtDesc(@Param("title") String title, @Param("status") String status, Pageable pageable);
     
     // 제목+타입+상태로 검색
-    Page<InquiriesEntity> findByTitleContainingIgnoreCaseAndTypeAndStatusOrderByCreatedAtDesc(String title, InquiryEnums.InquiryType type, InquiryEnums.InquiryStatus status, Pageable pageable);
+    @Query(value = "SELECT i.* FROM inquiries i LEFT JOIN user u ON u.user_id = i.user_id WHERE i.title LIKE CONCAT('%', :title, '%') AND i.type = :type AND i.status = :status ORDER BY i.created_at DESC",
+           countQuery = "SELECT COUNT(*) FROM inquiries i LEFT JOIN user u ON u.user_id = i.user_id WHERE i.title LIKE CONCAT('%', :title, '%') AND i.type = :type AND i.status = :status",
+           nativeQuery = true)
+    Page<InquiriesEntity> findByTitleContainingIgnoreCaseAndTypeAndStatusOrderByCreatedAtDesc(@Param("title") String title, @Param("type") String type, @Param("status") String status, Pageable pageable);
     
     // 작성자+타입
-    @Query("SELECT i FROM InquiriesEntity i JOIN i.user u WHERE u.email LIKE %:email% AND i.type = :type ORDER BY i.createdAt DESC")
-    Page<InquiriesEntity> findByUserEmailContainingIgnoreCaseAndTypeOrderByCreatedAtDesc(@Param("email") String email, @Param("type") InquiryEnums.InquiryType type, Pageable pageable);
+    @Query(value = "SELECT i.* FROM inquiries i LEFT JOIN user u ON u.user_id = i.user_id WHERE u.email LIKE CONCAT('%', :email, '%') AND i.type = :type ORDER BY i.created_at DESC",
+           countQuery = "SELECT COUNT(*) FROM inquiries i LEFT JOIN user u ON u.user_id = i.user_id WHERE u.email LIKE CONCAT('%', :email, '%') AND i.type = :type",
+           nativeQuery = true)
+    Page<InquiriesEntity> findByUserEmailContainingIgnoreCaseAndTypeOrderByCreatedAtDesc(@Param("email") String email, @Param("type") String type, Pageable pageable);
     
     // 작성자+상태
-    @Query("SELECT i FROM InquiriesEntity i JOIN i.user u WHERE u.email LIKE %:email% AND i.status = :status ORDER BY i.createdAt DESC")
-    Page<InquiriesEntity> findByUserEmailContainingIgnoreCaseAndStatusOrderByCreatedAtDesc(@Param("email") String email, @Param("status") InquiryEnums.InquiryStatus status, Pageable pageable);
+    @Query(value = "SELECT i.* FROM inquiries i LEFT JOIN user u ON u.user_id = i.user_id WHERE u.email LIKE CONCAT('%', :email, '%') AND i.status = :status ORDER BY i.created_at DESC",
+           countQuery = "SELECT COUNT(*) FROM inquiries i LEFT JOIN user u ON u.user_id = i.user_id WHERE u.email LIKE CONCAT('%', :email, '%') AND i.status = :status",
+           nativeQuery = true)
+    Page<InquiriesEntity> findByUserEmailContainingIgnoreCaseAndStatusOrderByCreatedAtDesc(@Param("email") String email, @Param("status") String status, Pageable pageable);
     
     // 작성자+타입+상태
-    @Query("SELECT i FROM InquiriesEntity i JOIN i.user u WHERE u.email LIKE %:email% AND i.type = :type AND i.status = :status ORDER BY i.createdAt DESC")
-    Page<InquiriesEntity> findByUserEmailContainingIgnoreCaseAndTypeAndStatusOrderByCreatedAtDesc(@Param("email") String email, @Param("type") InquiryEnums.InquiryType type, @Param("status") InquiryEnums.InquiryStatus status, Pageable pageable);
+    @Query(value = "SELECT i.* FROM inquiries i LEFT JOIN user u ON u.user_id = i.user_id WHERE u.email LIKE CONCAT('%', :email, '%') AND i.type = :type AND i.status = :status ORDER BY i.created_at DESC",
+           countQuery = "SELECT COUNT(*) FROM inquiries i LEFT JOIN user u ON u.user_id = i.user_id WHERE u.email LIKE CONCAT('%', :email, '%') AND i.type = :type AND i.status = :status",
+           nativeQuery = true)
+    Page<InquiriesEntity> findByUserEmailContainingIgnoreCaseAndTypeAndStatusOrderByCreatedAtDesc(@Param("email") String email, @Param("type") String type, @Param("status") String status, Pageable pageable);
+
+    // 문의 유저아이디 조회
+    @Query(value = "SELECT user_id FROM inquiries WHERE inquiries_id = :inquiryId", nativeQuery = true)
+    Long findUserIdByInquiryIdNative(@Param("inquiryId") Long inquiryId);
+
+    // 문의 상세
+    @Query(value = "SELECT i.* FROM inquiries i LEFT JOIN user u ON u.user_id = i.user_id WHERE i.inquiries_id = :inquiryId",
+           nativeQuery = true)
+    Optional<InquiriesEntity> findByIdIncludingDeletedUser(@Param("inquiryId") Long inquiryId);
 }
