@@ -59,18 +59,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             log.warn("### 필터 스킵 TRUE (Auth 공개): {}", path);
             return true;
         }
-        // 퍼블릭 GET API 스킵 (임시 우회 추가 - /api 프리픽스)
-        if (HttpMethod.GET.matches(request.getMethod())) {
-            if (path.equals("/auctions") || path.startsWith("/auctions/")
-                    || path.equals("/api/auctions") || path.startsWith("/api/auctions/")) {
-                return true;
-            }
-            if (path.equals("/category") || path.startsWith("/category/")
-                    || path.equals("/api/category") || path.startsWith("/api/category/")) {
-                return true;
-            }
-        }
-
         // 공개 리소스 스킵
         if (path.equals("/favicon.ico") || path.startsWith("/chat_test") || path.startsWith("/ws/bid")) {
             return true;
