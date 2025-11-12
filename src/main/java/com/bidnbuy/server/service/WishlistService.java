@@ -114,7 +114,7 @@ public class WishlistService {
                     // 종료 그룹: "경매 종료", "판매완료", "판매자 삭제완료"
                     boolean isFinishedGroup = "종료".equals(currentStatusString)
                             || "완료".equals(currentStatusString)
-                            || "판매자에 의해 삭제완료".equals(currentStatusString); // ✨ 라벨 통일 및 삭제 상태 포함
+                            || "삭제".equals(currentStatusString); // ✨ 라벨 통일 및 삭제 상태 포함
 
                     // 2. 필터링 로직 (기존 의도 유지)
 

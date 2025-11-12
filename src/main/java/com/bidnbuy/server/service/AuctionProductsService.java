@@ -357,7 +357,7 @@ public class AuctionProductsService {
             case "FINISH":
                 return "종료";
             case "DELETED":
-                return "판매자의 의해 삭제";
+                return "삭제";
             default:
                 return "진행중";
         }
@@ -412,7 +412,7 @@ public class AuctionProductsService {
     public String calculateSellingStatus(AuctionProductsEntity product) {
 
         if (product.getDeletedAt() != null) {
-            return "판매자에 의해 삭제"; // SellingStatus.DELETED에 매핑되는 문자열
+            return "삭제"; // SellingStatus.DELETED에 매핑되는 문자열
         }
 
         return switch (product.getSellingStatus()) {
@@ -430,7 +430,7 @@ public class AuctionProductsService {
             case BEFORE -> "시작전";
             case COMPLETED -> "완료"; // 거래완료
             case FINISH -> "종료";
-            case DELETED -> "판매자에 의해 삭제";
+            case DELETED -> "삭제";
         };
     }
 
