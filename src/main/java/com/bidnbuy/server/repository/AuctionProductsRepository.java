@@ -173,7 +173,7 @@ public interface AuctionProductsRepository extends JpaRepository<AuctionProducts
             "    LIMIT 1)              AS mainImageUrl,\n" +
             "  (SELECT COUNT(*) FROM wish_list w WHERE w.auction_id = p.auction_id) AS wishCount\n" +
             "FROM auction_products p\n" +
-            "LEFT JOIN user u ON u.user_id = p.user_id\n" +
+            "LEFT JOIN `user` u ON u.user_id = p.user_id\n" +
             "LEFT JOIN category c ON c.category_id = p.category_id\n" +
             "LEFT JOIN category pc ON pc.category_id = c.parent_id\n" +
             "WHERE p.deleted_at IS NULL\n" +
@@ -232,7 +232,7 @@ public interface AuctionProductsRepository extends JpaRepository<AuctionProducts
             "    LIMIT 1)              AS mainImageUrl,\n" +
             "  (SELECT COUNT(*) FROM wish_list w WHERE w.auction_id = p.auction_id) AS wishCount\n" +
             "FROM auction_products p\n" +
-            "LEFT JOIN user u ON u.user_id = p.user_id\n" +
+            "LEFT JOIN `user` u ON u.user_id = p.user_id\n" +
             "LEFT JOIN category c ON c.category_id = p.category_id\n" +
             "LEFT JOIN category pc ON pc.category_id = c.parent_id\n" +
             "WHERE p.deleted_at IS NULL\n" +
@@ -253,7 +253,7 @@ public interface AuctionProductsRepository extends JpaRepository<AuctionProducts
             countQuery = "\n" +
             "SELECT COUNT(*)\n" +
             "FROM auction_products p\n" +
-            "LEFT JOIN user u ON u.user_id = p.user_id\n" +
+            "LEFT JOIN `user` u ON u.user_id = p.user_id\n" +
             "LEFT JOIN category c ON c.category_id = p.category_id\n" +
             "LEFT JOIN category pc ON pc.category_id = c.parent_id\n" +
             "WHERE p.deleted_at IS NULL\n" +
@@ -297,7 +297,7 @@ public interface AuctionProductsRepository extends JpaRepository<AuctionProducts
             "  u.profile_image_url    AS sellerProfileImageUrl,\n" +
             "  u.user_temperature     AS sellerTemperature\n" +
             "FROM auction_products p\n" +
-            "LEFT JOIN user u ON u.user_id = p.user_id\n" +
+            "LEFT JOIN `user` u ON u.user_id = p.user_id\n" +
             "WHERE p.deleted_at IS NULL\n" +
             "  AND p.auction_id = :auctionId\n",
             nativeQuery = true)
