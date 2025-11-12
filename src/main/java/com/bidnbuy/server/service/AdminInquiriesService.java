@@ -87,13 +87,20 @@ public class AdminInquiriesService {
             }
         }
 
-        List<AdminInquiryListDto> dtoList = inquiries.getContent().stream()
-                .map(inquiry -> {
-                    // 네이티브쿼리 결과 detach, jpa 자동 로딩 및 더티체킹 방지
-                    entityManager.detach(inquiry);
-                    return convertToInquiryListDto(inquiry);
-                })
+        // 네이티브쿼리 결과 받은 직후 모든 엔티티 detach, 관계 로딩 방지
+        log.debug("네이티브 쿼리 결과 받음: totalElements={}", inquiries.getTotalElements());
+        List<InquiriesEntity> inquiryList = inquiries.getContent();
+        log.debug("getContent() 호출 완료: inquiryList.size()={}", inquiryList.size());
+        
+        for (InquiriesEntity inquiry : inquiryList) {
+            entityManager.detach(inquiry);
+        }
+        log.debug("모든 엔티티 detach 완료");
+
+        List<AdminInquiryListDto> dtoList = inquiryList.stream()
+                .map(this::convertToInquiryListDto)
                 .collect(Collectors.toList());
+        log.debug("DTO 변환 완료: dtoList.size()={}", dtoList.size());
 
         return PagingResponseDto.<AdminInquiryListDto>builder()
                 .data(dtoList)
