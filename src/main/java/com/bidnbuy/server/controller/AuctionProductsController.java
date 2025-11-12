@@ -17,7 +17,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -75,7 +74,7 @@ public class AuctionProductsController {
                     @Parameter(name = "searchKeyword", description = "상품 검색", required = false),
                     @Parameter(name = "mainCategoryId", description = "상품 대분류", required = false),
                     @Parameter(name = "subCategoryId", description = "상품 소분류", required = false),
-                    @Parameter(name = "userEmail", description = "유저 이메일(관리자 전용)", required = false),
+                    @Parameter(name = "userEmail", description = "유저 이메일로 검색", required = false),
             })
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "조회 성공",
@@ -96,17 +95,6 @@ public class AuctionProductsController {
             @RequestParam(required = false) Long subCategoryId,
             @RequestParam(required = false) String userEmail
     ) {
-        // 관리자용 이메일 조회
-        if (userEmail != null && !userEmail.trim().isEmpty()) {
-            boolean isAdmin = SecurityContextHolder.getContext().getAuthentication().getAuthorities()
-                    .stream()
-                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
-
-            if (!isAdmin) {
-                return ResponseEntity.status(403).build();
-            }
-        }
-
         PagingResponseDto<AuctionListResponseDto> list = auctionProductsService.getAllAuctions(
                 userId,
                 page,
