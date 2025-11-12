@@ -10,7 +10,6 @@ import com.bidnbuy.server.service.AdminInquiriesService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -38,7 +37,7 @@ public class AdminInquiriesController {
     @Operation(summary = "문의 목록 조회", description = "문의 목록 조회(필터링 가능)", tags = {"관리자 문의 관리 API"})
     @Parameter(name = "page", description = "페이지 번호 (0부터 시작)", required = false, example = "0")
     @Parameter(name = "size", description = "페이지 크기", required = false, example = "20")
-    @Parameter(name = "sort", description = "정렬 기준 (기본값 createdAt,DESC)", required = false, example = "createdAt,DESC")
+    @Parameter(name = "sort", description = "정렬 기준 (네이티브 쿼리에서 자동 정렬)", required = false, example = "")
     @Parameter(name = "type", description = "문의 타입", required = false, example = "REPORT")
     @Parameter(name = "status", description = "답변 상태", required = false, example = "WAITING")
     @Parameter(name = "title", description = "제목 검색 키워드", required = false, example = "환불")
@@ -52,7 +51,7 @@ public class AdminInquiriesController {
     })
     @GetMapping
     public ResponseEntity<PagingResponseDto<AdminInquiryListDto>> getInquiryList(
-            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+            @PageableDefault(size = 20) Pageable pageable,
             @RequestParam(required = false) InquiryEnums.InquiryType type,
             @RequestParam(required = false) InquiryEnums.InquiryStatus status,
             @RequestParam(required = false) String title,
@@ -65,7 +64,7 @@ public class AdminInquiriesController {
             PagingResponseDto<AdminInquiryListDto> inquiries = adminInquiriesService.getInquiryList(pageable, type, status, title, userEmail);
             return ResponseEntity.ok(inquiries);
         } catch (Exception e) {
-            log.error("문의 목록 조회 중 오류 발생: {}", e.getMessage());
+            log.error("문의 목록 조회 중 오류 발생: {}", e.getMessage(), e);
             return ResponseEntity.internalServerError().build();
         }
     }
