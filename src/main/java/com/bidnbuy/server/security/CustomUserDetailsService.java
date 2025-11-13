@@ -34,8 +34,8 @@ public class CustomUserDetailsService implements UserDetailsService {
             return new User(
                     String.valueOf(userEntity.getUserId()),
                     "",
-                    Collections.emptyList()
-//                    Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
+//                    Collections.emptyList()
+                    Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
             );
         }catch (NumberFormatException e){
             log.error("JWT에서 추출된 ID가 유효한 숫자가 아닙니다: {}", userIdStr, e);
