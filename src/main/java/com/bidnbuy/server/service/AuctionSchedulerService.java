@@ -81,12 +81,12 @@ public class AuctionSchedulerService {
 
             // 시간지나서 자동 낙찰자 알림 발송
             String winnerContent = "경매 종료! 최고 입찰자에게 낙찰 🎉 지금 채팅방으로 이동하기";
-            notificationService.createNotificationforChat(finalBid.getUser().getUserId(), NotificationType.AUCTION_RESULT, winnerContent, auction.getAuctionId(), auction.getUser().getUserId());
+            notificationService.createNotification(finalBid.getUser().getUserId(), NotificationType.NOTICE, winnerContent);
             log.info("낙찰자 알림 발송 완료 userId={}", finalBid.getUser().getUserId());
 
             // 판매자 알림
             String sellerContent = "경매 종료! 귀하의 상품이 낙찰되었습니다. 채팅방에서 거래를 이어가세요.";
-            notificationService.createNotificationforChat(auction.getUser().getUserId(), NotificationType.AUCTION_RESULT, sellerContent, auction.getAuctionId(), auction.getUser().getUserId());
+            notificationService.createNotification(auction.getUser().getUserId(), NotificationType.NOTICE, sellerContent);
             log.info("판매자 알림 발송 완료 userId={}", auction.getUser().getUserId());
 
             //  orderEntity = orderRepository.save(orderEntity);
