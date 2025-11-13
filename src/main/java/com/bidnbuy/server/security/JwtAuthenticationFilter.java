@@ -64,6 +64,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (path.equals("/favicon.ico") || path.startsWith("/chat_test") || path.startsWith("/ws/bid")) {
             return true;
         }//인증 필터링 건너뛰기
+
+        if (path.startsWith("/chatrooms") || path.startsWith("/api/chatrooms")) {
+            log.info("### [AUTH REQUIRED] chatrooms path detected: {}", path);
+            return false;
+        }
+
         return false;
     }
 
