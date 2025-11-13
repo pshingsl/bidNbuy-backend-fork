@@ -29,6 +29,7 @@ public class OrderService {
     private final ChatRoomRepository chatRoomRepository;
     private final AuctionProductsRepository auctionProductsRepository;
     private final UserNotificationService notificationService;
+    private final AddressRepository addressRepository;
 
     // 볍점 부여
     @Transactional
@@ -286,6 +287,24 @@ public class OrderService {
         AuctionProductsEntity auction = auctionProductsRepository.findById(dto.getAuctionId())
                 .orElseThrow(() -> new IllegalArgumentException("Auction not found: " + dto.getAuctionId()));
 
+        // 주소추가
+        AddressEntity address;
+
+        if (dto.getAddressId() != null) {
+            address = addressRepository.findById(dto.getAddressId())
+                    .orElseThrow(() -> new IllegalArgumentException("선택한 배송지를 찾을 수 없습니다: " + dto.getAddressId()));
+
+            if (!address.getUser().getUserId().equals(buyer.getUserId())) {
+                throw new IllegalArgumentException("선택한 배송지는 해당 구매자의 배송지가 아닙니다.");
+            }
+
+        } else {
+            address = addressRepository
+                    .findFirstByUser_UserIdOrderByCreatedAtDesc(buyer.getUserId())
+                    .orElse(null);
+        }
+
+
         // 1. 이미 같은 경매/구매자 조합의 주문이 존재하는지 확인
         OrderEntity existing = orderRepository
                 .findFirstByBuyer_UserIdAndResult_Auction_AuctionId(dto.getBuyerId(), dto.getAuctionId())
@@ -312,6 +331,7 @@ public class OrderService {
         order.setRating(0);
         order.setCreatedAt(LocalDateTime.now());
         order.setUpdatedAt(LocalDateTime.now());
+        order.setShippingAddress(address);
 
         // 2. 기존 auction에 대한 result 존재 여부 체크
         AuctionResultEntity existingResult = auctionResultRepository

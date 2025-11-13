@@ -10,4 +10,5 @@ public class OrderRequestDto {
     private Long buyerId;
     private String type;
     private Long auctionId;// 거래 타입 (예: ESCROW)
+    private Long addressId;
 }

@@ -16,20 +16,24 @@ public class OrderEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long orderId;
 
-    // ✅ 판매자
+    // 판매자
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "seller_id", nullable = false)
     private UserEntity seller;
 
-    // ✅ 구매자
+    // 구매자
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "buyer_id", nullable = false)
     private UserEntity buyer;
 
-    // ✅ 경매 결과
+    // 경매 결과
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "result_id")
     private AuctionResultEntity result;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "shipping_address_id", nullable = true)
+    private AddressEntity shippingAddress;
 
     @Column(nullable = false)
     private String type;
