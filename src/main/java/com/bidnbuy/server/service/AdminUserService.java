@@ -8,6 +8,7 @@ import com.bidnbuy.server.entity.UserEntity;
 import com.bidnbuy.server.entity.PenaltyEntity;
 import com.bidnbuy.server.repository.UserRepository;
 import com.bidnbuy.server.repository.PenaltyRepository;
+import com.bidnbuy.server.repository.AuctionProductsRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
@@ -25,6 +26,7 @@ public class AdminUserService {
     
     private final UserRepository userRepository;
     private final PenaltyRepository penaltyRepository;
+    private final AuctionProductsRepository auctionProductsRepository;
 
     // 회원 목록 조회 (페이징)
     public PagingResponseDto<AdminUserListDto> getUserList(Pageable pageable, String email) {
@@ -85,8 +87,8 @@ public class AdminUserService {
                 .map(this::convertToPenaltyHistoryDto)
                 .collect(Collectors.toList());
         
-        // 거래글 카운트
-        int auctionCount = user.getAuctionProducts().size();
+        // 거래글 카운트 (삭제 안 된 것만)
+        int auctionCount = (int) auctionProductsRepository.countByUser_UserIdAndDeletedAtIsNull(userId);
         
         return AdminUserDetailDto.builder()
                 .userId(user.getUserId())
