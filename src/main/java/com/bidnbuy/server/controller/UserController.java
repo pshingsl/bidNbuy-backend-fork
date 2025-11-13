@@ -205,10 +205,14 @@ public class   UserController {
     @GetMapping("/naver")
     public void naverLogin (@RequestParam("code") String code, @RequestParam("state") String state,
                             HttpSession session, HttpServletResponse response) throws IOException{
+        log.info("### NAVER CALLBACK ARRIVED: code={}, state={}", code, state);
+
         String savedState = (String) session.getAttribute("naver_oauth_state");
+        log.info("### NAVER savedState(from session) = {}", savedState);
+        log.info("### NAVER state(from Naver) = {}", state);
 
         if (savedState == null || !savedState.equals(state)){
-            log.warn("Naver login failed: State token mismatch.");
+            log.warn("### STATE MISMATCH 발생!! savedState={}, state={}", savedState, state);
             String errorRedirectUrl = frontUri + "/login?error=" + URLEncoder.encode("State token mismatch.", StandardCharsets.UTF_8);
             response.sendRedirect(errorRedirectUrl);
             return;
