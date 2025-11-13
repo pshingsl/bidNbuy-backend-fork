@@ -115,8 +115,7 @@ public class SecurityConfig {
 
 
                     // 인증 필요한 영역
-                    .requestMatchers("/chatrooms/**", "/api/chatrooms/**")
-                    .authenticated()
+                    .requestMatchers("/chatrooms/**").authenticated()
                     .requestMatchers("/notifications/token/**").authenticated()
                     .requestMatchers("/orders/**", "/payments/**", "/inquiries/**", "/reports/**").permitAll()
 
