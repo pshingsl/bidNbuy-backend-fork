@@ -31,7 +31,8 @@ public class StompHandler implements ChannelInterceptor {
             String authorizationHeader = accessor.getFirstNativeHeader(("authorization"));
 
             if(authorizationHeader !=null && authorizationHeader.startsWith("Bearer")){
-                String token = (String) accessor.getFirstNativeHeader("Auth-Token");
+//                String token = (String) accessor.getFirstNativeHeader("Auth-Token");
+                String token = authorizationHeader.substring(7).trim();
                 //토큰 유효성 검증 및 userID추출
                 if(jwtProvider.validateToken(token)){
                     try{
