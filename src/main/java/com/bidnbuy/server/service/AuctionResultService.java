@@ -4,9 +4,7 @@ import com.bidnbuy.server.dto.AuctionPurchaseHistoryDto;
 import com.bidnbuy.server.dto.AuctionSalesHistoryDto;
 import com.bidnbuy.server.dto.MyPageSummaryDto;
 import com.bidnbuy.server.dto.UserProfileSummaryDto;
-import com.bidnbuy.server.entity.AuctionProductsEntity;
-import com.bidnbuy.server.entity.AuctionResultEntity;
-import com.bidnbuy.server.entity.UserEntity;
+import com.bidnbuy.server.entity.*;
 import com.bidnbuy.server.enums.ResultStatus;
 import com.bidnbuy.server.enums.SellingStatus;
 import com.bidnbuy.server.enums.TradeFilterStatus;
@@ -200,6 +198,16 @@ public class AuctionResultService {
         } catch (Exception e) {
             // keep null
         }
+        // 여기 추가: ORDER -> ADDRESS 꺼내기
+        OrderEntity order = result.getOrder();
+        AddressEntity addr = (order != null) ? order.getShippingAddress() : null;
+
+        String recipientName = (addr != null) ? addr.getRecipientName() : null;
+        String phoneNumber = (addr != null) ? addr.getPhoneNumber() : null;
+        String zonecode = (addr != null) ? addr.getZonecode() : null;
+        String addressValue = (addr != null) ? addr.getAddress() : null;
+        String detailAddress = (addr != null) ? addr.getDetailAddress() : null;
+
 
         return AuctionSalesHistoryDto.builder()
                 .auctionId(result.getAuction().getAuctionId())
@@ -210,6 +218,14 @@ public class AuctionResultService {
                 .statusText(statusText)
                 .finalPrice(result.getFinalPrice())
                 .winnerNickname(winnerNickname)
+
+                // 여기서 주소 값들 세팅
+                .recipientName(recipientName)
+                .phoneNumber(phoneNumber)
+                .zonecode(zonecode)
+                .address(addressValue)
+                .detailAddress(detailAddress)
+
                 .build();
     }
 

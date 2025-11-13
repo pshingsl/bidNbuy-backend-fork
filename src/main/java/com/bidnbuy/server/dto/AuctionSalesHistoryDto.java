@@ -20,4 +20,11 @@ public class AuctionSalesHistoryDto {
     // 낙찰자 정보
     private String winnerNickname;
     private String statusText;
+
+    // 여기 추가
+    private String recipientName;   // 받는 사람 이름
+    private String phoneNumber;     // 전화번호
+    private String zonecode;        // 우편번호
+    private String address;         // 기본 주소
+    private String detailAddress;   // 상세 주소
 }
