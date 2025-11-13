@@ -135,7 +135,7 @@ public interface AuctionProductsRepository extends JpaRepository<AuctionProducts
             "LEFT JOIN FETCH p.category c " +
             "WHERE p.deletedAt IS NULL " +
             "AND p.sellingStatus IN :statuses " +
-            "AND u.email = :userEmail " +
+            "AND u.email LIKE %:#{#userEmail}% " +
             "AND (:#{#searchKeyword} IS NULL OR p.title LIKE %:#{#searchKeyword}%) " +
             "AND (:#{#minPrice} IS NULL OR p.currentPrice >= :#{#minPrice}) " +
             "AND (:#{#maxPrice} IS NULL OR p.currentPrice <= :#{#maxPrice}) " +
@@ -237,7 +237,7 @@ public interface AuctionProductsRepository extends JpaRepository<AuctionProducts
             "LEFT JOIN category pc ON pc.category_id = c.parent_id\n" +
             "WHERE p.deleted_at IS NULL\n" +
             "  AND p.selling_status IN (:statusNames)\n" +
-            "  AND u.email = :userEmail\n" +
+            "  AND u.email LIKE CONCAT('%', :userEmail, '%')\n" +
             "  AND (:searchKeyword IS NULL OR p.title LIKE CONCAT('%', :searchKeyword, '%'))\n" +
             "  AND (:minPrice IS NULL OR p.current_price >= :minPrice)\n" +
             "  AND (:maxPrice IS NULL OR p.current_price <= :maxPrice)\n" +
@@ -258,7 +258,7 @@ public interface AuctionProductsRepository extends JpaRepository<AuctionProducts
             "LEFT JOIN category pc ON pc.category_id = c.parent_id\n" +
             "WHERE p.deleted_at IS NULL\n" +
             "  AND p.selling_status IN (:statusNames)\n" +
-            "  AND u.email = :userEmail\n" +
+            "  AND u.email LIKE CONCAT('%', :userEmail, '%')\n" +
             "  AND (:searchKeyword IS NULL OR p.title LIKE CONCAT('%', :searchKeyword, '%'))\n" +
             "  AND (:minPrice IS NULL OR p.current_price >= :minPrice)\n" +
             "  AND (:maxPrice IS NULL OR p.current_price <= :maxPrice)\n" +
