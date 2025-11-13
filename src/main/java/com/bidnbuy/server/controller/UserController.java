@@ -187,6 +187,9 @@ public class   UserController {
     public RedirectView redirectToNaver(HttpSession session){
         String state = jwtProvider.generateStateToken();
         session.setAttribute("naver_oauth_state", state);
+
+        log.info("### NAVER redirectUri = {}", redirectUri);
+
         String naverAuthUrl = "https://nid.naver.com/oauth2.0/authorize" +
                 "?response_type=code" +
                 "&client_id=" + naverClientId +
