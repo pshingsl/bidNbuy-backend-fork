@@ -93,13 +93,16 @@ public class   UserController {
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@RequestBody UserSignupRequestDto requestDto){
         log.info("회원가입 요청 DTO: {}", requestDto);
-        try{
             UserEntity savedUser = userService.signup(requestDto);
-            return ResponseEntity.status(HttpStatus.CREATED).body(savedUser);
-        }catch (RuntimeException e){
-            log.error("회원가입 실패:{}", e.getMessage());
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+
+            UserSignupResponseDto response = UserSignupResponseDto.builder()
+                .userId(savedUser.getUserId())
+                .email(savedUser.getEmail())
+                .nickname(savedUser.getNickname())
+                .createdAt(savedUser.getCreatedAt())
+                .build();
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @Operation(summary = "로그인", description = "로그인 후 토큰 발급", tags = {"유저 API"})
