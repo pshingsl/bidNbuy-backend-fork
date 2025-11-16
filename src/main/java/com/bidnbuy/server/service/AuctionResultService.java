@@ -1,9 +1,6 @@
 package com.bidnbuy.server.service;
 
-import com.bidnbuy.server.dto.AuctionPurchaseHistoryDto;
-import com.bidnbuy.server.dto.AuctionSalesHistoryDto;
-import com.bidnbuy.server.dto.MyPageSummaryDto;
-import com.bidnbuy.server.dto.UserProfileSummaryDto;
+import com.bidnbuy.server.dto.*;
 import com.bidnbuy.server.entity.*;
 import com.bidnbuy.server.enums.ResultStatus;
 import com.bidnbuy.server.enums.SellingStatus;
@@ -248,6 +245,89 @@ public class AuctionResultService {
 
             default -> false; // 정의되지 않은 상태
         };
+    }
+
+    // 11/16
+    @Transactional(readOnly = true)
+    public UserSalesListResponseDto getOtherUserSalesList(Long userId) {
+        // 1. 판매 완료된 거래 (AuctionResultEntity 활용)
+        // 경매 결과가 있으며, ResultStatus가 SUCCESS_COMPLETED인 것만 필터링합니다.
+        List<AuctionResultEntity> completedResults = auctionResultRepository.findByAuction_User_UserId_Optimized(userId)
+                .stream()
+                .filter(result -> result.getResultStatus() == ResultStatus.SUCCESS_COMPLETED)
+                .toList();
+
+        List<OtherUserSalesDto> completedSales = completedResults.stream()
+                .map(this::toOtherUserSalesDto) // 아래에 구현할 매핑 메서드
+                .collect(Collectors.toList());
+
+        // 2. 판매 중인 물품 (AuctionProductsEntity 활용)
+        List<SellingStatus> ongoingStatuses = List.of(SellingStatus.BEFORE, SellingStatus.SALE, SellingStatus.PROGRESS);
+
+        List<AuctionProductsEntity> activeAuctions =
+                auctionProductsRepository.findByUser_UserIdAndSellingStatusInAndDeletedAtIsNull(
+                        userId,
+                        ongoingStatuses
+                );
+
+        List<OtherUserSalesDto> onSale = activeAuctions.stream()
+                .map(this::toOtherUserSalesDto) // 아래에 구현할 매핑 메서드
+                .collect(Collectors.toList());
+
+        // 3. UserSalesListResponseDto로 취합
+        return UserSalesListResponseDto.builder()
+                .completedSalesCount(completedSales.size())
+                .completedSales(completedSales)
+                .onSaleCount(onSale.size())
+                .onSale(onSale)
+                .build();
+    }
+
+    // ✨ 5. OtherUserSalesDto 변환을 위한 매핑 메서드 추가
+
+    // 5-1. 판매 완료된 AuctionResultEntity를 OtherUserSalesDto로 변환
+    private OtherUserSalesDto toOtherUserSalesDto(AuctionResultEntity result) {
+        AuctionProductsEntity auction = result.getAuction();
+        String imageUrl = imageRepository.findFirstImageUrlByAuctionId(auction.getAuctionId())
+                .orElse("/images/default_product.png");
+
+        return OtherUserSalesDto.builder()
+                .auctionId(auction.getAuctionId())
+                .title(auction.getTitle())
+                .itemImageUrl(imageUrl)
+               // .finalPrice(result.getFinalPrice())
+                // 판매 완료는 경매 종료 시간이 기준이 됩니다.
+             //   .endTime(auction.getEndTime())
+                // 판매 완료 상태 텍스트
+              //  .statusText(determineSalesStatusText(result))
+                .build();
+    }
+
+    // 5-2. 판매 중인 AuctionProductsEntity를 OtherUserSalesDto로 변환
+    private OtherUserSalesDto toOtherUserSalesDto(AuctionProductsEntity auction) {
+        String imageUrl = imageRepository.findFirstImageUrlByAuctionId(auction.getAuctionId())
+                .orElse("/images/default_product.png");
+
+        return OtherUserSalesDto.builder()
+                .auctionId(auction.getAuctionId())
+                .title(auction.getTitle())
+                .itemImageUrl(imageUrl)
+                // 판매 중이므로 최종 가격은 null
+                // .finalPrice(null)
+               // .endTime(auction.getEndTime())
+                // 판매 중 상태 텍스트
+                //.statusText(auction.getSellingStatus().name())
+                .build();
+    }
+
+    // 5-3. 판매 완료된 거래에 대한 상태 텍스트를 결정하는 헬퍼 메서드 (간단하게)
+    private String determineSalesStatusText(AuctionResultEntity result) {
+        // ResultStatus가 SUCCESS_COMPLETED 인 경우만 넘어온다고 가정
+        if (result.getResultStatus() == ResultStatus.SUCCESS_COMPLETED) {
+            return "판매 완료";
+        }
+        // 다른 상태라면 해당 텍스트를 반환하거나, 에러 처리
+        return "상태 정보 없음";
     }
 
     // 상태 메서드

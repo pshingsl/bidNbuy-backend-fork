@@ -446,21 +446,24 @@ public class   UserController {
         return ResponseEntity.ok(profile);
     }
 
-    // 다른 유저 프로필 구매내역 확인
-    @Operation(summary = "다른 프로필 유저 구매내역 조회 API", description = "다른 유저 프로필 구매내역 조회")
+    // 다른 유저 프로필 - 판매 목록 조회
+    @Operation(summary = "다른 유저 판매 목록 조회 API", description = "다른 유저의 판매 완료된 거래와 판매 중인 물품 리스트를 분리하여 조회합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "조회 성공",
-                    content = @Content(schema = @Schema(implementation = UserProfileSummaryDto.class))),
+                    content = @Content(schema = @Schema(implementation = UserSalesListResponseDto.class))),
+            @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음"),
             @ApiResponse(responseCode = "401", description = "인증 실패")
     })
-    @GetMapping("/users/{userId}/purchases")
-    public ResponseEntity<List<AuctionSalesHistoryDto>> getUserPurchaseHistory(
+    @GetMapping("/other/{targetId}/sales")
+    public ResponseEntity<UserSalesListResponseDto> getOtherUserSalesHistory(
             @AuthenticationPrincipal Long userId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
-    ) {
-        List<AuctionSalesHistoryDto> history = auctionResultService.getPurchaseHistoryByUser(userId, page, size);
-        return ResponseEntity.ok(history);
+            @PathVariable("targetId") Long targetId) {
+
+        log.info("다른 사용자 판매 목록 조회 요청: Target ID = {}", targetId);
+
+        UserSalesListResponseDto salesListDto = auctionResultService.getOtherUserSalesList(targetId);
+
+        return ResponseEntity.ok(salesListDto);
     }
 
 
