@@ -415,14 +415,13 @@ PW : admin123
 
 - 관심 경매 찜하기 기능
 - 찜 목록 조회 및 필터링
+- 
+<details>
+  <summary>GIF 보기</summary>
 
-<br>
-
-<p align="left">
+  <br>
   <img src="./assets/zimm.gif">
-</p>
-
-___
+</details>
 
 ### 마이 페이지
 
