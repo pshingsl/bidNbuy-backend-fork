@@ -381,12 +381,22 @@ PW : admin123
 - 다중 이미지 업로드 지원(이미지 크기 검증), 이미지 순서로 대표 이미지 설정 가능
 - 무한 스크롤 통한 목록 조회
 
+<details>
+    <summary>GIF 보기</summary>
+    <br>
+    <img src="./assets/product-registration.gif">
+    <br>
+    <img src="./assets/product-search.gif">
+</details>
+
 ### 입찰
 
 - REST API 기반 입찰 제출
 - 입찰 가능 금액 안내 및 입찰가 검증
 - 입찰 후 낙관적 업데이트 및 서버 데이터 동기화로 실시간 갱신
 - 낙찰 알림 및 경매 종료 알림
+
+
 
 ### 실시간 채팅
 
@@ -397,6 +407,12 @@ PW : admin123
 - 채팅 내에서 결제 요청(판매자 전용) 및 주소 전송(구매자 전용) 기능
 - 이미지 전송 기능
 
+<details>
+    <summary>GIF 보기</summary>
+    <br>
+    <img src="./assets/chatting.gif">
+</details>
+
 ### 결제 및 주문 관리
 
 - 토스페이먼츠 연동 에스크로 결제 시스템
@@ -404,12 +420,24 @@ PW : admin123
 - 주문 조회 및 주문 상태 확인
 - 구매 확정 및 판매자 별점 평가 기능
 
+<details>
+    <summary>GIF 보기</summary>
+    <br>
+    <img src="./assets/payment.gif">
+</details>
+
 ### 알림 시스템
 
 - FCM(Firebase Cloud Messaging) 기반 푸시 알림
 - 입찰 알림, 경매 종료 알림 등
 - 알림 목록 조회 및 읽음 처리
 - 관리자 공지 및 경고 알림 발송
+
+<details>
+    <summary>GIF 보기</summary>
+    <br>
+    <img src="./assets/alarm.gif">
+</details>
 
 ### 찜 기능
 
@@ -419,7 +447,7 @@ PW : admin123
 <details>
     <summary>GIF 보기</summary>
     <br>
-    <img src="./assets/zimm.gif" width="400">
+    <img src="./assets/zimm.gif">
 </details>
 
 ### 마이 페이지
@@ -431,12 +459,13 @@ PW : admin123
 - 1:1 문의/신고 등록 및 조회
 - 회원 탈퇴 기능
 
-    <details>
-      <summary>GIF 보기</summary>
-
-      <br>
-      <img src="./assets/mypage.gif">
-    </details>
+<details>
+    <summary>GIF 보기</summary>
+    <br>
+    <img src="./assets/mypage.gif">
+    <br>
+    <img src="./assets/mypage_sale.gif">
+</details>
 
 ### 관리자 기능
 
@@ -448,6 +477,18 @@ PW : admin123
 - 회원 거래글 및 기타 정보 확인
 - 거래글 검색, 조회 및 관리
 - 공지, 경고 등 알림 발송 기능
+
+<details>
+    <summary>GIF 보기</summary>
+    <br>
+    <img src="./assets/admin-login-reply.gif">
+    <br>
+    <img src="./assets/admin-user-auction.gif">
+    <br>
+    <img src="./assets/admin-auction-search.gif">
+    <br>
+    <img src="./assets/admin-penalty.gif">
+</details>
 
 ### 정산 시스템
 
