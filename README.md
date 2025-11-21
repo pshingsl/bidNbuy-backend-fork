@@ -431,7 +431,7 @@ PW : admin123
   <img src="./assets/mypage.gif" width="400">
 </p>
 
-***
+---
 
 ### 관리자 기능
 
