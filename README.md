@@ -11,9 +11,11 @@
 
 ## 🏷️ 프로젝트 소개
 
-기존의 중고거래 플랫폼은 대부분 고정가 방식으로 운영되고 있습니다. 이 방식은 직관적이고 간단하지만, 가격 경쟁을 통한 더 나은 조건을 얻기에는 한계가 있습니다. 반면 전문 경매 플랫폼은 접근성이 낮고, 일반 사용자는 진입 장벽을 느끼는 경우가 많습니다.
+기존의 중고거래 플랫폼은 대부분 고정가 방식으로 운영되고 있습니다. 이 방식은 직관적이고 간단하지만, 가격 경쟁을 통한 더 나은 조건을 얻기에는 한계가 있습니다. 반면 전문 경매 플랫폼은 접근성이 낮고, 일반
+사용자는 진입 장벽을 느끼는 경우가 많습니다.
 
-<strong>Bid&Buy는 이런 간극을 해소하기 위해 중고거래에 경매 방식을 결합한 서비스입니다.</strong> 누구나 부담 없이 참여할 수 있는 “일상 속 경매 경험”을 제공하고, 실시간 입찰·알림·채팅 기능으로 역동적인 거래 분위기를 만듭니다. 또한 안전결제(에스크로) 시스템을 적용해 사용자가 보다 안심하고 이용할 수 있는 환경을 마련했습니다.
+<strong>Bid&Buy는 이런 간극을 해소하기 위해 중고거래에 경매 방식을 결합한 서비스입니다.</strong> 누구나 부담 없이 참여할 수 있는 “일상 속 경매 경험”을 제공하고, 실시간 입찰·알림·채팅
+기능으로 역동적인 거래 분위기를 만듭니다. 또한 안전결제(에스크로) 시스템을 적용해 사용자가 보다 안심하고 이용할 수 있는 환경을 마련했습니다.
 
 Bid&Buy는 경매의 합리성과 거래의 안전함을 갖춘 차별화된 중고거래 플랫폼으로, 중고거래 시장에 효율적이고 신뢰감 있는 새로운 서비스를 제안합니다.
 <br><br>
@@ -189,34 +191,63 @@ PW : admin123
 <br>
 
 [//]: # "## 📄 관련 문서"
+
 [//]: #
+
 [//]: # "<details>"
+
 [//]: #
+
 [//]: # "<summary><b>ERD</b></summary>"
+
 [//]: #
+
 [//]: # "<!-- ERD 링크 (추후 추가) -->"
+
 [//]: # "<!-- [ERD](링크) -->"
+
 [//]: #
+
 [//]: # "</details>"
+
 [//]: #
+
 [//]: # "<details>"
+
 [//]: #
+
 [//]: # "<summary><b>화면설계서(Figma)</b></summary>"
+
 [//]: #
+
 [//]: # "<!-- Figma 링크 (추후 추가) -->"
+
 [//]: # "<!-- [화면설계서(Figma)](링크) -->"
+
 [//]: #
+
 [//]: # "</details>"
+
 [//]: #
+
 [//]: # "<details>"
+
 [//]: #
+
 [//]: # "<summary><b>API 명세서 (Swagger)</b></summary>"
+
 [//]: #
+
 [//]: # "<!-- Swagger 링크 (추후 추가) -->"
+
 [//]: # '<!-- <img src="이미지URL" alt="API 명세서" width="900" /> -->'
+
 [//]: #
+
 [//]: # "</details>"
+
 [//]: #
+
 [//]: # "<br>"
 
 ## ✨ 주요 기능
@@ -341,6 +372,14 @@ PW : admin123
 - JWT 기반 인증 시스템, Spring Security 활용 보안 처리
 - 관리자 IP 화이트리스트 기반 인증
 
+<details>
+    <summary>GIF 보기</summary>
+    <br>
+    <img src="./assets/login.gif">
+    <br>
+    <img src="./assets/signup.gif">
+</details>
+
 ### 경매
 
 - 키워드 검색 및 가격 범위, 상태 필터링
@@ -350,12 +389,26 @@ PW : admin123
 - 다중 이미지 업로드 지원(이미지 크기 검증), 이미지 순서로 대표 이미지 설정 가능
 - 무한 스크롤 통한 목록 조회
 
+<details>
+    <summary>GIF 보기</summary>
+    <br>
+    <img src="./assets/product-registration.gif">
+    <br>
+    <img src="./assets/product-search.gif">
+</details>
+
 ### 입찰
 
 - REST API 기반 입찰 제출
 - 입찰 가능 금액 안내 및 입찰가 검증
 - 입찰 후 낙관적 업데이트 및 서버 데이터 동기화로 실시간 갱신
 - 낙찰 알림 및 경매 종료 알림
+
+<details>
+    <summary>GIF 보기</summary>
+    <br>
+    <img src="./assets/bid.gif">
+</details>
 
 ### 실시간 채팅
 
@@ -366,12 +419,24 @@ PW : admin123
 - 채팅 내에서 결제 요청(판매자 전용) 및 주소 전송(구매자 전용) 기능
 - 이미지 전송 기능
 
+<details>
+    <summary>GIF 보기</summary>
+    <br>
+    <img src="./assets/chatting.gif">
+</details>
+
 ### 결제 및 주문 관리
 
 - 토스페이먼츠 연동 에스크로 결제 시스템
 - 결제 취소 및 환불 처리
 - 주문 조회 및 주문 상태 확인
 - 구매 확정 및 판매자 별점 평가 기능
+
+<details>
+    <summary>GIF 보기</summary>
+    <br>
+    <img src="./assets/payment.gif">
+</details>
 
 ### 알림 시스템
 
@@ -380,10 +445,22 @@ PW : admin123
 - 알림 목록 조회 및 읽음 처리
 - 관리자 공지 및 경고 알림 발송
 
+<details>
+    <summary>GIF 보기</summary>
+    <br>
+    <img src="./assets/alarm.gif">
+</details>
+
 ### 찜 기능
 
 - 관심 경매 찜하기 기능
 - 찜 목록 조회 및 필터링
+
+<details>
+    <summary>GIF 보기</summary>
+    <br>
+    <img src="./assets/zimm.gif">
+</details>
 
 ### 마이 페이지
 
@@ -393,6 +470,14 @@ PW : admin123
 - 구매 내역, 판매 내역 조회
 - 1:1 문의/신고 등록 및 조회
 - 회원 탈퇴 기능
+
+<details>
+    <summary>GIF 보기</summary>
+    <br>
+    <img src="./assets/mypage.gif">
+    <br>
+    <img src="./assets/mypage_sale.gif">
+</details>
 
 ### 관리자 기능
 
@@ -405,12 +490,30 @@ PW : admin123
 - 거래글 검색, 조회 및 관리
 - 공지, 경고 등 알림 발송 기능
 
+<details>
+    <summary>GIF 보기</summary>
+    <br>
+    <img src="./assets/admin-login-reply.gif">
+    <br>
+    <img src="./assets/admin-user-auction.gif">
+    <br>
+    <img src="./assets/admin-auction-search.gif">
+    <br>
+    <img src="./assets/admin-penalty.gif">
+</details>
+
 ### 정산 시스템
 
 - 판매자 정산 요청 및 승인
 - 구매자 구매 확정 시 정산 완료 처리
 - 정산 상태 관리 (대기, 진행중, 완료)
 - 정산 내역 조회
+
+<details>
+    <summary>GIF 보기</summary>
+    <br>
+    <img src="./assets/settlement.gif">
+</details>
 
 <br>
 
