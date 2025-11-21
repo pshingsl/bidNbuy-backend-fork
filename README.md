@@ -416,6 +416,14 @@ PW : admin123
 - 관심 경매 찜하기 기능
 - 찜 목록 조회 및 필터링
 
+<br>
+
+<p align="left">
+  <img src="./assets/mypage.gif" width="400">
+</p>
+
+___
+
 ### 마이 페이지
 
 - 프로필 이미지, 닉네임, 비밀번호 변경 기능
@@ -431,7 +439,7 @@ PW : admin123
   <img src="./assets/mypage.gif" width="400">
 </p>
 
----
+___
 
 ### 관리자 기능
 
