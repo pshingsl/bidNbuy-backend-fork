@@ -98,7 +98,7 @@ public class ChatRoomService {
 
         Long unreadCount = chatMessageService.getUnreadMessageCount(chatRoom.getChatroomId(), currentUserId);
 
-        Long counterpartIdSafe = null;
+        Long counterpartIdSafe = 0L;
         String counterpartNicknameSafe = "탈퇴회원";
         String counterpartProfileImageUrlSafe = null;
         try {
