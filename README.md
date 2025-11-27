@@ -253,9 +253,9 @@ PW : admin123
 <details>
     <summary>GIF 보기</summary>
     <br>
-    <img src="./assets/login.gif">
+    <img src="https://github.com/user-attachments/assets/7cc56a76-1879-4ce7-9745-953b2b439d95">
     <br>
-    <img src="./assets/signup.gif">
+    <img src="https://github.com/user-attachments/assets/3bc3dce4-af1f-42c0-8b30-600d602be51b">
 </details>
 
 ### 경매
@@ -270,9 +270,9 @@ PW : admin123
 <details>
     <summary>GIF 보기</summary>
     <br>
-    <img src="./assets/product-registration.gif">
+    <img src="https://github.com/user-attachments/assets/32344b61-fe5e-43ae-ac67-a0eab343ac34">
     <br>
-    <img src="./assets/product-search.gif">
+    <img src="https://github.com/user-attachments/assets/986c05e9-c0c2-470b-8644-43eba3de878d">
 </details>
 
 ### 입찰
@@ -285,7 +285,7 @@ PW : admin123
 <details>
     <summary>GIF 보기</summary>
     <br>
-    <img src="./assets/bid.gif">
+    <img src="https://github.com/user-attachments/assets/d093abef-ee93-445d-b976-4cc7da4d82bd">
 </details>
 
 ### 실시간 채팅
@@ -300,7 +300,7 @@ PW : admin123
 <details>
     <summary>GIF 보기</summary>
     <br>
-    <img src="./assets/chatting.gif">
+    <img src="https://github.com/user-attachments/assets/75c62d79-47f2-4a59-9714-8097323c1d65">
 </details>
 
 ### 결제 및 주문 관리
@@ -313,7 +313,20 @@ PW : admin123
 <details>
     <summary>GIF 보기</summary>
     <br>
-    <img src="./assets/payment.gif">
+    <img src="https://github.com/user-attachments/assets/72e92e1f-2be4-4bfc-ba73-56f87d597670">
+</details>
+
+### 정산 시스템
+
+- 판매자 정산 요청 및 승인
+- 구매자 구매 확정 시 정산 완료 처리
+- 정산 상태 관리 (대기, 진행중, 완료)
+- 정산 내역 조회
+
+<details>
+    <summary>GIF 보기</summary>
+    <br>
+    <img src="https://github.com/user-attachments/assets/3cd78f1c-ce8f-4826-9bbc-3cad76d7267c">
 </details>
 
 ### 알림 시스템
@@ -326,7 +339,7 @@ PW : admin123
 <details>
     <summary>GIF 보기</summary>
     <br>
-    <img src="./assets/alarm.gif">
+    <img src="https://github.com/user-attachments/assets/2c8248f7-6e09-487b-bec8-a0965dfb63df">
 </details>
 
 ### 찜 기능
@@ -337,7 +350,7 @@ PW : admin123
 <details>
     <summary>GIF 보기</summary>
     <br>
-    <img src="./assets/zimm.gif">
+    <img src="https://github.com/user-attachments/assets/4caf5a9f-1ba0-433c-a76e-d17ddbf298e5">
 </details>
 
 ### 마이 페이지
@@ -352,9 +365,9 @@ PW : admin123
 <details>
     <summary>GIF 보기</summary>
     <br>
-    <img src="./assets/mypage.gif">
+    <img src="https://github.com/user-attachments/assets/4072787f-fbf0-43f7-a19f-7caa57a9b36c">
     <br>
-    <img src="./assets/mypage_sale.gif">
+    <img src="https://github.com/user-attachments/assets/3c6792bd-60ed-473d-9b06-3dd6c183b358">
 </details>
 
 ### 관리자 기능
@@ -371,26 +384,13 @@ PW : admin123
 <details>
     <summary>GIF 보기</summary>
     <br>
-    <img src="./assets/admin-login-reply.gif">
+    <img src="https://github.com/user-attachments/assets/ffd6cd8e-7752-4359-b8c5-ffe69c97c8b4">
     <br>
-    <img src="./assets/admin-user-auction.gif">
+    <img src="https://github.com/user-attachments/assets/03b3a1d9-dbd3-4f23-96ec-5b6a415036ba">
     <br>
-    <img src="./assets/admin-auction-search.gif">
+    <img src="https://github.com/user-attachments/assets/fe080518-9bed-4d3b-9326-06fce0d3dc7f">
     <br>
-    <img src="./assets/admin-penalty.gif">
-</details>
-
-### 정산 시스템
-
-- 판매자 정산 요청 및 승인
-- 구매자 구매 확정 시 정산 완료 처리
-- 정산 상태 관리 (대기, 진행중, 완료)
-- 정산 내역 조회
-
-<details>
-    <summary>GIF 보기</summary>
-    <br>
-    <img src="./assets/settlement.gif">
+    <img src="https://github.com/user-attachments/assets/03aac759-559c-49aa-8bb7-04ae561e5b90">
 </details>
 
 <br>
