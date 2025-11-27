@@ -9,6 +9,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -21,6 +23,8 @@ import java.util.List;
 @Data
 @Entity
 @Table(name = "AuctionProducts")
+@SQLDelete(sql = "UPDATE auction_products SET deleted_at = NOW(), selling_status = 'DELETED' WHERE auction_id = ?")
+@Where(clause = "deleted_at IS NULL")
 public class AuctionProductsEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
