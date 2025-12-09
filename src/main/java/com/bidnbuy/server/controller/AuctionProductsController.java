@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -25,10 +26,10 @@ import java.util.List;
 @Tag(name = "경매상품 API", description = "경매상품 기능 제공")
 @RestController
 @RequestMapping("/auctions")
+@RequiredArgsConstructor
 public class AuctionProductsController {
 
-    @Autowired
-    private AuctionProductsService auctionProductsService;
+    private final AuctionProductsService auctionProductsService;
 
     @Operation(summary = "상품 등록 API", description = "상품 등록")
     @ApiResponses({
