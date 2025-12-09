@@ -11,7 +11,7 @@ public class AutoCancelScheduler {
 
     private final OrderService orderService;
 
-    // 1시간마다 (3600000ms) 실행
+    // 1시간마다 실행 36000 -> 3600000으로 변경
     @Scheduled(fixedRate = 3600000)
     public void runAutoCancel() {
         System.out.println("✅ 자동 취소 스케줄러 실행됨 - kgb");
