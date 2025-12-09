@@ -1,7 +1,6 @@
 package com.bidnbuy.server.controller;
 
 import com.bidnbuy.server.dto.AuctionBidDto;
-import com.bidnbuy.server.dto.AuctionCreationResponseDto;
 import com.bidnbuy.server.dto.BidRequestDto;
 import com.bidnbuy.server.dto.ResponseDto;
 import com.bidnbuy.server.service.AuctionBidService;
