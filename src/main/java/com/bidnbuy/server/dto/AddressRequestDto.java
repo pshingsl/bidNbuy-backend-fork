@@ -20,6 +20,7 @@ public class AddressRequestDto {
 
     @NotBlank(message="전화번호을 입력해주세요.")
     @Size(min = 10, max = 15, message = "유효한 전화번호 길이를 벗어났습니다.")
+    // 유효검사
     @Pattern(regexp = "^01(?:0|1|[6-9])-(?:\\d{3}|\\d{4})-\\d{4}$",
             message = "유효하지 않은 전화번호 형식입니다. (예: 010-1234-5678)")
     private String phoneNumber;
