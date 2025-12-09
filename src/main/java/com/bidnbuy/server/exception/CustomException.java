@@ -1,14 +1,15 @@
 package com.bidnbuy.server.exception;
 
-public class AuctionException extends RuntimeException {
-    private final String errorCode;
+import com.bidnbuy.server.enums.ExceptionCode;
+import lombok.Getter;
 
-    public AuctionException(String errorCode, String message) {
-        super(message);
-        this.errorCode = errorCode;
-    }
+@Getter
+public class CustomException extends RuntimeException {
+  private final ExceptionCode exceptionCode;
 
-    public String getErrorCode(){
-        return errorCode;
+    public CustomException(ExceptionCode exceptionCode) {
+        super(exceptionCode.getMessage()); // 이거 중요!!
+        this.exceptionCode = exceptionCode;
     }
 }
+
