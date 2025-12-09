@@ -33,7 +33,7 @@ public class AuctionBidController {
             @ApiResponse(responseCode = "400", description = "요청 데이터/유효성 검증 실패"),
             @ApiResponse(responseCode = "401", description = "인증 실패")
     })
-    @PostMapping("/{userId}")
+    @PostMapping()
     public ResponseEntity<?> placeBid(
             @PathVariable Long auctionId,
             @AuthenticationPrincipal Long userId,
