@@ -1,7 +1,6 @@
 package com.bidnbuy.server.controller;
 
 import com.bidnbuy.server.dto.*;
-import com.bidnbuy.server.entity.UserEntity;
 import com.bidnbuy.server.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -11,11 +10,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.catalina.User;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -54,7 +51,7 @@ public class OrderController {
     @PostMapping
     public ResponseEntity<OrderResponseDto> createOrder(@RequestBody OrderRequestDto dto) {
         OrderResponseDto response = orderService.createOrder(dto);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     // 주문 전체 조회
@@ -94,21 +91,11 @@ public class OrderController {
     @PutMapping("/{orderId}")
     public ResponseEntity<OrderUpdateResponseDto> updateOrder(
             @PathVariable Long orderId,
-            @RequestBody OrderUpdateRequestDto dto) {
+            @RequestBody OrderUpdateRequestDto dto,
+            @AuthenticationPrincipal Long userId) {
 
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        Long userId;
-
-        try {
-            userId = Long.parseLong(authentication.getName());
-        } catch (NumberFormatException e) {
-            throw new SecurityException("유효하지 않은 사용자 id");
-        }
 
         OrderUpdateResponseDto response = orderService.updateOrderStatus(orderId, userId, dto);
         return ResponseEntity.ok(response);
     }
-
-
 }
