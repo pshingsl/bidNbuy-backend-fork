@@ -117,6 +117,7 @@ public class SecurityConfig {
                     // 인증 필요한 영역
                     .requestMatchers("/chatrooms/**").authenticated()
                     .requestMatchers("/notifications/token/**").authenticated()
+                        .requestMatchers("/bids/**").authenticated()
                     .requestMatchers("/orders/**", "/payments/**", "/inquiries/**", "/reports/**").permitAll()
 
                     // 관리자 관련
@@ -128,11 +129,7 @@ public class SecurityConfig {
                     ).permitAll()
                     .requestMatchers(HttpMethod.GET, "/admin/**").hasAnyRole("ADMIN", "ADMIN_VIEWER")
                     .requestMatchers("/admin/**").hasRole("ADMIN")
-                    .requestMatchers("/auctions/admin/**").hasRole("ADMIN")
-
-                    .anyRequest().authenticated()
-                )
-                .csrf(csrf -> csrf.disable());
+                    .requestMatchers("/auctions/admin/**").hasRole("ADMIN"));
 
         http.addFilterBefore(
                 jwtAuthenticationFilter,

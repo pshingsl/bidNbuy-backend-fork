@@ -5,7 +5,9 @@ import com.bidnbuy.server.dto.BidUpdateDto;
 import com.bidnbuy.server.entity.AuctionBidsEntity;
 import com.bidnbuy.server.entity.AuctionProductsEntity;
 import com.bidnbuy.server.entity.UserEntity;
+import com.bidnbuy.server.enums.ExceptionCode;
 import com.bidnbuy.server.enums.SellingStatus;
+import com.bidnbuy.server.exception.CustomException;
 import com.bidnbuy.server.repository.AuctionBidRepository;
 import com.bidnbuy.server.repository.AuctionProductsRepository;
 import com.bidnbuy.server.repository.UserRepository;
@@ -34,27 +36,29 @@ public class AuctionBidService {
 
         // 1. 사용자 및 경매 물품 유효성 검증
         UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("USER_NOT_FOUND, 존재하지 않는 사용자입니다."));
+                .orElseThrow(() -> new CustomException(ExceptionCode.INVALID_USER_ID));
 
         // 2. 경매 상태, 입찰금액 유효성 검증
         AuctionProductsEntity auctionProduct = auctionProductsRepository.findByIdWithLock(auctionId)
-                .orElseThrow(() -> new RuntimeException("AUCTION_NOT_FOUND, 존재하지 않는 경매 물품입니다."));
+                .orElseThrow(() -> new CustomException(ExceptionCode.AUCTION_NOT_FOUND));
 
         // 자신이 판매한 경매물품 입찰 금지
         Long sellerId = auctionProduct.getUser().getUserId();
         if (userId == sellerId) {
-            throw new RuntimeException("SELF_BIDDING_FORBIDDEN, 자신이 등록한 경매 물품에는 입찰할 수 없습니다.");
+            throw new CustomException(ExceptionCode.SELF_BIDDING_FORBIDDEN);
         }
 
         // 경매가 진행 중인지 확인
         if (auctionProduct.getSellingStatus() != SellingStatus.PROGRESS) {
             throw new RuntimeException("AUCTION_NOT_IN_PROGRESS, 현재 입찰이 불가능합니다. 경매가 진행 중이 아닙니다.");
+            // AUCTION_NOT_IN_PROGRESS, 현재 입찰이 불가능합니다. 경매가 진행 중이 아닙니다.
         }
 
         // 경매 끝났을때 입찰 막기
         LocalDateTime now = LocalDateTime.now();
         if (now.isAfter(auctionProduct.getEndTime())) {
             throw new RuntimeException("AUCTION_ENDED, 이미 경매가 종료된 물품입니다.");
+            //AUCTION_ENDED, 이미 경매가 종료된 물품입니다.
         }
 
         // 사용자의 최소 입찰 금애이 현재 입찰 금액 비교

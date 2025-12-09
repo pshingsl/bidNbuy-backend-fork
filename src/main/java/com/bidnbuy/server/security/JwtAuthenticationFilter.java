@@ -40,7 +40,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String contextPath = request.getContextPath();
         String path = request.getRequestURI().substring(contextPath.length());
-        log.info("###################3shouldNotFilter path: {}", path);
+        log.info("shouldNotFilter path: {}", path);
 //        if(path.startsWith("/auth")){
         // admin auth 쪽 스킵
         if (path.startsWith("/admin/auth/") || path.equals("/admin/auth")) {
