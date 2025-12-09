@@ -29,7 +29,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AuctionProductsController {
 
-    private final AuctionProductsService auctionProductsService;
+    private final AuctionProductsService auctionProductsService; // 변경
 
     @Operation(summary = "상품 등록 API", description = "상품 등록")
     @ApiResponses({
