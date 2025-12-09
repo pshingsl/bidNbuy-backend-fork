@@ -7,7 +7,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
-import software.amazon.awssdk.annotations.NotNull;
 
 @Builder
 @Getter
