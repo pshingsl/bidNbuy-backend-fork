@@ -112,8 +112,6 @@ public class SecurityConfig {
                             "/category/**", "/api/category/**"
                     ).permitAll()
 
-
-
                     // 인증 필요한 영역
                     .requestMatchers("/chatrooms/**").authenticated()
                     .requestMatchers("/notifications/token/**").authenticated()
