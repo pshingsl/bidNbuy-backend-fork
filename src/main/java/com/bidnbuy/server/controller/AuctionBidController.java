@@ -80,6 +80,7 @@ public class AuctionBidController {
                 .item(bidList)
                 .build();
 
+        // 조회는 200 OK를 반환합니다.
         return ResponseEntity.ok().body(response);
     }
 }
