@@ -5,6 +5,7 @@ import lombok.Getter;
 import org.springframework.http.HttpStatus;
 import static org.springframework.http.HttpStatus.*;
 
+// 예외 메세지
 @Getter
 @AllArgsConstructor
 public enum ExceptionCode {

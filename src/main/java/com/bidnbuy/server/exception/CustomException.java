@@ -3,6 +3,7 @@ package com.bidnbuy.server.exception;
 import com.bidnbuy.server.enums.ExceptionCode;
 import lombok.Getter;
 
+// 커스텀
 @Getter
 public class CustomException extends RuntimeException {
   private final ExceptionCode exceptionCode;

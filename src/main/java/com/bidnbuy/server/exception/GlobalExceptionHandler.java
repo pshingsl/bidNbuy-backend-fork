@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.Map;
 
+// 글로버 커스텀
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
