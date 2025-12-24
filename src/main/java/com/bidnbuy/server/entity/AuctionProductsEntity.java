@@ -20,7 +20,7 @@ import java.util.List;
 @AllArgsConstructor
 @Data
 @Entity
-@Table(name = "AuctionProducts")
+@Table(name = "Auction_Products")
 public class AuctionProductsEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

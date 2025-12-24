@@ -42,12 +42,12 @@ public class AuctionProductsController {
     public ResponseEntity<?> createAuction(
             @AuthenticationPrincipal Long userId,
             @Valid @ModelAttribute CreateAuctionDto dto,
-            @RequestPart(value = "images") List<MultipartFile> imageFiles
+            @RequestPart(value = "images", required = false) List<MultipartFile> imageFiles
     ) {
 
-        if (imageFiles == null || imageFiles.isEmpty()) {
-            throw new IllegalArgumentException("경매 상품 이미지는 최소 1개 이상 필요합니다.");
-        }
+        //if (imageFiles == null || imageFiles.isEmpty()) {
+        //    throw new IllegalArgumentException("경매 상품 이미지는 최소 1개 이상 필요합니다.");
+       // }
 
         AuctionProductsEntity newProduct = auctionProductsService.create(userId, dto, imageFiles);
 

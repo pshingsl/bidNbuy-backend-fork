@@ -18,10 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -151,13 +148,28 @@ public class AuctionProductsService {
             );
         }
 
+        // 최적화 코드
+        List<Long> auctionIds = projectionPage.getContent().stream()
+                .map(com.bidnbuy.server.repository.projection.AuctionListProjection::getAuctionId)
+                .collect(Collectors.toList());
+
+        Set<Long> likedAuctionIds = new java.util.HashSet<>();
+        if (userId != null && !auctionIds.isEmpty()) {
+            // DB를 딱 한 번만 더 호출합니다.
+            List<Long> likedIds = wishlistRepository.findLikedAuctionIdsByUserIdAndAuctionIds(userId, auctionIds);
+            likedAuctionIds.addAll(likedIds);
+        }
+
         // 프로젝션 -> 응답 dto 매핑
         List<AuctionListResponseDto> dtoList = projectionPage.getContent().stream()
                 .map(p -> {
-                    boolean liked = false;
-                    if (userId != null) {
-                        liked = wishlistRepository.existsByUser_UserIdAndAuction_AuctionId(userId, p.getAuctionId());
-                    }
+                    // boolean liked = false;
+                     boolean liked = likedAuctionIds.contains(p.getAuctionId());
+
+                  //  if (userId != null) {
+                  //      liked = wishlistRepository.existsByUser_UserIdAndAuction_AuctionId(userId, p.getAuctionId());
+                  //  }
+
                     return AuctionListResponseDto.builder()
                             .auctionId(p.getAuctionId())
                             .title(p.getTitle())
@@ -184,39 +196,6 @@ public class AuctionProductsService {
                 .isLast(projectionPage.isLast())
                 .build();
     }
-//
-//    @Transactional(readOnly = true)
-//    public List<AuctionListResponseDto> getMyAuctionListSimple(Long userId) {
-//
-//        // 1. 사용자 엔티티 조회
-//        UserEntity user = userRepository.findById(userId)
-//                .orElseThrow(() -> new IllegalArgumentException("해당 사용자 존재하지 않습니다."));
-//
-//        // 2. Repository를 통해 해당 사용자가 작성한 모든 상품을 조회
-//        List<AuctionProductsEntity> myProducts = auctionProductsRepository.findProductsByUserEagerly(user);
-//
-//        // 3. DTO로 변환
-//        return myProducts.stream()
-//                .map(product -> {
-//                    String mainImageUrl = imageRepository.findFirstImageUrlByAuctionId(product.getAuctionId())
-//                            .orElse("default_product.png");
-//
-//                    return AuctionListResponseDto.builder()
-//                            .auctionId(product.getAuctionId())
-//                            .title(product.getTitle())
-//                            .currentPrice(product.getCurrentPrice())
-//                            .createdAt(product.getCreatedAt())
-//                            .endTime(product.getEndTime())
-//                            .sellingStatus(calculateSellingStatus(product))
-//                            //.categoryName(product.getCategory().getCategoryName())
-//                            .sellerId(product.getUser().getUserId())
-//                            .sellerNickname(product.getUser().getNickname())
-//                            .mainImageUrl(mainImageUrl)
-//                            .wishCount(wishlistRepository.countByAuction(product))
-//                            .build();
-//                })
-//                .collect(Collectors.toList());
-//    }
 
     // 상세조회
     @Transactional(readOnly = true)

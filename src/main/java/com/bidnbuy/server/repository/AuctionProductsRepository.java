@@ -191,18 +191,18 @@ public interface AuctionProductsRepository extends JpaRepository<AuctionProducts
             "  CASE WHEN :sortKey = 'latest'     THEN p.created_at   END DESC,\n" +
             "  p.created_at DESC\n",
             countQuery = "\n" +
-            "SELECT COUNT(*)\n" +
-            "FROM auction_products p\n" +
-            "LEFT JOIN category c ON c.category_id = p.category_id\n" +
-            "LEFT JOIN category pc ON pc.category_id = c.parent_id\n" +
-            "WHERE p.deleted_at IS NULL\n" +
-            "  AND p.selling_status IN (:statusNames)\n" +
-            "  AND (:searchKeyword IS NULL OR p.title LIKE CONCAT('%', :searchKeyword, '%'))\n" +
-            "  AND (:minPrice IS NULL OR p.current_price >= :minPrice)\n" +
-            "  AND (:maxPrice IS NULL OR p.current_price <= :maxPrice)\n" +
-            "  AND ((:subCategoryId IS NULL AND :mainCategoryId IS NULL)\n" +
-            "       OR (:subCategoryId IS NOT NULL AND c.category_id = :subCategoryId)\n" +
-            "       OR (:mainCategoryId IS NOT NULL AND :subCategoryId IS NULL AND (pc.category_id = :mainCategoryId OR c.category_id = :mainCategoryId)))\n",
+                    "SELECT COUNT(*)\n" +
+                    "FROM auction_products p\n" +
+                    "LEFT JOIN category c ON c.category_id = p.category_id\n" +
+                    "LEFT JOIN category pc ON pc.category_id = c.parent_id\n" +
+                    "WHERE p.deleted_at IS NULL\n" +
+                    "  AND p.selling_status IN (:statusNames)\n" +
+                    "  AND (:searchKeyword IS NULL OR p.title LIKE CONCAT('%', :searchKeyword, '%'))\n" +
+                    "  AND (:minPrice IS NULL OR p.current_price >= :minPrice)\n" +
+                    "  AND (:maxPrice IS NULL OR p.current_price <= :maxPrice)\n" +
+                    "  AND ((:subCategoryId IS NULL AND :mainCategoryId IS NULL)\n" +
+                    "       OR (:subCategoryId IS NOT NULL AND c.category_id = :subCategoryId)\n" +
+                    "       OR (:mainCategoryId IS NOT NULL AND :subCategoryId IS NULL AND (pc.category_id = :mainCategoryId OR c.category_id = :mainCategoryId)))\n",
             nativeQuery = true)
     Page<AuctionListProjection> findAuctionsNative(
             @Param("searchKeyword") String searchKeyword,
@@ -251,20 +251,20 @@ public interface AuctionProductsRepository extends JpaRepository<AuctionProducts
             "  CASE WHEN :sortKey = 'latest'     THEN p.created_at   END DESC,\n" +
             "  p.created_at DESC\n",
             countQuery = "\n" +
-            "SELECT COUNT(*)\n" +
-            "FROM auction_products p\n" +
-            "LEFT JOIN `user` u ON u.user_id = p.user_id\n" +
-            "LEFT JOIN category c ON c.category_id = p.category_id\n" +
-            "LEFT JOIN category pc ON pc.category_id = c.parent_id\n" +
-            "WHERE p.deleted_at IS NULL\n" +
-            "  AND p.selling_status IN (:statusNames)\n" +
-            "  AND u.email LIKE CONCAT('%', :userEmail, '%')\n" +
-            "  AND (:searchKeyword IS NULL OR p.title LIKE CONCAT('%', :searchKeyword, '%'))\n" +
-            "  AND (:minPrice IS NULL OR p.current_price >= :minPrice)\n" +
-            "  AND (:maxPrice IS NULL OR p.current_price <= :maxPrice)\n" +
-            "  AND ((:subCategoryId IS NULL AND :mainCategoryId IS NULL)\n" +
-            "       OR (:subCategoryId IS NOT NULL AND c.category_id = :subCategoryId)\n" +
-            "       OR (:mainCategoryId IS NOT NULL AND :subCategoryId IS NULL AND (pc.category_id = :mainCategoryId OR c.category_id = :mainCategoryId)))\n",
+                    "SELECT COUNT(*)\n" +
+                    "FROM auction_products p\n" +
+                    "LEFT JOIN `user` u ON u.user_id = p.user_id\n" +
+                    "LEFT JOIN category c ON c.category_id = p.category_id\n" +
+                    "LEFT JOIN category pc ON pc.category_id = c.parent_id\n" +
+                    "WHERE p.deleted_at IS NULL\n" +
+                    "  AND p.selling_status IN (:statusNames)\n" +
+                    "  AND u.email LIKE CONCAT('%', :userEmail, '%')\n" +
+                    "  AND (:searchKeyword IS NULL OR p.title LIKE CONCAT('%', :searchKeyword, '%'))\n" +
+                    "  AND (:minPrice IS NULL OR p.current_price >= :minPrice)\n" +
+                    "  AND (:maxPrice IS NULL OR p.current_price <= :maxPrice)\n" +
+                    "  AND ((:subCategoryId IS NULL AND :mainCategoryId IS NULL)\n" +
+                    "       OR (:subCategoryId IS NOT NULL AND c.category_id = :subCategoryId)\n" +
+                    "       OR (:mainCategoryId IS NOT NULL AND :subCategoryId IS NULL AND (pc.category_id = :mainCategoryId OR c.category_id = :mainCategoryId)))\n",
             nativeQuery = true)
     Page<AuctionListProjection> findAuctionsByUserEmailNative(
             @Param("userEmail") String userEmail,

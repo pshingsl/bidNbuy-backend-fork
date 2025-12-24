@@ -3,6 +3,7 @@ package com.bidnbuy.server.repository;
 import com.bidnbuy.server.entity.AuctionProductsEntity;
 import com.bidnbuy.server.entity.UserEntity;
 import com.bidnbuy.server.entity.WishlistEntity;
+import io.lettuce.core.dynamic.annotation.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -27,4 +28,12 @@ public interface WishlistRepository extends JpaRepository<WishlistEntity, Long> 
     List<WishlistEntity> findByUserWithAuctionAndImages(UserEntity user);
 
     boolean existsByUser_UserIdAndAuction_AuctionId(Long userId, Long auctionId);
+
+    // 특정 사용자가 현재 페이지 상품들 중 찜한 상품 ID 리스트만 일괄 조회
+    @Query("SELECT w.auction.auctionId FROM WishlistEntity w " +
+            "WHERE w.user.userId = :userId AND w.auction.auctionId IN :auctionIds")
+    List<Long> findLikedAuctionIdsByUserIdAndAuctionIds(
+            @Param("userId") Long userId,
+            @Param("auctionIds") List<Long> auctionIds
+    );
 }
