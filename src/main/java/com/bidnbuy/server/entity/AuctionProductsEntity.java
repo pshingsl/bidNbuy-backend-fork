@@ -86,13 +86,11 @@ public class AuctionProductsEntity {
         }
     }
 
-    /*
-    * 아래 메서드는 데이터 무결성 문제를 방지하기 위해 사용
-    * */
+    // 아래 메서드는 데이터 무결성 문제를 방지하기 위해 사용
     public void setCategory(CategoryEntity category) {
         this.category = category;
         if(category != null && category.getAuctionProducts().contains(this)){
-            user.getAuctionProducts().add(this);
+            category.getAuctionProducts().add(this);
         }
     }
 
