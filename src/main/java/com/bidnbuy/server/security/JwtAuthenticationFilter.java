@@ -108,20 +108,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     //Security Context에 저장할 인증 토큰 생성
                     AbstractAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                             userId,
-                            null,//비번 비밀
-                            //임시 기본  권한 설정, 디비에 없더라고 시큐리티 인증을 위해 일반 사용자임을 알림
-                            // AuthorityUtils.createAuthorityList("ROLE_USER")
+                            null,
                             authorities
                     );
                     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-//                    authentication.setAuthenticated(true);
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                     log.info("### [AUTH SET] SecurityContext updated for userId={}, authorities={}",
                             userId, authorities);
-
-//                    SecurityContext securityContext =  SecurityContextHolder.createEmptyContext();
-//                    securityContext.setAuthentication(authentication);
-//                    SecurityContextHolder.setContext(securityContext);
                 }
             }
         }catch (Exception e){
@@ -138,7 +131,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     //HTTP 헤더에서 Bearer{Token} 형태 토큰 추출
     private String parseBearerToken(HttpServletRequest request){
         String bearerToken = request.getHeader("Authorization");
-        log.info("%%%%%%%%%%%%%%5Authorization Header: {}", bearerToken);
+        log.debug("Authorization Header: {}", bearerToken);
         if (bearerToken == null) {
             return null;
         }
