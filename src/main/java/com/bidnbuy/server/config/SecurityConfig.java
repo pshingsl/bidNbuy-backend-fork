@@ -116,7 +116,7 @@ public class SecurityConfig {
                     .requestMatchers("/chatrooms/**").authenticated()
                     .requestMatchers("/notifications/token/**").authenticated()
                         .requestMatchers("/bids/**").authenticated()
-                    .requestMatchers("/orders/**", "/payments/**", "/inquiries/**", "/reports/**").permitAll()
+                    .requestMatchers("/orders/**", "/payments/**", "/inquiries/**", "/reports/**").authenticated()
 
                     // 관리자 관련
                     .requestMatchers(
@@ -133,8 +133,6 @@ public class SecurityConfig {
                 jwtAuthenticationFilter,
                 UsernamePasswordAuthenticationFilter.class
         );
-        //요청마다 jwtAuthenticationFilter필터 실행하기
-//        http.addFilterAfter(jwtAuthenticationFilter, CorsFilter.class);
 
         return http.build();
     }
