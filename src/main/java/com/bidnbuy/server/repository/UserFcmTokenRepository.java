@@ -2,7 +2,7 @@ package com.bidnbuy.server.repository;
 
 import com.bidnbuy.server.entity.UserEntity;
 import com.bidnbuy.server.entity.UserFcmTokenEntity;
-import io.lettuce.core.dynamic.annotation.Param;
+import org.springframework.data.repository.query.Param;
 import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;

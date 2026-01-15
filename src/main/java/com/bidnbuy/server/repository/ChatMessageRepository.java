@@ -3,7 +3,7 @@ package com.bidnbuy.server.repository;
 import com.bidnbuy.server.entity.ChatMessageEntity;
 import com.bidnbuy.server.entity.ChatRoomEntity;
 import com.bidnbuy.server.entity.UserEntity;
-import io.lettuce.core.dynamic.annotation.Param;
+import org.springframework.data.repository.query.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
