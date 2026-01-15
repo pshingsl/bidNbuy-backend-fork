@@ -5,7 +5,7 @@ import com.bidnbuy.server.dto.BidUpdateDto;
 import com.bidnbuy.server.entity.AuctionBidsEntity;
 import com.bidnbuy.server.entity.AuctionProductsEntity;
 import com.bidnbuy.server.entity.UserEntity;
-import com.bidnbuy.server.enums.ExceptionCode;
+import com.bidnbuy.server.enums.ErrorCode;
 import com.bidnbuy.server.enums.SellingStatus;
 import com.bidnbuy.server.exception.CustomException;
 import com.bidnbuy.server.repository.AuctionBidRepository;
@@ -36,16 +36,16 @@ public class AuctionBidService {
 
         // 1. 사용자 및 경매 물품 유효성 검증(커스텀 예외 적용)
         UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ExceptionCode.INVALID_USER_ID));
+                .orElseThrow(() -> new CustomException(ErrorCode.INVALID_USER_ID));
 
         // 2. 경매 상태, 입찰금액 유효성 검증(커스텀 예외 적용)
         AuctionProductsEntity auctionProduct = auctionProductsRepository.findByIdWithLock(auctionId)
-                .orElseThrow(() -> new CustomException(ExceptionCode.AUCTION_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.AUCTION_NOT_FOUND));
 
         // 자신이 판매한 경매물품 입찰 금지(커스텀 예외 적용)
         Long sellerId = auctionProduct.getUser().getUserId();
         if (userId == sellerId) {
-            throw new CustomException(ExceptionCode.SELF_BIDDING_FORBIDDEN);
+            throw new CustomException(ErrorCode.SELF_BIDDING_FORBIDDEN);
         }
 
         // 경매가 진행 중인지 확인
