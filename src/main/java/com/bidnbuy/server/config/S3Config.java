@@ -9,7 +9,7 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 
 @Configuration
-//TODO: aws 키발급 받으면 WebMvcConfig, WebConfig 삭제
+//aws 키발급 받으면 WebMvcConfig, WebConfig 삭제 -> 추후 S3 연결 종료시 로컬에서 사용
 public class S3Config {
 
     @Value("${SPRING_AWS_ACCESS_KEY_ID}")
